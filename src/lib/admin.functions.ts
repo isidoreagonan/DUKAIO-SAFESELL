@@ -506,12 +506,12 @@ export const adminAiEngineGet = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
-    const { getAiEngineSettings } = await import("./ai-engine.server");
+    const { getAiEngineSettings, hasGeminiKey } = await import("./ai-engine.server");
     const settings = await getAiEngineSettings(true);
     return {
       ...settings,
       kieConfigured: Boolean(process.env["KIE_API_KEY"]),
-      geminiConfigured: Boolean(process.env["GEMINI_API_KEY"]),
+      geminiConfigured: hasGeminiKey(),
     };
   });
 

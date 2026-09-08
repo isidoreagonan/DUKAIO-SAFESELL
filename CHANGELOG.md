@@ -2,6 +2,8 @@
 
 Ce fichier garde la trace de toutes les modifications et corrections apportées au projet.
 
+> **Note d'environnement :** Ce projet a été initialement généré avec Lovable, mais a été entièrement migré sur Antigravity. Il n'est plus synchronisé avec Lovable Cloud et utilise désormais exclusivement la propre instance Supabase de l'utilisateur.
+
 ## [08/09/2026] - Corrections Storefront & Éditeur de Thème
 
 ### Corrigé
@@ -11,3 +13,4 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 - **Crash écran blanc à l'accueil (Boutique) :** Correction d'une erreur \TypeError: Cannot read properties of undefined (reading 'handle')\ due à la désérialisation du contexte dans TanStack Router lors de l'hydratation côté client (correction dans \src/routes/index.tsx\).
 - **Erreur "new row violates row-level security policy" lors de l'ajout d'image :** Le problème est dû à une configuration trop stricte de la politique (Row-Level Security) sur le bucket de stockage Supabase. Un script SQL (`supabase/migrations/fix_storage_rls.sql`) a été généré pour corriger les règles `storage.objects` (remplacement de la fonction complexe `storage.foldername` par la colonne standard `owner`).
+- **Affichage "Clé API non configurée" pour Gemini dans le panneau Admin :** L'interface administrateur vérifiait uniquement l'existence de la variable `GEMINI_API_KEY` au lieu d'accepter également la configuration via `GOOGLE_VERTEX_SA_JSON` (Google Cloud Service Account). Cela est désormais corrigé via l'utilisation de `hasGeminiKey()` dans `adminAiEngineGet`.
