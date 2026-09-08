@@ -138,7 +138,7 @@ export function Storefront({ handle, page, productId }: StorefrontProps) {
             <p className="text-sm leading-relaxed text-zinc-400">
               Si vous avez des difficultés à accéder à votre boutique, connectez-vous à votre{" "}
               <a
-                href="/dashboard"
+                href="https://dukaio.com/dashboard"
                 className="text-white underline underline-offset-4 hover:text-zinc-200"
               >
                 Tableau de bord

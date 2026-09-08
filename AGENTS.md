@@ -1,10 +1,7 @@
-<!-- LOVABLE:BEGIN -->
 > [!IMPORTANT]
-> This project is connected to [Lovable](https://lovable.dev). Avoid rewriting
-> published git history — force pushing, or rebasing/amending/squashing commits
-> that are already pushed — as it rewrites history on Lovable's side and the
-> user will likely lose their project history.
->
-> Commits you push to the connected branch sync back to Lovable and show up in
-> the editor, so keep the branch in a working state.
-<!-- LOVABLE:END -->
+> **CONTEXTE DU PROJET (MÉMOIRE)**
+> Ce projet a été initialement créé avec [Lovable](https://lovable.dev) et était connecté à Lovable Cloud.
+> Cependant, le développement sur Lovable est terminé. Le projet a été migré vers Antigravity.
+> Toutes les dépendances et traces de Lovable Cloud ont été supprimées.
+> Le projet utilise désormais **exclusivement la propre instance Supabase de l'utilisateur**.
+> Il ne faut plus tenir compte des contraintes de synchronisation Lovable (pas de risque de casser l'historique Git côté Lovable).
