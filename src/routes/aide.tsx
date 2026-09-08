@@ -13,7 +13,6 @@ import {
   X,
 } from "lucide-react";
 import teamImage from "@/assets/help-team.png";
-import mark from "@/assets/dukaio-mark.png.asset.json";
 import {
   Dialog,
   DialogContent,
@@ -69,7 +68,7 @@ function HelpHeader() {
       <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-3 px-4 py-3 sm:px-6">
         <Link to="/" className="flex items-center gap-2">
           <div className="grid h-8 w-8 place-items-center rounded-[4px] bg-foreground">
-            <img src={mark.url} alt="" className="h-5 w-5 object-contain" />
+            <img src="/dukaio-icon.png" alt="DUKAIO" className="h-5 w-5 object-contain" />
           </div>
           <span className="text-lg font-bold tracking-tight">dukaio</span>
         </Link>

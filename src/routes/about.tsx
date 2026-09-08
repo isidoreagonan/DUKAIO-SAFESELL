@@ -11,7 +11,6 @@ import {
 
 import { Nav } from "@/components/landing/nav";
 import { Footer } from "@/components/landing/social";
-import isidore from "@/assets/isidore.png.asset.json";
 
 const title = "À propos de DUKAIO — L'histoire d'AGONAN Isidore Abraham";
 const description =
@@ -115,7 +114,7 @@ function About() {
           <div className="relative">
             <div className="overflow-hidden rounded-[2rem] border border-border bg-card p-2 shadow-float">
               <img
-                src={isidore.url}
+                src="/isidore.png"
                 alt="AGONAN Isidore Abraham, fondateur et CEO de DUKAIO"
                 width={1256}
                 height={1256}

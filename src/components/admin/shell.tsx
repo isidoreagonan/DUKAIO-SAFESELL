@@ -1,5 +1,4 @@
 import { useEffect, useState, type ReactNode } from "react";
-import mark from "@/assets/dukaio-mark.png.asset.json";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import {
   Activity,
@@ -144,7 +143,7 @@ function NavContent({
           {collapsed ? (
             <div className="flex flex-col items-center gap-3">
               <div className="grid h-10 w-10 place-items-center rounded-[10px] bg-chrome-foreground">
-                <img src={mark.url} alt="DUKAIO" className="h-6 w-6 object-contain" />
+                <img src="/dukaio-icon.png" alt="DUKAIO" className="h-6 w-6 object-contain" />
               </div>
               {onToggle ? (
                 <button
@@ -160,7 +159,7 @@ function NavContent({
           ) : (
             <div className="flex min-w-0 items-center gap-2.5">
               <div className="grid h-9 w-9 shrink-0 place-items-center rounded-[4px] bg-chrome-foreground">
-                <img src={mark.url} alt="" className="h-6 w-6 object-contain" />
+                <img src="/dukaio-icon.png" alt="" className="h-6 w-6 object-contain" />
               </div>
               <div className="min-w-0">
                 <p className="truncate text-sm font-black tracking-tight text-chrome-foreground">

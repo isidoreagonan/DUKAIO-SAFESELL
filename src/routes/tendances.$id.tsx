@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ExternalLink, Heart } from "lucide-react";
-import mark from "@/assets/dukaio-mark.png.asset.json";
 import { countryLabel, platformLabel, trendingAdQueryOptions } from "@/lib/ad-library";
 
 export const Route = createFileRoute("/tendances/$id")({
@@ -40,7 +39,7 @@ function Shell({ children }: { children: React.ReactNode }) {
       <header className="border-b border-border bg-card">
         <div className="mx-auto grid max-w-5xl grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 py-4">
           <Link to="/" className="flex min-w-0 items-center gap-2">
-            <img src={mark.url} alt="Dukaio" className="h-8 w-8 shrink-0 object-contain" />
+            <img src="/dukaio-icon.png" alt="Dukaio" className="h-8 w-8 shrink-0 object-contain rounded-md" />
             <span className="truncate text-lg font-black">Radar publicitaire</span>
           </Link>
           <Link

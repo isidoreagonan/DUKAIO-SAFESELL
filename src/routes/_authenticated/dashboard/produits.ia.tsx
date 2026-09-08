@@ -13,7 +13,6 @@ import {
   Trash2,
   Upload,
 } from "lucide-react";
-import markAsset from "@/assets/dukaio-mark.png.asset.json";
 import { DashboardShell } from "@/components/dashboard/shell";
 import { MediaLibraryDialog } from "@/components/editor/MediaLibraryDialog";
 import { useProducts, useStore } from "@/lib/store";
@@ -932,7 +931,7 @@ function ProduitIaPage() {
             <div className="relative mx-auto grid h-24 w-24 place-items-center">
               <span className="absolute inset-0 animate-ping rounded-[22px] bg-surface-tint" />
               <img
-                src={markAsset.url}
+                src="/dukaio-icon.png"
                 alt="Dukaio"
                 className="relative h-[74px] w-[74px] select-none rounded-[18px] object-cover shadow-lg ring-1 ring-black/10"
                 loading="eager"

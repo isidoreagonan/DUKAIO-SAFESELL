@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Heart, Play, RotateCcw, Search, TrendingUp, LayoutGrid } from "lucide-react";
-import mark from "@/assets/dukaio-mark.png.asset.json";
 import { cn } from "@/lib/utils";
 import {
   CATEGORIES,
@@ -161,7 +160,7 @@ function TrendsPage() {
       <header className="border-b border-border bg-card">
         <div className="mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 py-4">
           <Link to="/" className="flex min-w-0 items-center gap-3">
-            <img src={mark.url} alt="Dukaio" className="h-9 w-9 shrink-0 object-contain" />
+            <img src="/dukaio-icon.png" alt="Dukaio" className="h-9 w-9 shrink-0 object-contain rounded-md" />
             <span className="min-w-0">
               <span className="block truncate text-lg font-black leading-tight">
                 Radar publicitaire

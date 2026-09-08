@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import mark from "@/assets/dukaio-mark.png.asset.json";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import {
   BarChart3,
@@ -420,7 +419,7 @@ function NavContent({
           {collapsed ? (
             <div className="flex flex-col items-center gap-3">
               <div className="grid h-10 w-10 place-items-center rounded-[10px] bg-primary text-primary-foreground">
-                <img src={mark.url} alt="DUKAIO" className="h-6 w-6 object-contain" />
+                <img src="/dukaio-icon.png" alt="DUKAIO" className="h-6 w-6 object-contain" />
               </div>
               {onToggle ? (
                 <button
@@ -436,7 +435,7 @@ function NavContent({
           ) : (
             <div className="flex items-center gap-2.5">
               <div className="grid h-9 w-9 place-items-center rounded-[4px] bg-chrome-foreground">
-                <img src={mark.url} alt="" className="h-6 w-6 object-contain" />
+                <img src="/dukaio-icon.png" alt="" className="h-6 w-6 object-contain" />
               </div>
               <span className="text-lg font-black tracking-normal text-chrome-foreground">DUKAIO</span>
             </div>
