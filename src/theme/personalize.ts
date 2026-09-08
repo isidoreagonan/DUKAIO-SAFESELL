@@ -130,11 +130,23 @@ export function isThemeConfig(value: unknown): value is ThemeConfig {
   );
 }
 
-/** Config à éditer : celle enregistrée, sinon un thème personnalisé propre. */
 export function readThemeConfig(store: StoreSettings, products: Product[]): ThemeConfig {
-  const raw = store.theme_config as unknown;
-  if (isThemeConfig(raw)) return raw;
-  return personalizedTheme(store, products);
+  const raw = store.theme_config as any;
+  const base = personalizedTheme(store, products);
+  if (isThemeConfig(raw)) {
+    return {
+      global: raw.global,
+      chrome: raw.chrome,
+      pages: {
+        home: raw.pages.home,
+        product: raw.pages.product ?? base.pages.product,
+        contact: raw.pages.contact ?? base.pages.contact,
+      },
+      productPages: raw.productPages,
+      productGlobals: raw.productGlobals,
+    };
+  }
+  return base;
 }
 
 /**

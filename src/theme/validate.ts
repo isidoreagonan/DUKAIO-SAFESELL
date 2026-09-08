@@ -18,7 +18,7 @@ const ALLOWED_PATHS = ["/", "/produit", "/contact"];
 /** Une URL d'image n'est acceptée que si elle est chiffrée ou déjà stockée. */
 export function isSafeImage(url: string) {
   if (!url) return true;
-  return /^https:\/\//i.test(url) || /^data:image\/(png|jpe?g|webp|avif|gif);base64,/i.test(url);
+  return /^(https?|blob):\/\//i.test(url) || /^data:image\/(png|jpe?g|webp|avif|gif);base64,/i.test(url) || url.startsWith("/");
 }
 
 /** Retire toute balise ou expression exécutable d'un texte saisi. */

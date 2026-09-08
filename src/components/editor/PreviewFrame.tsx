@@ -20,7 +20,6 @@ export function PreviewFrame({
   const frameRef = useRef<HTMLIFrameElement>(null);
   const [doc, setDoc] = useState<Document | null>(null);
   const [styled, setStyled] = useState(false);
-  const [height, setHeight] = useState(900);
 
   /* Récupère le document de l'iframe (dispo immédiatement pour un about:blank) */
   useEffect(() => {
@@ -83,19 +82,6 @@ export function PreviewFrame({
     };
   }, [doc]);
 
-
-  /* Ajuste la hauteur de l'iframe au contenu pour un scroll naturel.
-     On mesure le body (pas documentElement, dont la hauteur suit celle de
-     l'iframe et empêcherait toute réduction). */
-  useEffect(() => {
-    if (!doc) return;
-    const measure = () => setHeight(Math.max(400, doc.body.scrollHeight));
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(doc.body);
-    return () => observer.disconnect();
-  }, [doc]);
-
   return (
     <iframe
       ref={frameRef}
@@ -104,7 +90,7 @@ export function PreviewFrame({
       /* srcDoc avec doctype = mode standard (sinon quirks mode : le body
          prend la hauteur du viewport et l'iframe ne peut jamais rétrécir) */
       srcDoc="<!DOCTYPE html><html><head></head><body></body></html>"
-      style={{ width, height, maxWidth: "100%", border: 0, display: "block" }}
+      style={{ width, height: "100%", maxWidth: "100%", border: 0, display: "block" }}
     >
       {doc
         ? createPortal(

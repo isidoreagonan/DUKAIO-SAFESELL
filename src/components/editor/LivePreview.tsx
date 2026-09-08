@@ -189,12 +189,12 @@ export function LivePreview() {
         </div>
       ) : null}
 
-      <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto p-2 sm:p-4">
+      <div className="min-h-0 min-w-0 flex-1 p-2 sm:p-4">
         <div
-          className="mx-auto overflow-hidden rounded-[6px] border border-border bg-background shadow-sm transition-[max-width] duration-300"
+          className="mx-auto h-full overflow-hidden rounded-[6px] border border-border bg-background shadow-sm transition-[max-width] duration-300"
           style={{ width: devices[device].width, maxWidth: "100%" }}
         >
-          <PreviewFrame width="100%" themeStyle={themeStyle} className="w-full">
+          <PreviewFrame width="100%" themeStyle={themeStyle} className="h-full w-full">
             <BrandProvider value={brandFrom(global)}>
               <PreviewShellProvider value={shell}>
                 {render(chrome.filter((sec) => sec.type !== "footer"))}
