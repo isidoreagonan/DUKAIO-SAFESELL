@@ -232,7 +232,7 @@ function OnboardingFlow() {
         setSetupPhase(i);
       }
       toast.success("Ta boutique est prête !");
-      void navigate({ to: "/dashboard" });
+      window.location.href = "/dashboard";
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Impossible d'enregistrer ta boutique",
@@ -524,6 +524,13 @@ function OnboardingFlow() {
                   );
                 })}
               </div>
+              {setupPhase >= SETUP_PHASES.length && (
+                <div className="mt-8 text-center animate-in fade-in">
+                  <PrimaryButton onClick={() => { window.location.href = "/dashboard"; }}>
+                    Accéder à mon tableau de bord <ArrowRight className="size-4" />
+                  </PrimaryButton>
+                </div>
+              )}
             </div>
           )}
         </div>

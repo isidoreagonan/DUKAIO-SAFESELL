@@ -32,8 +32,22 @@ export const Route = createFileRoute("/_authenticated")({
           getVerificationGate().catch(() => ({ needsVerification: false })),
         ]);
 
-        if (profileRes && !profileRes.error && !profileRes.data?.onboarding_completed)
-          return { redirectTo: "/onboarding" as const, user: null };
+        if (profileRes && !profileRes.error && !profileRes.data?.onboarding_completed) {
+          if (user.user_metadata?.["onboarding_completed"]) {
+            await supabase.from("profiles").upsert(
+              {
+                id: user.id,
+                full_name: (user.user_metadata?.["full_name"] as string) || (user.user_metadata?.["name"] as string) || "Commerçant",
+                avatar_url: (user.user_metadata?.["avatar_url"] as string) || (user.user_metadata?.["picture"] as string) || null,
+                onboarding_completed: true,
+                onboarding_completed_at: new Date().toISOString(),
+              },
+              { onConflict: "id" },
+            );
+          } else {
+            return { redirectTo: "/onboarding" as const, user: null };
+          }
+        }
         if (gate.needsVerification)
           return { redirectTo: "/verification" as const, user: null };
 

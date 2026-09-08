@@ -140,12 +140,17 @@ export function useCompleteOnboarding() {
 
       const { error: profileError } = await supabase
         .from("profiles")
-        .update({
-          phone,
-          onboarding_completed: true,
-          onboarding_completed_at: new Date().toISOString(),
-        })
-        .eq("id", user.id);
+        .upsert(
+          {
+            id: user.id,
+            full_name: (user.user_metadata?.["full_name"] as string) || (user.user_metadata?.["name"] as string) || "Commerçant",
+            avatar_url: (user.user_metadata?.["avatar_url"] as string) || (user.user_metadata?.["picture"] as string) || null,
+            phone,
+            onboarding_completed: true,
+            onboarding_completed_at: new Date().toISOString(),
+          },
+          { onConflict: "id" },
+        );
       if (profileError) throw profileError;
 
       await supabase.auth.updateUser({ data: { onboarding_completed: true, store_name: storeName } });
@@ -154,6 +159,8 @@ export function useCompleteOnboarding() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["store"] });
       void qc.invalidateQueries({ queryKey: ["profile"] });
+      void qc.invalidateQueries({ queryKey: ["access-gate"] });
+      qc.removeQueries({ queryKey: ["access-gate"] });
     },
   });
 }
