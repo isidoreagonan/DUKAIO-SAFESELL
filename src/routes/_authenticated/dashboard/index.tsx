@@ -32,6 +32,7 @@ import { cn } from "@/lib/utils";
 import { useDashboardStats, useStore, formatFcfa, type Order } from "@/lib/store";
 import { statusMeta } from "@/lib/order-status";
 import { useAuth, displayName } from "@/hooks/use-auth";
+import { storeUrl } from "@/lib/storefront";
 
 export const Route = createFileRoute("/_authenticated/dashboard/")({
   head: () => ({
@@ -177,7 +178,7 @@ function DashboardPage() {
           </div>
           {store?.subdomain ? (
             <a
-              href={`/s/${store.subdomain}`}
+              href={storeUrl(store.subdomain, store.custom_domain)}
               target="_blank"
               rel="noreferrer"
               className="btn-3d hidden items-center gap-2 rounded-[6px] border border-border px-3.5 py-2.5 text-sm font-semibold sm:inline-flex"
@@ -517,7 +518,7 @@ function DashboardPage() {
             </Link>
             {store?.subdomain ? (
               <a
-                href={`/s/${store.subdomain}`}
+                href={storeUrl(store.subdomain, store.custom_domain)}
                 target="_blank"
                 rel="noreferrer"
                 className="btn-3d inline-flex items-center justify-center gap-2 rounded-[6px] border border-border px-3.5 py-2.5 text-sm font-semibold"

@@ -1,8 +1,17 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { Storefront } from "@/components/site/Storefront";
-import { storefrontQuery } from "@/lib/storefront";
+import { storeHandleFromHost, storefrontQuery } from "@/lib/storefront";
+import { getIncomingHost } from "@/lib/storefront.functions";
 
 export const Route = createFileRoute("/s/$handle/produit/")({
+  beforeLoad: async ({ params }) => {
+    const host =
+      typeof window !== "undefined" ? window.location.host : await getIncomingHost();
+    const handle = storeHandleFromHost(host);
+    if (handle && handle.toLowerCase() === params.handle.toLowerCase()) {
+      throw redirect({ to: "/produit/", replace: true });
+    }
+  },
   loader: ({ context, params }) =>
     context.queryClient.ensureQueryData(storefrontQuery(params.handle)),
   head: ({ params, loaderData }) => {

@@ -5,7 +5,30 @@ import { getStorefront, type StorefrontData } from "@/lib/storefront.functions";
 export const ROOT_DOMAIN = "dukaio.com";
 
 /** Sous-domaines réservés à la plateforme, jamais une boutique. */
-const RESERVED = new Set(["www", "app", "admin", "api", "cdn", "mail", "preview", "dev", "staging"]);
+export const RESERVED_SUBDOMAINS = new Set([
+  "www",
+  "app",
+  "admin",
+  "api",
+  "cdn",
+  "mail",
+  "preview",
+  "dev",
+  "staging",
+  "s",
+  "auth",
+  "login",
+  "signup",
+  "dashboard",
+  "boutique",
+  "boutiques",
+  "aide",
+  "about",
+  "tendances",
+  "verification",
+  "mentions-legales",
+  "confidentialite",
+]);
 
 export function storefrontQuery(handle: string) {
   return queryOptions<StorefrontData>({
@@ -15,19 +38,29 @@ export function storefrontQuery(handle: string) {
   });
 }
 
-/** Chemin public d'une boutique tant que le domaine n'est pas branché. */
+/**
+ * Chemin interne / public : si on est déjà sur le sous-domaine de la boutique,
+ * retourne directement le chemin propre (ex: /produits, /commande).
+ * Sinon (aperçu interne, embed iframe), retourne le préfixe /s/:handle.
+ */
 export function storePath(handle: string, path = "/") {
+  const normPath = path.startsWith("/") ? path : `/${path}`;
+  if (typeof window !== "undefined") {
+    const currentHandle = storeHandleFromHost(window.location.host);
+    if (currentHandle && currentHandle.toLowerCase() === handle.toLowerCase()) {
+      return normPath;
+    }
+  }
   const base = `/s/${handle}`;
-  return path === "/" ? base : `${base}${path}`;
+  return normPath === "/" ? base : `${base}${normPath}`;
 }
 
-/** URL de partage : sous-domaine dès que dukaio.com est connecté, sinon chemin. */
-export function storeUrl(handle: string, origin: string) {
-  const host = origin.replace(/^https?:\/\//, "").split(":")[0] ?? "";
-  if (host === ROOT_DOMAIN || host.endsWith(`.${ROOT_DOMAIN}`)) {
-    return `https://${handle}.${ROOT_DOMAIN}`;
+/** URL absolue de la boutique : sous-domaine propre ou domaine personnalisé. */
+export function storeUrl(handle: string, customDomain?: string | null) {
+  if (customDomain) {
+    return `https://${customDomain.trim()}`;
   }
-  return `${origin}${storePath(handle)}`;
+  return `https://${handle.trim()}.${ROOT_DOMAIN}`;
 }
 
 /**
@@ -39,12 +72,18 @@ export function storeHandleFromHost(host: string | null | undefined): string | n
   const clean = host.toLowerCase().split(":")[0] ?? "";
   if (!clean || clean === "localhost" || /^\d+(\.\d+)+$/.test(clean)) return null;
   if (clean === ROOT_DOMAIN) return null;
+  if (clean.endsWith(".localhost")) {
+    const label = clean.slice(0, -".localhost".length);
+    if (!label || label.includes(".") || RESERVED_SUBDOMAINS.has(label)) return null;
+    return label;
+  }
   if (clean.endsWith(`.${ROOT_DOMAIN}`)) {
     const label = clean.slice(0, -(ROOT_DOMAIN.length + 1));
-    if (!label || label.includes(".") || RESERVED.has(label)) return null;
+    if (!label || label.includes(".") || RESERVED_SUBDOMAINS.has(label)) return null;
     return label;
   }
   /* Prévisualisations Vercel et plateformes restent le domaine plateforme. */
   if (clean.endsWith(".vercel.app") || clean.endsWith(".lovable.app") || clean.endsWith(".lovableproject.com")) return null;
   return clean;
 }
+

@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { DashboardShell } from "@/components/dashboard/shell";
 import { useStore } from "@/lib/store";
 import { useThemeVersions } from "@/theme/versions";
-import { storePath } from "@/lib/storefront";
+import { storePath, storeUrl } from "@/lib/storefront";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/dashboard/boutique")({
@@ -75,7 +75,8 @@ function BoutiquePage() {
   const { data: versions } = useThemeVersions(store?.id);
   const [reload, setReload] = useState(0);
   const handle = store?.subdomain ?? "";
-  const livePath = handle ? storePath(handle) : "";
+  const liveUrl = handle ? storeUrl(handle, store?.custom_domain) : "";
+  const previewPath = handle ? storePath(handle) : "";
 
   const lastSaved = useMemo(() => {
     const at = versions?.[0]?.created_at;
@@ -88,7 +89,7 @@ function BoutiquePage() {
     });
   }, [versions]);
 
-  const previewSrc = livePath ? `${livePath}?preview=${reload}` : "";
+  const previewSrc = previewPath ? `${previewPath}?preview=${reload}` : "";
 
   return (
     <DashboardShell>
@@ -109,9 +110,9 @@ function BoutiquePage() {
           >
             <RefreshCw className="h-4 w-4" /> <span className="hidden sm:inline">Rafraîchir</span>
           </button>
-          {livePath ? (
+          {liveUrl ? (
             <a
-              href={livePath}
+              href={liveUrl}
               target="_blank"
               rel="noreferrer"
               className="btn-3d inline-flex items-center gap-2 rounded-[6px] px-3.5 py-2.5 text-sm font-semibold"

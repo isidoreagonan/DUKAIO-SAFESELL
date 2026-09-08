@@ -13,18 +13,23 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AideRouteImport } from './routes/aide'
+import { Route as CommandeRouteImport } from './routes/commande'
 import { Route as ConfidentialiteRouteImport } from './routes/confidentialite'
+import { Route as ContactRouteImport } from './routes/contact'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LogoPreviewRouteImport } from './routes/logo-preview'
 import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
 import { Route as MotDePasseOublieRouteImport } from './routes/mot-de-passe-oublie'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as ProduitsRouteImport } from './routes/produits'
 import { Route as RejoindreRouteImport } from './routes/rejoindre'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as TendancesRouteImport } from './routes/tendances'
 import { Route as VerificationRouteImport } from './routes/verification'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as ProduitIndexRouteImport } from './routes/produit.index'
+import { Route as ProduitProductIdRouteImport } from './routes/produit.$productId'
 import { Route as TendancesIndexRouteImport } from './routes/tendances.index'
 import { Route as TendancesIdRouteImport } from './routes/tendances.$id'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
@@ -95,9 +100,19 @@ const AideRoute = AideRouteImport.update({
   path: '/aide',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CommandeRoute = CommandeRouteImport.update({
+  id: '/commande',
+  path: '/commande',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ConfidentialiteRoute = ConfidentialiteRouteImport.update({
   id: '/confidentialite',
   path: '/confidentialite',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -123,6 +138,11 @@ const MotDePasseOublieRoute = MotDePasseOublieRouteImport.update({
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProduitsRoute = ProduitsRouteImport.update({
+  id: '/produits',
+  path: '/produits',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RejoindreRoute = RejoindreRouteImport.update({
@@ -153,6 +173,16 @@ const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
   path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProduitIndexRoute = ProduitIndexRouteImport.update({
+  id: '/produit/',
+  path: '/produit/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProduitProductIdRoute = ProduitProductIdRouteImport.update({
+  id: '/produit/$productId',
+  path: '/produit/$productId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TendancesIndexRoute = TendancesIndexRouteImport.update({
@@ -445,19 +475,24 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/aide': typeof AideRoute
+  '/commande': typeof CommandeRoute
   '/confidentialite': typeof ConfidentialiteRoute
+  '/contact': typeof ContactRoute
   '/login': typeof LoginRoute
   '/logo-preview': typeof LogoPreviewRoute
   '/mentions-legales': typeof MentionsLegalesRoute
   '/mot-de-passe-oublie': typeof MotDePasseOublieRoute
   '/onboarding': typeof OnboardingRoute
+  '/produits': typeof ProduitsRoute
   '/rejoindre': typeof RejoindreRoute
   '/signup': typeof SignupRoute
   '/tendances': typeof TendancesRouteWithChildren
   '/verification': typeof VerificationRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
+  '/produit/$productId': typeof ProduitProductIdRoute
   '/tendances/$id': typeof TendancesIdRoute
+  '/produit/': typeof ProduitIndexRoute
   '/tendances/': typeof TendancesIndexRoute
   '/admin/abonnements': typeof AuthenticatedAdminAbonnementsRoute
   '/admin/administrateurs': typeof AuthenticatedAdminAdministrateursRoute
@@ -512,17 +547,22 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/aide': typeof AideRoute
+  '/commande': typeof CommandeRoute
   '/confidentialite': typeof ConfidentialiteRoute
+  '/contact': typeof ContactRoute
   '/login': typeof LoginRoute
   '/logo-preview': typeof LogoPreviewRoute
   '/mentions-legales': typeof MentionsLegalesRoute
   '/mot-de-passe-oublie': typeof MotDePasseOublieRoute
   '/onboarding': typeof OnboardingRoute
+  '/produits': typeof ProduitsRoute
   '/rejoindre': typeof RejoindreRoute
   '/signup': typeof SignupRoute
   '/verification': typeof VerificationRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/produit/$productId': typeof ProduitProductIdRoute
   '/tendances/$id': typeof TendancesIdRoute
+  '/produit': typeof ProduitIndexRoute
   '/tendances': typeof TendancesIndexRoute
   '/admin/abonnements': typeof AuthenticatedAdminAbonnementsRoute
   '/admin/administrateurs': typeof AuthenticatedAdminAdministrateursRoute
@@ -579,19 +619,24 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/aide': typeof AideRoute
+  '/commande': typeof CommandeRoute
   '/confidentialite': typeof ConfidentialiteRoute
+  '/contact': typeof ContactRoute
   '/login': typeof LoginRoute
   '/logo-preview': typeof LogoPreviewRoute
   '/mentions-legales': typeof MentionsLegalesRoute
   '/mot-de-passe-oublie': typeof MotDePasseOublieRoute
   '/onboarding': typeof OnboardingRoute
+  '/produits': typeof ProduitsRoute
   '/rejoindre': typeof RejoindreRoute
   '/signup': typeof SignupRoute
   '/tendances': typeof TendancesRouteWithChildren
   '/verification': typeof VerificationRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
+  '/produit/$productId': typeof ProduitProductIdRoute
   '/tendances/$id': typeof TendancesIdRoute
+  '/produit/': typeof ProduitIndexRoute
   '/tendances/': typeof TendancesIndexRoute
   '/_authenticated/admin/abonnements': typeof AuthenticatedAdminAbonnementsRoute
   '/_authenticated/admin/administrateurs': typeof AuthenticatedAdminAdministrateursRoute
@@ -648,19 +693,24 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/aide'
+    | '/commande'
     | '/confidentialite'
+    | '/contact'
     | '/login'
     | '/logo-preview'
     | '/mentions-legales'
     | '/mot-de-passe-oublie'
     | '/onboarding'
+    | '/produits'
     | '/rejoindre'
     | '/signup'
     | '/tendances'
     | '/verification'
     | '/admin'
     | '/auth/callback'
+    | '/produit/$productId'
     | '/tendances/$id'
+    | '/produit/'
     | '/tendances/'
     | '/admin/abonnements'
     | '/admin/administrateurs'
@@ -715,17 +765,22 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/aide'
+    | '/commande'
     | '/confidentialite'
+    | '/contact'
     | '/login'
     | '/logo-preview'
     | '/mentions-legales'
     | '/mot-de-passe-oublie'
     | '/onboarding'
+    | '/produits'
     | '/rejoindre'
     | '/signup'
     | '/verification'
     | '/auth/callback'
+    | '/produit/$productId'
     | '/tendances/$id'
+    | '/produit'
     | '/tendances'
     | '/admin/abonnements'
     | '/admin/administrateurs'
@@ -781,19 +836,24 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/about'
     | '/aide'
+    | '/commande'
     | '/confidentialite'
+    | '/contact'
     | '/login'
     | '/logo-preview'
     | '/mentions-legales'
     | '/mot-de-passe-oublie'
     | '/onboarding'
+    | '/produits'
     | '/rejoindre'
     | '/signup'
     | '/tendances'
     | '/verification'
     | '/_authenticated/admin'
     | '/auth/callback'
+    | '/produit/$productId'
     | '/tendances/$id'
+    | '/produit/'
     | '/tendances/'
     | '/_authenticated/admin/abonnements'
     | '/_authenticated/admin/administrateurs'
@@ -850,17 +910,22 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
   AideRoute: typeof AideRoute
+  CommandeRoute: typeof CommandeRoute
   ConfidentialiteRoute: typeof ConfidentialiteRoute
+  ContactRoute: typeof ContactRoute
   LoginRoute: typeof LoginRoute
   LogoPreviewRoute: typeof LogoPreviewRoute
   MentionsLegalesRoute: typeof MentionsLegalesRoute
   MotDePasseOublieRoute: typeof MotDePasseOublieRoute
   OnboardingRoute: typeof OnboardingRoute
+  ProduitsRoute: typeof ProduitsRoute
   RejoindreRoute: typeof RejoindreRoute
   SignupRoute: typeof SignupRoute
   TendancesRoute: typeof TendancesRouteWithChildren
   VerificationRoute: typeof VerificationRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
+  ProduitProductIdRoute: typeof ProduitProductIdRoute
+  ProduitIndexRoute: typeof ProduitIndexRoute
   ApiPublicWhatsappRoute: typeof ApiPublicWhatsappRoute
   SHandleCommandeRoute: typeof SHandleCommandeRoute
   SHandleContactRoute: typeof SHandleContactRoute
@@ -906,11 +971,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AideRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/commande': {
+      id: '/commande'
+      path: '/commande'
+      fullPath: '/commande'
+      preLoaderRoute: typeof CommandeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/confidentialite': {
       id: '/confidentialite'
       path: '/confidentialite'
       fullPath: '/confidentialite'
       preLoaderRoute: typeof ConfidentialiteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -946,6 +1025,13 @@ declare module '@tanstack/react-router' {
       path: '/onboarding'
       fullPath: '/onboarding'
       preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/produits': {
+      id: '/produits'
+      path: '/produits'
+      fullPath: '/produits'
+      preLoaderRoute: typeof ProduitsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/rejoindre': {
@@ -988,6 +1074,20 @@ declare module '@tanstack/react-router' {
       path: '/auth/callback'
       fullPath: '/auth/callback'
       preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/produit/': {
+      id: '/produit/'
+      path: '/produit'
+      fullPath: '/produit/'
+      preLoaderRoute: typeof ProduitIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/produit/$productId': {
+      id: '/produit/$productId'
+      path: '/produit/$productId'
+      fullPath: '/produit/$productId'
+      preLoaderRoute: typeof ProduitProductIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tendances/': {
@@ -1471,17 +1571,22 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AboutRoute: AboutRoute,
   AideRoute: AideRoute,
+  CommandeRoute: CommandeRoute,
   ConfidentialiteRoute: ConfidentialiteRoute,
+  ContactRoute: ContactRoute,
   LoginRoute: LoginRoute,
   LogoPreviewRoute: LogoPreviewRoute,
   MentionsLegalesRoute: MentionsLegalesRoute,
   MotDePasseOublieRoute: MotDePasseOublieRoute,
   OnboardingRoute: OnboardingRoute,
+  ProduitsRoute: ProduitsRoute,
   RejoindreRoute: RejoindreRoute,
   SignupRoute: SignupRoute,
   TendancesRoute: TendancesRouteWithChildren,
   VerificationRoute: VerificationRoute,
   AuthCallbackRoute: AuthCallbackRoute,
+  ProduitProductIdRoute: ProduitProductIdRoute,
+  ProduitIndexRoute: ProduitIndexRoute,
   ApiPublicWhatsappRoute: ApiPublicWhatsappRoute,
   SHandleCommandeRoute: SHandleCommandeRoute,
   SHandleContactRoute: SHandleContactRoute,

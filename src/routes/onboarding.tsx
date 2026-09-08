@@ -6,8 +6,10 @@ import { ensureWelcomeEmail } from "@/lib/lifecycle.functions";
 
 
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, Check, Globe2, Loader2, Palette, ShoppingBag } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Globe2, Loader2, Palette, ShoppingBag, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { slugify } from "@/lib/store";
+import { RESERVED_SUBDOMAINS } from "@/lib/storefront";
 import {
   COLOR_PALETTES,
   COUNTRIES,
@@ -40,7 +42,7 @@ export const Route = createFileRoute("/onboarding")({
       {
         name: "description",
         content:
-          "Configure ta boutique DUKAIO en quelques étapes : nom, pays, devise, livraison et couleurs de ton site.",
+          "Configure ta boutique DUKAIO en quelques étapes : nom, adresse, pays, devise, livraison et couleurs de ton site.",
       },
       { property: "og:title", content: "Mise en route de ta boutique | DUKAIO" },
       {
@@ -54,7 +56,7 @@ export const Route = createFileRoute("/onboarding")({
   component: OnboardingFlow,
 });
 
-const TOTAL_STEPS = 9;
+const TOTAL_STEPS = 10;
 
 const SETUP_PHASES = [
   "Enregistrement de tes réponses",
@@ -203,6 +205,7 @@ function OnboardingFlow() {
   const [setupPhase, setSetupPhase] = useState(0);
   const [answers, setAnswers] = useState<OnboardingAnswers>({
     storeName: "",
+    subdomain: "",
     experience: "",
     revenue: "",
     teamSize: "",
@@ -211,6 +214,63 @@ function OnboardingFlow() {
     whatsapp: "",
     palette: "sunset",
   });
+
+  const [subdomainInput, setSubdomainInput] = useState("");
+  const [subdomainStatus, setSubdomainStatus] = useState<
+    "idle" | "checking" | "free" | "taken" | "invalid"
+  >("idle");
+  const [subdomainError, setSubdomainError] = useState("");
+
+  const verifySubdomain = async (raw: string) => {
+    const clean = slugify(raw);
+    if (!clean || clean.length < 3) {
+      setSubdomainStatus("invalid");
+      setSubdomainError("L'adresse doit comporter au moins 3 caractères");
+      return false;
+    }
+    if (!/^[a-z0-9-]+$/.test(clean)) {
+      setSubdomainStatus("invalid");
+      setSubdomainError("Uniquement des lettres minuscules, chiffres et tirets");
+      return false;
+    }
+    if (RESERVED_SUBDOMAINS.has(clean)) {
+      setSubdomainStatus("taken");
+      setSubdomainError("Cette adresse est réservée par la plateforme");
+      return false;
+    }
+    setSubdomainStatus("checking");
+    setSubdomainError("");
+    try {
+      const { data: free, error } = await supabase.rpc("is_store_link_available", {
+        _link: clean,
+      });
+      if (error) throw error;
+      if (free) {
+        setSubdomainStatus("free");
+        setSubdomainError("");
+        setAnswers((a) => ({ ...a, subdomain: clean }));
+        return true;
+      } else {
+        setSubdomainStatus("taken");
+        setSubdomainError(`L'adresse ${clean}.dukaio.com est déjà utilisée`);
+        return false;
+      }
+    } catch {
+      setSubdomainStatus("invalid");
+      setSubdomainError("Impossible de vérifier pour l'instant");
+      return false;
+    }
+  };
+
+  const handleStoreNameNext = () => {
+    const candidate = slugify(answers.storeName);
+    if (!subdomainInput) {
+      setSubdomainInput(candidate);
+      setAnswers((a) => ({ ...a, subdomain: candidate }));
+      void verifySubdomain(candidate);
+    }
+    next();
+  };
 
   const set = (patch: Partial<OnboardingAnswers>) => setAnswers((a) => ({ ...a, ...patch }));
   const next = () => setStep((s) => Math.min(s + 1, TOTAL_STEPS + 1));
@@ -300,16 +360,100 @@ function OnboardingFlow() {
                 autoFocus
                 value={answers.storeName}
                 onChange={(e) => set({ storeName: e.target.value })}
-                placeholder="Ex : Kadi Cosmetics"
+                placeholder="Ex : TECHNOVA"
                 className="mb-6 w-full rounded-lg border border-border bg-card px-4 py-4 text-lg outline-none transition focus:border-primary focus:ring-1 focus:ring-primary"
               />
-              <PrimaryButton onClick={next} disabled={!answers.storeName.trim()}>
+              <PrimaryButton onClick={handleStoreNameNext} disabled={!answers.storeName.trim()}>
                 Continuer <ArrowRight className="size-4" />
               </PrimaryButton>
             </div>
           )}
 
           {step === 3 && (
+            <div>
+              <StepHeader
+                title="Quelle sera l'adresse de ta boutique ?"
+                subtitle="Tes clients l'utiliseront pour visiter et commander"
+              />
+              <div className="mb-4">
+                <div className="flex items-center rounded-xl border border-border bg-card overflow-hidden transition focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+                  <span className="bg-muted/60 px-3.5 py-4 text-xs sm:text-sm font-medium text-muted-foreground border-r border-border select-none shrink-0">
+                    https://
+                  </span>
+                  <input
+                    autoFocus
+                    value={subdomainInput}
+                    onChange={(e) => {
+                      const val = slugify(e.target.value);
+                      setSubdomainInput(val);
+                      setAnswers((a) => ({ ...a, subdomain: val }));
+                      void verifySubdomain(val);
+                    }}
+                    placeholder="technova"
+                    className="w-full bg-transparent px-3 py-4 text-base font-semibold text-foreground outline-none lowercase min-w-0"
+                  />
+                  <span className="bg-muted/60 px-3.5 py-4 text-xs sm:text-sm font-bold text-primary border-l border-border select-none whitespace-nowrap shrink-0">
+                    .dukaio.com
+                  </span>
+                </div>
+
+                {subdomainStatus === "checking" && (
+                  <p className="mt-2.5 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                    <Loader2 className="size-3.5 animate-spin text-primary" /> Vérification de la disponibilité…
+                  </p>
+                )}
+                {subdomainStatus === "free" && (
+                  <p className="mt-2.5 flex items-center gap-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                    <Check className="size-4 shrink-0" />
+                    <span><strong>{subdomainInput}.dukaio.com</strong> est disponible !</span>
+                  </p>
+                )}
+                {subdomainStatus === "taken" && (
+                  <div className="mt-2.5 space-y-2">
+                    <p className="flex items-center gap-2 text-xs font-semibold text-destructive">
+                      <X className="size-4 shrink-0" /> {subdomainError || `${subdomainInput}.dukaio.com est déjà pris`}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                      <span className="text-xs text-muted-foreground">Suggestions disponibles :</span>
+                      {[
+                        `${subdomainInput}-boutique`,
+                        `${subdomainInput}-shop`,
+                        `${subdomainInput}-store`,
+                      ].map((sug) => (
+                        <button
+                          key={sug}
+                          type="button"
+                          onClick={() => {
+                            setSubdomainInput(sug);
+                            setAnswers((a) => ({ ...a, subdomain: sug }));
+                            void verifySubdomain(sug);
+                          }}
+                          className="rounded-full border border-border bg-muted/50 px-2.5 py-1 text-xs font-medium text-foreground hover:border-primary hover:text-primary transition-colors"
+                        >
+                          {sug}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {subdomainStatus === "invalid" && (
+                  <p className="mt-2.5 flex items-center gap-2 text-xs font-medium text-amber-600 dark:text-amber-400">
+                    <span>{subdomainError}</span>
+                  </p>
+                )}
+              </div>
+
+              <p className="mb-6 text-xs text-muted-foreground">
+                Cette adresse sera le lien direct de ta vitrine. Tu pourras également associer ton propre nom de domaine personnalisé plus tard dans tes paramètres.
+              </p>
+
+              <PrimaryButton onClick={next} disabled={subdomainStatus !== "free"}>
+                Continuer <ArrowRight className="size-4" />
+              </PrimaryButton>
+            </div>
+          )}
+
+          {step === 4 && (
             <div>
               <StepHeader title="Où en es-tu aujourd'hui ?" subtitle="Pour adapter ton accompagnement" />
               <div className="space-y-3">
@@ -326,7 +470,7 @@ function OnboardingFlow() {
             </div>
           )}
 
-          {step === 4 && (
+          {step === 5 && (
             <div>
               <StepHeader
                 title="Ton chiffre d'affaires mensuel ?"
@@ -346,7 +490,7 @@ function OnboardingFlow() {
             </div>
           )}
 
-          {step === 5 && (
+          {step === 6 && (
             <div>
               <StepHeader title="Combien êtes-vous ?" subtitle="Pour préparer ton espace de travail" />
               <div className="grid grid-cols-2 gap-4">
@@ -364,7 +508,7 @@ function OnboardingFlow() {
             </div>
           )}
 
-          {step === 6 && (
+          {step === 7 && (
             <div>
               <StepHeader
                 title="Comment gères-tu la livraison ?"
@@ -384,7 +528,7 @@ function OnboardingFlow() {
             </div>
           )}
 
-          {step === 7 && (
+          {step === 8 && (
             <div>
               <div className="mx-auto mb-6 flex size-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
                 <Globe2 className="size-6" />
@@ -421,7 +565,7 @@ function OnboardingFlow() {
             </div>
           )}
 
-          {step === 8 && (
+          {step === 9 && (
             <div>
               <div className="mx-auto mb-6 flex size-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
                 <Palette className="size-6" />
@@ -453,7 +597,7 @@ function OnboardingFlow() {
             </div>
           )}
 
-          {step === 9 && (
+          {step === 10 && (
             <div>
               <StepHeader
                 title="Ton numéro WhatsApp"

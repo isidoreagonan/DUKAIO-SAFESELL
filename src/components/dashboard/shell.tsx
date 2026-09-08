@@ -40,7 +40,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth, displayName, initials } from "@/hooks/use-auth";
 import { AiJobBanner } from "@/components/dashboard/ai-job-banner";
 import { useStore } from "@/lib/store";
-import { storePath } from "@/lib/storefront";
+import { storeUrl } from "@/lib/storefront";
 import { StoreSwitcher } from "@/components/dashboard/store-switcher";
 import { useIsAdmin } from "@/lib/admin";
 import { useAiAccess } from "@/lib/entitlements";
@@ -527,7 +527,9 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [helpWelcomeOpen, setHelpWelcomeOpen] = useState(false);
   const { data: store } = useStore();
-  const publicStorePath = store?.subdomain ? storePath(store.subdomain) : "/dashboard/boutique";
+  const publicStoreUrl = store?.subdomain
+    ? storeUrl(store.subdomain, store.custom_domain)
+    : "/dashboard/boutique";
 
   useEffect(() => {
     setCollapsed(localStorage.getItem("dukaio.sidebar") === "collapsed");
@@ -591,7 +593,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
 
             <div className="flex shrink-0 items-center gap-2">
               <a
-                href={publicStorePath}
+                href={publicStoreUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hidden h-10 cursor-pointer items-center gap-2 rounded-[6px] border border-border px-3 text-sm font-semibold transition-colors hover:bg-muted xl:inline-flex"

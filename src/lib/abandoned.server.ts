@@ -53,7 +53,7 @@ export async function sendRecoveryEmail(cartId: string) {
 
   const url = store.custom_domain
     ? `https://${store.custom_domain}/commande`
-    : `https://dukaio.com/s/${store.subdomain ?? ""}/commande`;
+    : `https://${store.subdomain ?? "boutique"}.dukaio.com/commande`;
 
   const theme = (store.theme_config ?? null) as Record<string, unknown> | null;
   const global = theme?.["global"] as Record<string, unknown> | undefined;

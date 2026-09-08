@@ -60,6 +60,7 @@ export const COLOR_PALETTES = [
 
 export type OnboardingAnswers = {
   storeName: string;
+  subdomain?: string;
   experience: string;
   revenue: string;
   teamSize: string;
@@ -86,6 +87,7 @@ export function useCompleteOnboarding() {
       const palette = COLOR_PALETTES.find((p) => p.id === answers.palette) ?? COLOR_PALETTES[0];
       const storeName = answers.storeName.trim() || "Ma Boutique";
       const base = slugify(storeName) || "boutique";
+      const finalSubdomain = slugify(answers.subdomain || "") || `${base}-${user.id.slice(0, 6)}`;
       const phone = `${country.prefix}${answers.whatsapp.replace(/\D/g, "")}`;
 
       const themeConfig = {
@@ -102,6 +104,7 @@ export function useCompleteOnboarding() {
 
       const values = {
         store_name: storeName,
+        subdomain: finalSubdomain,
         country: country.code,
         currency: country.currency,
         language: "fr",
@@ -133,7 +136,6 @@ export function useCompleteOnboarding() {
         const { error } = await supabase.from("store_settings").insert({
           ...values,
           user_id: user.id,
-          subdomain: `${base}-${user.id.slice(0, 6)}`,
         });
         if (error) throw error;
       }

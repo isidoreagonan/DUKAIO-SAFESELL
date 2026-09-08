@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { useAdminStores, useSuspendStore } from "@/lib/admin";
 import { formatFcfa } from "@/lib/store";
+import { storeUrl } from "@/lib/storefront";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/admin/boutiques")({
@@ -108,7 +109,7 @@ function AdminStores() {
                   <tr key={s.id} className="align-middle">
                     <td className="py-3 pr-3">
                       <p className="font-semibold">{s.store_name}</p>
-                      <p className="text-xs text-muted-foreground">/{s.subdomain ?? "—"}</p>
+                      <p className="text-xs text-muted-foreground">{s.subdomain ? `${s.subdomain}.dukaio.com` : "—"}</p>
                     </td>
                     <td className="py-3 pr-3">
                       <p className="text-xs">{s.owner_name ?? "—"}</p>
@@ -142,7 +143,7 @@ function AdminStores() {
                       <div className="flex items-center justify-end gap-2">
                         {s.subdomain ? (
                           <a
-                            href={`/s/${s.subdomain}`}
+                            href={storeUrl(s.subdomain)}
                             target="_blank"
                             rel="noreferrer"
                             className="grid size-8 place-items-center rounded-[6px] border border-border text-muted-foreground hover:text-foreground"

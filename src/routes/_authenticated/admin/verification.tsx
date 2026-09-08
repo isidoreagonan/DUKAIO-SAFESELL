@@ -119,7 +119,7 @@ function VerifyOrder() {
 
           <Panel title="Boutique">
             <Row label="Nom" value={result.store?.store_name ?? "—"} />
-            <Row label="Lien" value={result.store?.subdomain ? `/${result.store.subdomain}` : "—"} />
+            <Row label="Lien" value={result.store?.subdomain ? `${result.store.subdomain}.dukaio.com` : "—"} />
             <Row
               label="État"
               value={

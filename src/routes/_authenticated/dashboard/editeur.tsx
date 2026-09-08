@@ -230,7 +230,7 @@ function EditeurPage() {
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-sm font-semibold">{store.store_name}</h1>
             <p className="truncate text-xs text-muted-foreground">
-              /boutique/{store.subdomain} · {online ? "En ligne" : "Hors ligne"}
+              {store.custom_domain || `${store.subdomain}.dukaio.com`} · {online ? "En ligne" : "Hors ligne"}
               {dirty ? " · modifications non enregistrées" : ""}
             </p>
           </div>
