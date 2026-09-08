@@ -25,6 +25,9 @@ dist-ssr
 # Vercel
 .vercel
 
+# Scratch
+scratch/
+
 
 # Editor directories and files
 .vscode/*
