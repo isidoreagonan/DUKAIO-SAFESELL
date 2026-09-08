@@ -118,12 +118,41 @@ export function Storefront({ handle, page, productId }: StorefrontProps) {
 
   if (!data || !theme) {
     return (
-      <main className="grid min-h-screen place-items-center px-6 text-center">
-        <div>
-          <h1 className="text-2xl font-extrabold tracking-tight">Boutique introuvable</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Cette boutique n'existe pas ou n'est pas encore publiée par son vendeur.
-          </p>
+      <main className="relative flex min-h-screen flex-col items-center justify-center bg-[#050505] px-6 text-center font-sans">
+        <div className="absolute top-10 sm:top-14">
+          <a
+            href="https://dukaio.com"
+            className="text-sm font-medium text-zinc-400 transition-colors hover:text-white"
+          >
+            ← DUKAIO
+          </a>
+        </div>
+        <div className="w-full max-w-2xl">
+          <h1 className="mb-10 text-3xl font-normal tracking-tight text-white sm:text-[40px] sm:leading-tight">
+            Cette boutique est actuellement indisponible.
+          </h1>
+          <div className="mx-auto max-w-xl rounded-2xl border border-zinc-800/80 bg-[#0a0a0a] p-8 sm:p-10">
+            <h2 className="mb-3 text-lg font-medium text-white sm:text-xl">
+              Êtes-vous le propriétaire ?
+            </h2>
+            <p className="text-sm leading-relaxed text-zinc-400">
+              Si vous avez des difficultés à accéder à votre boutique, connectez-vous à votre{" "}
+              <a
+                href="/dashboard"
+                className="text-white underline underline-offset-4 hover:text-zinc-200"
+              >
+                Tableau de bord
+              </a>
+              . Pour la réactiver, contactez le{" "}
+              <a
+                href="mailto:support@dukaio.com"
+                className="text-white underline underline-offset-4 hover:text-zinc-200"
+              >
+                Support DUKAIO
+              </a>
+              .
+            </p>
+          </div>
         </div>
       </main>
     );
