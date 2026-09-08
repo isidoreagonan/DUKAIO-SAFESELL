@@ -32,8 +32,10 @@ export const Route = createFileRoute("/")({
     if (!context.handle) return null;
     return context.queryClient.ensureQueryData(storefrontQuery(context.handle));
   },
-  head: ({ context, loaderData }) => {
-    if (context.handle && loaderData?.store) {
+  head: (ctx) => {
+    const context = ctx?.context;
+    const loaderData = ctx?.loaderData as any;
+    if (context?.handle && loaderData?.store) {
       const name = loaderData.store.store_name ?? context.handle;
       const desc =
         loaderData.store.description?.slice(0, 155) ??

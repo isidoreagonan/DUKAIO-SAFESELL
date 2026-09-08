@@ -13,7 +13,7 @@ export const Route = createFileRoute("/produit/")({
   },
   loader: ({ context }) =>
     context.queryClient.ensureQueryData(storefrontQuery(context.handle)),
-  head: ({ context, loaderData }) => {
+  head: (ctx) => { const context = ctx?.context; const loaderData = ctx?.loaderData as any;
     const name = loaderData?.store.store_name ?? context.handle;
     const title = `Produits — ${name}`;
     return {
@@ -29,3 +29,4 @@ export const Route = createFileRoute("/produit/")({
     return <Storefront handle={handle} page="catalog" />;
   },
 });
+

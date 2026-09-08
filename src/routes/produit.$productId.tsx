@@ -13,7 +13,7 @@ export const Route = createFileRoute("/produit/$productId")({
   },
   loader: ({ context }) =>
     context.queryClient.ensureQueryData(storefrontQuery(context.handle)),
-  head: ({ params, context, loaderData }) => {
+  head: (ctx) => { const params = ctx.params as any; const context = ctx?.context; const loaderData = ctx?.loaderData as any;
     const product = loaderData?.products.find((p) => p.id === params.productId);
     const store = loaderData?.store;
     const storeName = store?.store_name ?? context.handle;
@@ -41,3 +41,4 @@ export const Route = createFileRoute("/produit/$productId")({
     return <Storefront handle={handle} page="product" productId={params.productId} />;
   },
 });
+

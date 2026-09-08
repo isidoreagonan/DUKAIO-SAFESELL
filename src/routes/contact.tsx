@@ -13,7 +13,7 @@ export const Route = createFileRoute("/contact")({
   },
   loader: ({ context }) =>
     context.queryClient.ensureQueryData(storefrontQuery(context.handle)),
-  head: ({ context, loaderData }) => {
+  head: (ctx) => { const context = ctx?.context; const loaderData = ctx?.loaderData as any;
     const name = loaderData?.store.store_name ?? context.handle;
     const title = `Contactez-nous — ${name}`;
     const description = `Besoin d'aide ou d'informations sur votre commande ? Contactez le service client de ${name}.`;
@@ -33,3 +33,4 @@ export const Route = createFileRoute("/contact")({
     return <Storefront handle={handle} page="contact" />;
   },
 });
+

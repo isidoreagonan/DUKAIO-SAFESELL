@@ -13,7 +13,7 @@ export const Route = createFileRoute("/commande")({
   },
   loader: ({ context }) =>
     context.queryClient.ensureQueryData(storefrontQuery(context.handle)),
-  head: ({ context, loaderData }) => {
+  head: (ctx) => { const context = ctx?.context; const loaderData = ctx?.loaderData as any;
     const name = loaderData?.store.store_name ?? context.handle;
     const title = `Finaliser ma commande — ${name}`;
     const description = `Renseignez vos coordonnées et validez votre commande chez ${name} : paiement à la livraison, livraison rapide.`;
@@ -34,3 +34,4 @@ export const Route = createFileRoute("/commande")({
     return <Storefront handle={handle} page="checkout" />;
   },
 });
+
