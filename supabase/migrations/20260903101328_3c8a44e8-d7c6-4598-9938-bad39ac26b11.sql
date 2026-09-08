@@ -1,0 +1,1 @@
+ALTER TABLE public.user_security ADD COLUMN IF NOT EXISTS email_2fa_session_id text;

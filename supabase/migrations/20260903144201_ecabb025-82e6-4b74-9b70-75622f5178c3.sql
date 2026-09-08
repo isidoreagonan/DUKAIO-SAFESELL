@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.consume_coupon(uuid, text) FROM anon, authenticated;

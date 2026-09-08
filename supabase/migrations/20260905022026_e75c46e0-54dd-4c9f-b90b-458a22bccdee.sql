@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.effective_plan_key(uuid) TO anon;

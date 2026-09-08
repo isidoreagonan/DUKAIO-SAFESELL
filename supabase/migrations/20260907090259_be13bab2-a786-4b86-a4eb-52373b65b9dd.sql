@@ -1,0 +1,1 @@
+revoke execute on function public.best_plan_key(uuid) from authenticated;

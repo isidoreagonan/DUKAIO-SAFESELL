@@ -1,0 +1,1 @@
+ALTER TABLE public.offers ADD COLUMN gift_product_id uuid REFERENCES public.products(id) ON DELETE SET NULL;

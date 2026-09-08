@@ -1,0 +1,3 @@
+GRANT SELECT, UPDATE ON public.ai_engine_settings TO authenticated;
+CREATE POLICY "Admins can read ai engine settings" ON public.ai_engine_settings FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'admin'));
+CREATE POLICY "Admins can update ai engine settings" ON public.ai_engine_settings FOR UPDATE TO authenticated USING (public.has_role(auth.uid(), 'admin')) WITH CHECK (public.has_role(auth.uid(), 'admin'));
