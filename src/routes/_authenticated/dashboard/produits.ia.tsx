@@ -144,32 +144,47 @@ function completePrompts(funnel: FunnelPayload, draft: ProductDraft) {
   }));
 }
 
-/** Pastilles numérotées reliées, façon assistant en trois temps. */
+/** Stepper professionnel avec labels et lignes de progression. */
+const STEP_LABELS = ["Importer", "Personnaliser", "Finaliser"] as const;
+
 function Stepper({ step }: { step: number }) {
   return (
     <ol className="flex items-center justify-center gap-0">
-      {[0, 1, 2].map((index) => {
+      {STEP_LABELS.map((label, index) => {
         const done = index < step;
         const active = index === step;
         return (
-          <li key={index} className="flex items-center">
+          <li key={label} className="flex items-center">
             {index > 0 ? (
               <span
                 className={
-                  "block h-[2px] w-12 sm:w-20 " + (index <= step ? "bg-primary" : "bg-border")
+                  "block h-[2px] w-8 sm:w-16 transition-colors " +
+                  (index <= step ? "bg-primary" : "bg-border")
                 }
               />
             ) : null}
-            <span
-              className={
-                "grid h-9 w-9 place-items-center rounded-full text-sm font-bold transition-colors " +
-                (done || active
-                  ? "bg-primary text-primary-foreground"
-                  : "border border-border bg-background text-muted-foreground")
-              }
-            >
-              {done ? <Check className="h-4 w-4" /> : index + 1}
-            </span>
+            <div className="flex flex-col items-center gap-1">
+              <span
+                className={
+                  "grid h-7 w-7 place-items-center rounded-full text-xs font-bold transition-all " +
+                  (done
+                    ? "bg-primary text-primary-foreground"
+                    : active
+                      ? "bg-primary text-primary-foreground ring-4 ring-primary/20"
+                      : "border border-border bg-background text-muted-foreground")
+                }
+              >
+                {done ? <Check className="h-3.5 w-3.5" /> : index + 1}
+              </span>
+              <span
+                className={
+                  "text-[11px] font-medium whitespace-nowrap transition-colors " +
+                  (done || active ? "text-primary" : "text-muted-foreground")
+                }
+              >
+                {label}
+              </span>
+            </div>
           </li>
         );
       })}
@@ -635,18 +650,22 @@ function ProduitIaPage() {
   return (
     <DashboardShell>
       <div className="mx-auto w-full max-w-2xl pb-4">
-        <Link
-          to="/dashboard/produits"
-          className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" /> Retour aux produits
-        </Link>
-        <div className="mt-4 flex items-center justify-between gap-3 rounded-[6px] border border-border bg-surface-tint px-3 py-2">
-          <span className="text-xs text-muted-foreground">
-            Votre solde DUKAIO AI se recharge chaque mois.
-          </span>
-          <AiCreditsBadge />
-        </div>
+        {!analyzing && !working ? (
+          <>
+            <Link
+              to="/dashboard/produits"
+              className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" /> Retour aux produits
+            </Link>
+            <div className="mt-4 flex items-center justify-between gap-3 rounded-[6px] border border-border bg-surface-tint px-3 py-2">
+              <span className="text-xs text-muted-foreground">
+                Votre solde DUKAIO AI se recharge chaque mois.
+              </span>
+              <AiCreditsBadge />
+            </div>
+          </>
+        ) : null}
 
         {!analyzing && !working ? (
           <div className="mt-6">
@@ -655,51 +674,65 @@ function ProduitIaPage() {
         ) : null}
 
         {analyzing ? (
-          <div className="mt-16 text-center">
-            <h1 className="inline-flex items-center gap-2 text-2xl font-extrabold tracking-tight">
-              <Sparkles className="h-6 w-6 text-primary" /> Analyse de votre produit en cours
-            </h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Nous récupérons les données et préparons votre boutique optimisée.
-            </p>
+          <div className="mt-12">
+            <div className="text-center">
+              <p className="text-xs font-semibold uppercase tracking-widest text-primary/70">DUKAIO AI</p>
+              <h1 className="mt-2 text-2xl font-extrabold tracking-tight">
+                Analyse de votre produit en cours
+              </h1>
+              <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+                Nous récupérons les données de votre page produit et préparons une boutique optimisée.
+              </p>
+            </div>
 
-            <ul className="mx-auto mt-12 max-w-sm space-y-4 text-left pl-6">
-              <li className="flex items-center gap-3">
-                <span className="flex-shrink-0 flex items-center justify-center w-5 h-5">
-                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                </span>
-                <span className="text-sm font-medium text-foreground">
-                  Récupération des informations produit
-                </span>
-              </li>
-              <li className="flex items-center gap-3">
-                <span className="flex-shrink-0 flex items-center justify-center w-5 h-5">
-                  <div className="h-3 w-3 rounded-full border-2 border-muted-foreground/30" />
-                </span>
-                <span className="text-sm font-medium text-muted-foreground">
-                  Analyse et préparation des visuels
-                </span>
-              </li>
-              <li className="flex items-center gap-3">
-                <span className="flex-shrink-0 flex items-center justify-center w-5 h-5">
-                  <div className="h-3 w-3 rounded-full border-2 border-muted-foreground/30" />
-                </span>
-                <span className="text-sm font-medium text-muted-foreground">
-                  Préparation de la fiche de vente
-                </span>
-              </li>
-            </ul>
-
-            <div className="mx-auto mt-12 max-w-sm px-6">
-              <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+            <div className="mx-auto mt-10 max-w-md space-y-3">
+              {[
+                { label: "Récupération des informations produit", done: false, active: true },
+                { label: "Analyse et préparation des visuels", done: false, active: false },
+                { label: "Génération de la fiche de vente", done: false, active: false },
+              ].map((task) => (
                 <div
-                  className="h-full rounded-full bg-primary transition-all duration-[2000ms] animate-pulse"
-                  style={{ width: `60%` }}
+                  key={task.label}
+                  className={
+                    "flex items-center gap-3 rounded-lg border px-4 py-3 transition-all " +
+                    (task.active
+                      ? "border-primary/30 bg-primary/5 shadow-sm"
+                      : "border-border bg-background")
+                  }
+                >
+                  <span className="flex-shrink-0 flex items-center justify-center w-6 h-6">
+                    {task.done ? (
+                      <span className="grid h-6 w-6 place-items-center rounded-full bg-primary text-primary-foreground">
+                        <Check className="h-3.5 w-3.5" />
+                      </span>
+                    ) : task.active ? (
+                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                    ) : (
+                      <div className="h-3 w-3 rounded-full border-2 border-muted-foreground/25" />
+                    )}
+                  </span>
+                  <span
+                    className={
+                      "text-sm font-medium " +
+                      (task.active ? "text-foreground" : "text-muted-foreground")
+                    }
+                  >
+                    {task.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="mx-auto mt-8 max-w-md">
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-primary/80 to-primary transition-all duration-[2000ms]"
+                  style={{ width: "45%" }}
                 />
               </div>
-              <div className="mt-2 text-right text-xs font-semibold text-primary">
-                Analyse en cours...
-              </div>
+              <p className="mt-3 text-center text-xs text-muted-foreground">
+                Cette étape prend généralement environ 1 minute.
+              </p>
             </div>
           </div>
         ) : null}
@@ -1052,27 +1085,44 @@ function ProduitIaPage() {
         ) : null}
 
         {working ? (
-          <div className="mt-16 text-center">
-            <h1 className="inline-flex items-center gap-2 text-2xl font-extrabold tracking-tight">
-              <Sparkles className="h-6 w-6 text-primary" /> Génération de votre boutique
-            </h1>
-            <p className="mt-2 text-sm text-muted-foreground">{busy}</p>
+          <div className="mt-12">
+            <div className="text-center">
+              <p className="text-xs font-semibold uppercase tracking-widest text-primary/70">DUKAIO AI</p>
+              <h1 className="mt-2 text-2xl font-extrabold tracking-tight">
+                Génération de votre boutique
+              </h1>
+              <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+                {busy}
+              </p>
+            </div>
 
-            <ul className="mx-auto mt-12 max-w-sm space-y-4 text-left pl-6">
+            <div className="mx-auto mt-10 max-w-md space-y-3">
               {PHASES.map((label, index) => {
                 const done = index < phase;
                 const active = index === phase;
                 const upcoming = index > phase;
 
                 return (
-                  <li key={label} className="flex items-center gap-3">
-                    <span className="flex-shrink-0 flex items-center justify-center w-5 h-5">
+                  <div
+                    key={label}
+                    className={
+                      "flex items-center gap-3 rounded-lg border px-4 py-3 transition-all " +
+                      (active
+                        ? "border-primary/30 bg-primary/5 shadow-sm"
+                        : done
+                          ? "border-primary/20 bg-primary/[0.02]"
+                          : "border-border bg-background")
+                    }
+                  >
+                    <span className="flex-shrink-0 flex items-center justify-center w-6 h-6">
                       {done ? (
-                         <Check className="h-5 w-5 text-primary" />
+                        <span className="grid h-6 w-6 place-items-center rounded-full bg-primary text-primary-foreground">
+                          <Check className="h-3.5 w-3.5" />
+                        </span>
                       ) : active ? (
-                         <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                        <Loader2 className="h-5 w-5 animate-spin text-primary" />
                       ) : (
-                         <div className="h-3 w-3 rounded-full border-2 border-muted-foreground/30" />
+                        <div className="h-3 w-3 rounded-full border-2 border-muted-foreground/25" />
                       )}
                     </span>
                     <span
@@ -1083,20 +1133,21 @@ function ProduitIaPage() {
                     >
                       {label}
                     </span>
-                  </li>
+                  </div>
                 );
               })}
-            </ul>
+            </div>
 
-            <div className="mx-auto mt-12 max-w-sm px-6">
-              <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+            <div className="mx-auto mt-8 max-w-md">
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
                 <div
-                  className="h-full rounded-full bg-primary transition-all duration-500"
+                  className="h-full rounded-full bg-gradient-to-r from-primary/80 to-primary transition-all duration-500"
                   style={{ width: `${percent}%` }}
                 />
               </div>
-              <div className="mt-2 text-right text-xs font-semibold text-primary">
-                {percent}%
+              <div className="mt-2 flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Progression</span>
+                <span className="font-semibold text-primary">{percent}%</span>
               </div>
             </div>
           </div>
