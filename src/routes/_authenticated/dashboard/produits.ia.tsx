@@ -20,6 +20,13 @@ import { useUploadMedia } from "@/lib/media";
 import { setPendingAiDraft } from "@/lib/ai-draft";
 import { useAiAccess } from "@/lib/entitlements";
 import { AiCreditsBadge, AiUpgradeDialog } from "@/components/dashboard/ai-credits";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatPrice } from "@/theme/personalize";
 import { aiJobGet, aiJobStart, aiJobTick, aiJobAck, aiJobCurrent, aiJobResume, type AiJobFull } from "@/lib/ai-job.functions";
@@ -770,47 +777,91 @@ function ProduitIaPage() {
                 <span className="text-[#FF9900] font-semibold">Amazon</span>, on s'occupe du reste.
               </p>
               
-              <div className="mt-6 flex max-w-md mx-auto items-center gap-2">
+              <div className="mt-6 flex max-w-xl mx-auto items-center gap-2">
                 <label className="relative flex-1 block">
                   <Link2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <input
                     className={field + " pl-9 h-11"}
-                    placeholder="Collez un lien AliExpress, Shopify, WooCommerce ou Amazon..."
+                    placeholder="Entrez l'URL de votre produit AliExpress..."
                     value={productUrl}
                     onChange={(event) => setProductUrl(event.target.value)}
                   />
                 </label>
-              </div>
 
-              {/* Sélecteur de langue */}
-              <div className="mt-8 flex justify-center items-center gap-2">
-                 <label className="text-sm font-medium text-muted-foreground">Langue de la boutique :</label>
-                 <select 
-                   value={language}
-                   onChange={(e) => setLanguage(e.target.value)}
-                   className="h-9 rounded-[6px] border border-border bg-background px-3 text-sm font-medium outline-none hover:border-primary/50 focus:border-primary"
-                 >
-                   <option value="français">FR Français</option>
-                   <option value="anglais">EN Anglais</option>
-                   <option value="espagnol">ES Espagnol</option>
-                   <option value="italien">IT Italien</option>
-                   <option value="allemand">DE Allemand</option>
-                   <option value="portugais">PT Portugais</option>
-                 </select>
+                {/* Sélecteur de langue avec drapeaux */}
+                <Select value={language} onValueChange={setLanguage}>
+                  <SelectTrigger className="w-[140px] h-11 bg-background hover:bg-muted/50 transition-colors">
+                    <SelectValue placeholder="Langue" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="français">
+                      <div className="flex items-center gap-2">
+                        <img src="https://flagcdn.com/w20/fr.png" alt="Français" width={20} className="rounded-sm" />
+                        <span>Français</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="anglais">
+                      <div className="flex items-center gap-2">
+                        <img src="https://flagcdn.com/w20/gb.png" alt="Anglais" width={20} className="rounded-sm" />
+                        <span>Anglais</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="espagnol">
+                      <div className="flex items-center gap-2">
+                        <img src="https://flagcdn.com/w20/es.png" alt="Espagnol" width={20} className="rounded-sm" />
+                        <span>Espagnol</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="italien">
+                      <div className="flex items-center gap-2">
+                        <img src="https://flagcdn.com/w20/it.png" alt="Italien" width={20} className="rounded-sm" />
+                        <span>Italien</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="allemand">
+                      <div className="flex items-center gap-2">
+                        <img src="https://flagcdn.com/w20/de.png" alt="Allemand" width={20} className="rounded-sm" />
+                        <span>Allemand</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="portugais">
+                      <div className="flex items-center gap-2">
+                        <img src="https://flagcdn.com/w20/pt.png" alt="Portugais" width={20} className="rounded-sm" />
+                        <span>Portugais</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <button
+                  type="button"
+                  onClick={() => void analyse()}
+                  disabled={busy !== null || uploading || !productUrl.trim()}
+                  className="btn-3d shrink-0 h-11 inline-flex items-center gap-2 rounded-[6px] px-5 text-sm font-semibold disabled:opacity-60 disabled:grayscale"
+                >
+                  {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                  Générer
+                </button>
               </div>
+              <p className="mt-2 text-xs text-muted-foreground flex items-center justify-center gap-1.5">
+                <Sparkles className="h-3 w-3" />
+                La création d'une boutique IA utilise 1 crédit IA.
+              </p>
             </div>
 
             <div className="mt-10 flex justify-center">
               <button
                 type="button"
                 onClick={() => void analyse()}
-                disabled={busy !== null || uploading || (images.length === 0 && !productUrl.trim())}
+                disabled={busy !== null || uploading || images.length === 0}
                 className="btn-3d w-[180px] h-11 inline-flex justify-center items-center gap-2 rounded-[6px] px-5 text-sm font-semibold disabled:opacity-60 disabled:grayscale"
               >
                 {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                 Continuer <ArrowRight className="h-4 w-4" />
               </button>
             </div>
+
+
           </>
         ) : null}
 
