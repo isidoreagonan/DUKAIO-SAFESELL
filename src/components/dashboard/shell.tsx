@@ -41,6 +41,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, displayName, initials } from "@/hooks/use-auth";
 import { AiJobBanner } from "@/components/dashboard/ai-job-banner";
+import { NotificationsBell } from "@/components/dashboard/notifications";
 import { useStore } from "@/lib/store";
 import { storeUrl } from "@/lib/storefront";
 import { StoreSwitcher } from "@/components/dashboard/store-switcher";
@@ -708,13 +709,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                 <Store className="h-4 w-4 text-primary" />
                 Voir la boutique
               </a>
-              <button
-                type="button"
-                aria-label="Notifications"
-                className="relative hidden h-10 w-10 place-items-center rounded-[6px] border border-border transition-colors hover:bg-muted sm:grid"
-              >
-                <Bell className="h-4 w-4" />
-              </button>
+              <NotificationsBell />
               <TopUserMenu />
             </div>
           </div>

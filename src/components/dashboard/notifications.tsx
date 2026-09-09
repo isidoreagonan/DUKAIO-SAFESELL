@@ -1,12 +1,16 @@
 /**
- * Cloche de notifications : commandes à traiter et stocks épuisés de la
- * boutique active. Le point rouge disparaît quand le vendeur ouvre le panneau.
+ * Cloche de notifications : commandes à traiter, stocks épuisés et créations DUKAIO AI.
+ * Le point rouge disparaît quand le vendeur ouvre le panneau.
  */
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Bell, ClipboardList, PackageX, Sparkles } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Bell, ClipboardList, Loader2, PackageX, Sparkles } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useOrders, useProducts, formatFcfa } from "@/lib/store";
+import { aiJobCurrent } from "@/lib/ai-job.functions";
+import { readPendingAiDraft } from "@/lib/ai-draft";
+import { cn } from "@/lib/utils";
 
 const SEEN_KEY = "dukaio.notifications.seen";
 
@@ -16,7 +20,9 @@ type Note = {
   detail: string;
   at: number;
   to: string;
-  icon: typeof ClipboardList;
+  search?: Record<string, string>;
+  icon: typeof ClipboardList | typeof Sparkles | typeof Loader2;
+  isAi?: boolean;
 };
 
 function timeAgo(ms: number) {
@@ -31,6 +37,13 @@ function timeAgo(ms: number) {
 export function NotificationsBell() {
   const { data: orders } = useOrders();
   const { data: products } = useProducts();
+  const { data: aiJob } = useQuery({
+    queryKey: ["ai-job-current"],
+    queryFn: () => aiJobCurrent(),
+    refetchInterval: 5_000,
+    staleTime: 0,
+  });
+
   const [seen, setSeen] = useState(0);
   const [open, setOpen] = useState(false);
 
@@ -40,6 +53,60 @@ export function NotificationsBell() {
 
   const notes = useMemo<Note[]>(() => {
     const list: Note[] = [];
+
+    /* 1. Notifications DUKAIO AI prioritaires */
+    if (aiJob) {
+      const name = aiJob.productName || "Votre produit";
+      if (aiJob.status === "running") {
+        list.push({
+          id: `ai-job-${aiJob.id}`,
+          title: "DUKAIO AI : Génération en cours",
+          detail: `${name} (${aiJob.percent}%) · Cliquez pour suivre`,
+          at: new Date(aiJob.updatedAt).getTime(),
+          to: "/dashboard/produits/ia",
+          search: { job: aiJob.id },
+          icon: Sparkles,
+          isAi: true,
+        });
+      } else if (aiJob.status === "done") {
+        list.push({
+          id: `ai-job-${aiJob.id}`,
+          title: "DUKAIO AI : Page prête !",
+          detail: `${name} · Ouvrir dans l'éditeur`,
+          at: new Date(aiJob.updatedAt).getTime(),
+          to: "/dashboard/produits/ia",
+          search: { job: aiJob.id },
+          icon: Sparkles,
+          isAi: true,
+        });
+      } else if (aiJob.status === "error") {
+        list.push({
+          id: `ai-job-${aiJob.id}`,
+          title: "DUKAIO AI : Création interrompue",
+          detail: `${name} · Cliquez pour reprendre`,
+          at: new Date(aiJob.updatedAt).getTime(),
+          to: "/dashboard/produits/ia",
+          search: { job: aiJob.id },
+          icon: Sparkles,
+          isAi: true,
+        });
+      }
+    }
+
+    const pendingDraft = readPendingAiDraft();
+    if (pendingDraft && !aiJob) {
+      list.push({
+        id: "ai-pending-draft",
+        title: "Brouillon IA non enregistré",
+        detail: `${pendingDraft.draft.name} · Prêt dans l'éditeur`,
+        at: pendingDraft.createdAt ?? Date.now(),
+        to: "/dashboard/editeur",
+        icon: Sparkles,
+        isAi: true,
+      });
+    }
+
+    /* 2. Commandes à traiter */
     for (const o of orders ?? []) {
       if (o.status !== "pending" && o.status !== "processing") continue;
       list.push({
@@ -51,6 +118,8 @@ export function NotificationsBell() {
         icon: ClipboardList,
       });
     }
+
+    /* 3. Alertes stocks épuisés */
     for (const p of products ?? []) {
       if (!p.track_quantity || (p.quantity ?? 0) > 0 || p.status !== "active") continue;
       list.push({
@@ -62,8 +131,9 @@ export function NotificationsBell() {
         icon: PackageX,
       });
     }
-    return list.sort((a, b) => b.at - a.at).slice(0, 12);
-  }, [orders, products]);
+
+    return list.sort((a, b) => b.at - a.at).slice(0, 15);
+  }, [orders, products, aiJob]);
 
   const unread = notes.filter((n) => n.at > seen).length;
 
@@ -84,32 +154,50 @@ export function NotificationsBell() {
       >
         <Bell className="h-4 w-4" />
         {unread > 0 ? (
-          <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-[4px] bg-primary px-1 text-[10px] font-black text-[color:var(--primary-foreground)]">
+          <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-[4px] bg-primary px-1 text-[10px] font-black text-primary-foreground shadow-sm animate-pulse">
             {unread > 9 ? "9+" : unread}
           </span>
         ) : null}
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-[330px] rounded-[6px] p-0">
-        <div className="border-b border-border px-4 py-3">
-          <p className="text-sm font-bold">Notifications</p>
-          <p className="text-xs text-muted-foreground">
+      <PopoverContent align="end" className="w-[340px] rounded-[6px] p-0 shadow-lg border border-border bg-popover">
+        <div className="border-b border-border px-4 py-3 bg-muted/20">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-bold">Notifications</p>
+            {unread > 0 ? (
+              <span className="rounded-[4px] bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+                {unread} non lue{unread > 1 ? "s" : ""}
+              </span>
+            ) : null}
+          </div>
+          <p className="text-xs text-muted-foreground mt-0.5">
             {notes.length ? `${notes.length} élément(s) à suivre` : "Tout est à jour"}
           </p>
         </div>
         {notes.length ? (
-          <ul className="max-h-[340px] divide-y divide-border overflow-y-auto">
+          <ul className="max-h-[360px] divide-y divide-border overflow-y-auto">
             {notes.map((n) => (
               <li key={n.id}>
                 <Link
-                  to={n.to}
+                  to={n.to as any}
+                  search={n.search as any}
                   onClick={() => setOpen(false)}
-                  className="flex gap-3 px-4 py-3 transition-colors hover:bg-muted"
+                  className={cn(
+                    "flex gap-3 px-4 py-3 transition-colors hover:bg-muted/80",
+                    n.isAi && "bg-primary/[0.03]",
+                  )}
                 >
-                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[6px] bg-accent text-accent-foreground">
+                  <span
+                    className={cn(
+                      "grid h-8 w-8 shrink-0 place-items-center rounded-[6px]",
+                      n.isAi
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-accent text-accent-foreground",
+                    )}
+                  >
                     <n.icon className="h-4 w-4" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-semibold">{n.title}</span>
+                    <span className="block truncate text-sm font-bold">{n.title}</span>
                     <span className="block truncate text-xs text-muted-foreground">{n.detail}</span>
                     <span className="mt-0.5 block text-[11px] text-muted-foreground">
                       {timeAgo(n.at)}
@@ -126,7 +214,7 @@ export function NotificationsBell() {
             </span>
             <p className="mt-3 text-sm font-semibold">Aucune notification</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Vos nouvelles commandes apparaîtront ici.
+              Vos nouvelles commandes et alertes IA apparaîtront ici.
             </p>
           </div>
         )}
@@ -134,3 +222,4 @@ export function NotificationsBell() {
     </Popover>
   );
 }
+

@@ -313,6 +313,8 @@ function ProduitIaPage() {
   const mountedRef = useRef(true);
   const [percent, setPercent] = useState(0);
   const currency = store?.currency || "XOF";
+  const working = busy !== null || (step === 2 && phase < 4 && percent < 100);
+  const analyzing = step === 0 && busy !== null;
 
   useEffect(() => {
     mountedRef.current = true;
@@ -674,6 +676,17 @@ function ProduitIaPage() {
     })();
   }, [jobParam, jobId, applyJob, followJob]);
 
+  /* Alerte avant de recharger l'onglet pendant une génération active */
+  useEffect(() => {
+    if (!working) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "Votre création IA se poursuit en arrière-plan. Vous pourrez la reprendre à tout moment via la notification.";
+      return event.returnValue;
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [working]);
 
   /* Import manuel d'un visuel : le vendeur choisit sa propre photo pour l'emplacement. */
   const importVisual = (target: string, file: File) => {
@@ -763,8 +776,6 @@ function ProduitIaPage() {
   const setDraftField = <K extends keyof ProductDraft>(key: K, value: ProductDraft[K]) =>
     setDraft((current) => (current ? { ...current, [key]: value } : current));
 
-  const working = step === 2 && busy !== null;
-  const analyzing = step === 0 && busy !== null;
   const isWideLayout = working || (step === 2 && funnel && draft);
 
   return (
@@ -1427,11 +1438,14 @@ function ProduitIaPage() {
                   </div>
                 </Card>
 
-                <div className="rounded-[8px] border border-primary/15 bg-primary/5 p-3.5 text-xs text-muted-foreground flex items-center gap-2.5">
-                  <Sparkles className="size-4 shrink-0 text-primary" />
-                  <span>
-                    Chaque section et visuel est composé pour maximiser vos conversions e-commerce.
-                  </span>
+                <div className="rounded-[8px] border border-primary/20 bg-primary/5 p-3.5 text-xs text-muted-foreground flex items-start gap-2.5">
+                  <Sparkles className="size-4 shrink-0 text-primary mt-0.5 animate-pulse" />
+                  <div>
+                    <p className="font-semibold text-foreground">Génération en arrière-plan active</p>
+                    <p className="mt-0.5 text-[11px] leading-relaxed">
+                      Vous pouvez quitter cet écran ou naviguer dans votre espace vendeur : la génération se poursuit automatiquement sur nos serveurs et une notification apparaîtra dès que votre page sera prête.
+                    </p>
+                  </div>
                 </div>
               </div>
 
