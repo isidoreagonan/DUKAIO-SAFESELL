@@ -291,9 +291,14 @@ function ProduitIaPage() {
     (step > 0 || images.length > 0 || productUrl.trim().length > 0 || busy !== null);
 
   const blocker = useBlocker({
-    shouldBlockFn: () => isDirty,
+    shouldBlockFn: ({ next }) => {
+      if (completedRef.current) return false;
+      const targetPath = next?.pathname || next?.fullPath || "";
+      if (targetPath.includes("/dashboard/editeur")) return false;
+      return isDirty;
+    },
     withResolver: true,
-    enableBeforeUnload: () => isDirty,
+    enableBeforeUnload: () => !completedRef.current && isDirty,
   });
 
   /* 5 visuels clés générés par l'IA, quel que soit le moteur actif. */
@@ -744,6 +749,9 @@ function ProduitIaPage() {
       /* Le solde de créations IA a changé : on rafraîchit le compteur. */
       void queryClient.invalidateQueries({ queryKey: ["subscription"] });
       completedRef.current = true;
+      if (blocker.status === "blocked") {
+        blocker.proceed?.();
+      }
       void navigate({ to: "/dashboard/editeur" });
     } catch (error) {
       toast.error("Préparation impossible", { description: (error as Error).message });
@@ -1976,7 +1984,7 @@ function ProduitIaPage() {
 
       {/* Dialogue de confirmation avant de quitter la création */}
       <Dialog
-        open={blocker.status === "blocked"}
+        open={blocker.status === "blocked" && !completedRef.current}
         onOpenChange={(open) => {
           if (!open) blocker.reset?.();
         }}
