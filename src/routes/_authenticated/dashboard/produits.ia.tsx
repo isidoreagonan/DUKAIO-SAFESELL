@@ -271,8 +271,11 @@ function ProduitIaPage() {
     return () => {
       mountedRef.current = false;
       followRef.current = null;
+      /* Quand le vendeur quitte la page, on invalide le cache pour que le
+         AiJobBanner détecte immédiatement le travail en cours. */
+      void queryClient.invalidateQueries({ queryKey: ["ai-job-current"] });
     };
-  }, []);
+  }, [queryClient]);
 
   /**
    * Une navigation « Régénérer » → « Nouveau produit » peut conserver le même
