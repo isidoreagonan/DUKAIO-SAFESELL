@@ -467,7 +467,7 @@ function SidebarUser({
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-1.5">
             <span className="truncate text-xs font-semibold leading-tight text-chrome-foreground">{name}</span>
-            <PlanBadge compact className="px-1 py-[1px]" />
+            <PlanBadge className="px-1 py-[1px] text-[8px]" />
           </div>
           <span className="block truncate text-[10px] text-chrome-muted">{user?.email ?? "—"}</span>
         </div>
