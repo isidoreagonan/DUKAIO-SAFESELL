@@ -237,7 +237,7 @@ export async function scrapePage(url: string): Promise<ScrapedPage> {
     },
   });
   if (!res.ok) throw new Error("Impossible de lire cette page produit. Vérifiez le lien.");
-  const html = (await res.text()).slice(0, 400_000);
+  const html = (await res.text()).slice(0, 600_000);
 
   const images = new Set<string>();
   let price = "";
@@ -246,6 +246,7 @@ export async function scrapePage(url: string): Promise<ScrapedPage> {
   const ogImage = meta(html, "og:image");
   if (ogImage) images.add(ogImage);
 
+  /* ── ld+json structured data ──────────────────────────────── */
   for (const match of html.matchAll(
     /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi,
   )) {
@@ -274,6 +275,49 @@ export async function scrapePage(url: string): Promise<ScrapedPage> {
     }
   }
 
+  /* ── <img> tags : src, data-src, data-lazy-src, data-original ── */
+  const imgAttrs = ["src", "data-src", "data-lazy-src", "data-original", "data-zoom-image", "data-image"];
+  for (const match of html.matchAll(/<img\b([^>]*)>/gi)) {
+    const tag = match[1] ?? "";
+    for (const attr of imgAttrs) {
+      const attrMatch = new RegExp(`${attr}=["']([^"']+)["']`, "i").exec(tag);
+      if (attrMatch?.[1]) {
+        const resolved = resolveUrl(url, attrMatch[1]);
+        if (resolved) images.add(resolved);
+      }
+    }
+    /* srcset : prendre la plus grande image */
+    const srcsetMatch = /srcset=["']([^"']+)["']/i.exec(tag);
+    if (srcsetMatch?.[1]) {
+      const candidates = srcsetMatch[1].split(",").map((s) => s.trim().split(/\s+/)[0]);
+      for (const candidate of candidates) {
+        if (candidate) {
+          const resolved = resolveUrl(url, candidate);
+          if (resolved) images.add(resolved);
+        }
+      }
+    }
+  }
+
+  /* ── AliExpress : JSON data in scripts (imagePathList, etc.) ── */
+  for (const match of html.matchAll(/"imageUrl"\s*:\s*"(https?:\/\/[^"]+)"/gi)) {
+    images.add(match[1]);
+  }
+  for (const match of html.matchAll(/"imagePath"\s*:\s*"(\/\/[^"]+)"/gi)) {
+    images.add("https:" + match[1]);
+  }
+  for (const match of html.matchAll(/"imagePathList"\s*:\s*\[([^\]]+)\]/gi)) {
+    for (const imgMatch of match[1].matchAll(/"(\/\/[^"]+|https?:\/\/[^"]+)"/g)) {
+      const imgUrl = imgMatch[1].startsWith("//") ? "https:" + imgMatch[1] : imgMatch[1];
+      images.add(imgUrl);
+    }
+  }
+
+  /* ── Generic : any large image URL in the page ────────────── */
+  for (const match of html.matchAll(/["'](https?:\/\/[^"'\s]+\.(?:jpg|jpeg|png|webp)(?:\?[^"'\s]*)?)["']/gi)) {
+    images.add(match[1]);
+  }
+
   if (!title) {
     const match = /<title[^>]*>([\s\S]*?)<\/title>/i.exec(html);
     if (match?.[1]) title = decode(match[1]);
@@ -287,13 +331,57 @@ export async function scrapePage(url: string): Promise<ScrapedPage> {
       .replace(/\s+/g, " "),
   ).slice(0, 6000);
 
+  /* ── Filtrer : garder uniquement les images produit pertinentes ── */
+  const filtered = [...images]
+    .filter((imgUrl) => imgUrl.startsWith("http"))
+    .filter((imgUrl) => {
+      const lower = imgUrl.toLowerCase();
+      /* Exclure les icônes, logos, SVG, GIF minuscules, boutons, placeholders */
+      if (lower.endsWith(".svg") || lower.endsWith(".gif")) return false;
+      if (lower.includes("logo") || lower.includes("icon") || lower.includes("favicon")) return false;
+      if (lower.includes("placeholder") || lower.includes("blank") || lower.includes("pixel")) return false;
+      if (lower.includes("flag") || lower.includes("badge") || lower.includes("rating")) return false;
+      if (lower.includes("avatar") || lower.includes("profile")) return false;
+      /* Exclure les images très petites (patterns courants) */
+      if (/[_-](\d{1,2})x(\d{1,2})\./i.test(lower)) return false;
+      if (/\/(\d{1,2})x(\d{1,2})\//i.test(lower)) return false;
+      return true;
+    })
+    /* Dédupliquer par nom de fichier (différentes tailles de la même image) */
+    .reduce<string[]>((acc, imgUrl) => {
+      /* Garder la version la plus grande en priorité (URL la plus longue) */
+      const basename = imgUrl.split("/").pop()?.split("?")[0]?.split("#")[0] ?? imgUrl;
+      const exists = acc.findIndex((existing) => {
+        const existingBase = existing.split("/").pop()?.split("?")[0]?.split("#")[0] ?? existing;
+        return existingBase === basename;
+      });
+      if (exists === -1) acc.push(imgUrl);
+      return acc;
+    }, [])
+    .slice(0, 20);
+
   return {
     title,
     description,
     price,
-    images: [...images].filter((url) => url.startsWith("http")).slice(0, 6),
+    images: filtered,
     text,
   };
+}
+
+/** Résout une URL relative en absolue par rapport à la page source. */
+function resolveUrl(pageUrl: string, relative: string): string | null {
+  try {
+    if (relative.startsWith("//")) return "https:" + relative;
+    if (relative.startsWith("http")) return relative;
+    if (relative.startsWith("/")) {
+      const base = new URL(pageUrl);
+      return base.origin + relative;
+    }
+    return new URL(relative, pageUrl).href;
+  } catch {
+    return null;
+  }
 }
 
 const num = (value: unknown): number => {
@@ -348,7 +436,7 @@ export async function analyzeSource(
     blocks,
   );
 
-  const images = [...source.imageUrls, ...(scraped?.images ?? [])].filter(Boolean).slice(0, 8);
+  const images = [...new Set([...source.imageUrls, ...(scraped?.images ?? [])])].filter(Boolean).slice(0, 20);
   return {
     name: str(result["name"], scraped?.title || "Nouveau produit"),
     description: str(result["description"], scraped?.description ?? ""),

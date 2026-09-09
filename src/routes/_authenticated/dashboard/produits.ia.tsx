@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard/shell";
 import { MediaLibraryDialog } from "@/components/editor/MediaLibraryDialog";
+import { ImageSelectionDialog } from "@/components/dashboard/ImageSelectionDialog";
 import { useProducts, useStore } from "@/lib/store";
 import { useUploadMedia } from "@/lib/media";
 import { setPendingAiDraft } from "@/lib/ai-draft";
@@ -238,6 +239,9 @@ function ProduitIaPage() {
   const [language, setLanguage] = useState("français");
   const [pickerOpen, setPickerOpen] = useState(false);
   const [withVisuals, setWithVisuals] = useState(true);
+  const [scrapedImages, setScrapedImages] = useState<string[]>([]);
+  const [imagePickerOpen, setImagePickerOpen] = useState(false);
+  const [pendingDraft, setPendingDraftResult] = useState<import("@/lib/ai-funnel.functions").ProductDraft | null>(null);
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
 
@@ -408,12 +412,45 @@ function ProduitIaPage() {
           language,
         },
       });
-      setDraft(result);
-      setStep(1);
+      /* Si des images ont été scrapées depuis le lien, ouvrir le popup de sélection */
+      if (result.images.length > 0 && productUrl.trim()) {
+        setScrapedImages(result.images);
+        setPendingDraftResult(result);
+        setImagePickerOpen(true);
+        setBusy(null);
+      } else {
+        setDraft(result);
+        setImages(result.images.slice(0, 5));
+        setStep(1);
+        setBusy(null);
+      }
     } catch (error) {
       toast.error("Analyse impossible", { description: (error as Error).message });
-    } finally {
       setBusy(null);
+    }
+  };
+
+  /** L'utilisateur a sélectionné ses images dans le popup. */
+  const onImagesSelected = (selectedImages: string[]) => {
+    setImagePickerOpen(false);
+    if (pendingDraft) {
+      setDraft({ ...pendingDraft, images: selectedImages });
+      setImages(selectedImages);
+      setPendingDraftResult(null);
+      setStep(1);
+    }
+  };
+
+  /** L'utilisateur a sauté la sélection d'images. */
+  const onImagesSkipped = () => {
+    setImagePickerOpen(false);
+    if (pendingDraft) {
+      /* Garder les 5 premières images par défaut */
+      const defaultImages = pendingDraft.images.slice(0, 5);
+      setDraft({ ...pendingDraft, images: defaultImages });
+      setImages(defaultImages);
+      setPendingDraftResult(null);
+      setStep(1);
     }
   };
 
@@ -959,14 +996,51 @@ function ProduitIaPage() {
         {step === 1 && draft ? (
           <>
             <header className="mt-6 text-center">
-              <h1 className="text-2xl font-extrabold tracking-tight">Fiche produit et prix</h1>
+              <p className="text-xs font-semibold uppercase tracking-widest text-primary/70">Étape 2</p>
+              <h1 className="mt-1 text-2xl font-extrabold tracking-tight">Personnalisez votre fiche</h1>
               <p className="mt-1 text-sm text-muted-foreground">
                 Tout est modifiable avant la composition de la page
               </p>
             </header>
 
             <div className="mt-6 grid gap-4">
+              {/* Images du produit */}
+              {draft.images.length > 0 ? (
+                <Card>
+                  <h2 className="text-sm font-semibold">Images du produit</h2>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {draft.images.length} image{draft.images.length > 1 ? "s" : ""} sélectionnée{draft.images.length > 1 ? "s" : ""}
+                  </p>
+                  <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5">
+                    {draft.images.map((url, index) => (
+                      <div key={url} className="group relative aspect-square overflow-hidden rounded-lg border border-border">
+                        <img src={url} alt={draft.name} className="h-full w-full object-cover" />
+                        {index === 0 ? (
+                          <span className="absolute bottom-1 left-1 rounded bg-primary px-1.5 py-0.5 text-[9px] font-bold text-primary-foreground">
+                            Principale
+                          </span>
+                        ) : null}
+                        <button
+                          type="button"
+                          aria-label="Retirer"
+                          onClick={() => {
+                            const updated = draft.images.filter((_, i) => i !== index);
+                            setDraftField("images", updated);
+                            setImages(updated);
+                          }}
+                          className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              ) : null}
+
+              {/* Informations produit */}
               <Card>
+                <h2 className="text-sm font-semibold mb-4">Informations produit</h2>
                 <div className="grid gap-4">
                   <div>
                     <label className={labelCls} htmlFor="ia-nom">
@@ -985,8 +1059,8 @@ function ProduitIaPage() {
                     </label>
                     <textarea
                       id="ia-desc"
-                      rows={5}
-                      className="w-full rounded-[6px] border border-border bg-muted/30 p-3.5 text-sm outline-none focus:border-primary/50 focus:bg-background"
+                      rows={4}
+                      className="w-full resize-none rounded-[6px] border border-border bg-muted/30 p-3.5 text-sm outline-none focus:border-primary/50 focus:bg-background"
                       value={draft.description}
                       onChange={(event) => setDraftField("description", event.target.value)}
                     />
@@ -1033,18 +1107,6 @@ function ProduitIaPage() {
                       onChange={(event) => setDraftField("category", event.target.value)}
                     />
                   </div>
-                  {draft.images.length ? (
-                    <div className="flex flex-wrap gap-2">
-                      {draft.images.map((url) => (
-                        <img
-                          key={url}
-                          src={url}
-                          alt={draft.name}
-                          className="h-16 w-16 rounded-[6px] border border-border object-cover"
-                        />
-                      ))}
-                    </div>
-                  ) : null}
                 </div>
               </Card>
 
@@ -1428,6 +1490,13 @@ function ProduitIaPage() {
         onSelect={(url) =>
           setImages((list) => (list.includes(url) ? list : [...list, url].slice(0, MAX_IMAGES)))
         }
+      />
+
+      <ImageSelectionDialog
+        open={imagePickerOpen}
+        images={scrapedImages}
+        onConfirm={onImagesSelected}
+        onSkip={onImagesSkipped}
       />
     </DashboardShell>
   );
