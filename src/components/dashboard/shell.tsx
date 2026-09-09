@@ -65,18 +65,9 @@ const mainNav: NavItem[] = [
   { title: "Accueil", icon: LayoutGrid, to: "/dashboard", exact: true },
   
   {
-    title: "Découverte",
-    icon: Compass,
-    badge: "NEW",
-    children: [
-      { title: "Boutiques", icon: Store, to: "/dashboard/decouverte/boutiques" },
-      { title: "Produits", icon: Package, to: "/dashboard/decouverte/produits" },
-      { title: "Publicités", icon: Megaphone, to: "/dashboard/decouverte/publicites" },
-    ],
-  },
-  {
     title: "Produits",
     icon: Package,
+    to: "/dashboard/produits",
     children: [
       { title: "Créer avec DUKAIO IA", icon: Sparkles, to: "/dashboard/produits/ia" },
       { title: "Mes Produits", icon: Package, to: "/dashboard/produits", exact: true },
@@ -85,6 +76,7 @@ const mainNav: NavItem[] = [
   {
     title: "Commandes",
     icon: ClipboardList,
+    to: "/dashboard/commandes",
     children: [
       { title: "Mes Commandes", icon: ClipboardList, to: "/dashboard/commandes", exact: true },
       { title: "Paniers abandonnés", icon: ShoppingCart, to: "/dashboard/commandes/paniers" },
@@ -93,6 +85,17 @@ const mainNav: NavItem[] = [
   { title: "Marketing", icon: Megaphone, to: "/dashboard/marketing", badge: "NEW" },
   { title: "Clients", icon: Users, to: "/dashboard/clients" },
   { title: "Analyses", icon: BarChart3, to: "/dashboard/analyses" },
+  {
+    title: "Découverte",
+    icon: Compass,
+    badge: "NEW",
+    to: "/dashboard/decouverte/boutiques",
+    children: [
+      { title: "Boutiques", icon: Store, to: "/dashboard/decouverte/boutiques" },
+      { title: "Produits", icon: Package, to: "/dashboard/decouverte/produits" },
+      { title: "Publicités", icon: Megaphone, to: "/dashboard/decouverte/publicites" },
+    ],
+  },
   { title: "Mes favoris", icon: Heart, to: "/dashboard/decouverte/favoris" },
   { title: "Ma boutique", icon: Store, to: "/dashboard/boutique" },
 ];
@@ -306,6 +309,75 @@ function SidebarLink({
   );
 }
 
+function CollapsibleNavItem({
+  item,
+  pathname,
+  onNavigate,
+  onOpenHelpWelcome,
+}: {
+  item: NavItem;
+  pathname: string;
+  onNavigate?: (() => void) | undefined;
+  onOpenHelpWelcome?: (() => void) | undefined;
+}) {
+  const parentActive = item.to
+    ? isActivePath(pathname, item.to, item.exact)
+    : item.href
+      ? isActivePath(pathname, item.href.split("?")[0] ?? item.href)
+      : item.children?.some((c) => c.to && isActivePath(pathname, c.to, c.exact)) || false;
+
+  const [isOpen, setIsOpen] = useState(parentActive);
+
+  return (
+    <li>
+      {item.children ? (
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className={cn(
+            "w-full cursor-pointer items-center text-left font-semibold transition-colors flex justify-between rounded-[4px] px-2.5 h-8 text-[13px]",
+            parentActive ? "bg-chrome-panel text-chrome-foreground" : "text-chrome-muted hover:bg-chrome-accent hover:text-chrome-accent-foreground"
+          )}
+        >
+          <span className="flex items-center gap-2.5 min-w-0">
+            <item.icon className="h-4 w-4 shrink-0" />
+            <span className="truncate">{item.title}</span>
+            {item.badge ? (
+              <span className="rounded-[4px] bg-chrome-warning px-1.5 py-0.5 text-[9px] font-black uppercase text-chrome-warning-foreground">
+                {item.badge}
+              </span>
+            ) : null}
+          </span>
+          <ChevronDown className={cn("h-3.5 w-3.5 shrink-0 transition-transform text-chrome-muted", isOpen ? "" : "-rotate-90")} />
+        </button>
+      ) : (
+        <SidebarLink
+          item={item}
+          collapsed={false}
+          active={parentActive}
+          onNavigate={onNavigate}
+          onOpenHelpWelcome={onOpenHelpWelcome}
+        />
+      )}
+      {item.children && isOpen ? (
+        <ul className="mt-0.5 space-y-0.5 border-l border-chrome-border/50 pl-2.5 ml-[13px] mb-1">
+          {item.children.map((child) => (
+            <li key={child.title}>
+              <SidebarLink
+                item={child}
+                collapsed={false}
+                isChild
+                active={child.to ? isActivePath(pathname, child.to, child.exact) : false}
+                onNavigate={onNavigate}
+              />
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </li>
+  );
+}
+
 function SidebarUser({
   collapsed,
   onNavigate,
@@ -480,9 +552,9 @@ function NavContent({
           ) : null}
         </div>
 
-        <nav className={cn("flex-1 overflow-y-auto", collapsed ? "px-4 py-6" : "space-y-6 px-3 py-4")}>
+        <nav className={cn("flex-1 overflow-y-auto", collapsed ? "px-4 py-4" : "space-y-4 px-3 py-4")}>
           {collapsed ? (
-            <ul className="space-y-5">
+            <ul className="space-y-3">
               {mainNav.map((item) => (
                 <li key={item.title}>
                   <SidebarLink
@@ -498,43 +570,19 @@ function NavContent({
           ) : (
             groups.map((group) => (
               <section key={group.label}>
-                <p className="px-3 pb-2 text-[10px] font-black uppercase tracking-normal text-chrome-muted">
+                <p className="px-2.5 pb-2 text-[10px] font-black uppercase tracking-normal text-chrome-muted">
                   {group.label}
                 </p>
-                <ul className="space-y-1">
-                  {group.items.map((item) => {
-                    const parentActive = item.to
-                      ? isActivePath(pathname, item.to, item.exact)
-                      : item.href
-                        ? isActivePath(pathname, item.href.split("?")[0] ?? item.href)
-                        : item.children?.some((c) => c.to && isActivePath(pathname, c.to, c.exact)) || false;
-                    return (
-                      <li key={item.title}>
-                        <SidebarLink
-                          item={item}
-                          collapsed={false}
-                          active={parentActive}
-                          onNavigate={onNavigate}
-                          onOpenHelpWelcome={onOpenHelpWelcome}
-                        />
-                        {item.children ? (
-                          <ul className="mt-0.5 space-y-0.5 border-l border-chrome-border/50 pl-2.5 ml-[13px] mb-1">
-                            {item.children.map((child) => (
-                              <li key={child.title}>
-                                <SidebarLink
-                                  item={child}
-                                  collapsed={false}
-                                  isChild
-                                  active={child.to ? isActivePath(pathname, child.to, child.exact) : false}
-                                  onNavigate={onNavigate}
-                                />
-                              </li>
-                            ))}
-                          </ul>
-                        ) : null}
-                      </li>
-                    );
-                  })}
+                <ul className="space-y-0.5">
+                  {group.items.map((item) => (
+                    <CollapsibleNavItem 
+                      key={item.title}
+                      item={item}
+                      pathname={pathname}
+                      onNavigate={onNavigate}
+                      onOpenHelpWelcome={onOpenHelpWelcome}
+                    />
+                  ))}
                 </ul>
               </section>
             ))
