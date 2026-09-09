@@ -312,11 +312,15 @@ function SidebarLink({
 function CollapsibleNavItem({
   item,
   pathname,
+  isOpen,
+  onToggle,
   onNavigate,
   onOpenHelpWelcome,
 }: {
   item: NavItem;
   pathname: string;
+  isOpen?: boolean;
+  onToggle?: () => void;
   onNavigate?: (() => void) | undefined;
   onOpenHelpWelcome?: (() => void) | undefined;
 }) {
@@ -326,14 +330,16 @@ function CollapsibleNavItem({
       ? isActivePath(pathname, item.href.split("?")[0] ?? item.href)
       : item.children?.some((c) => c.to && isActivePath(pathname, c.to, c.exact)) || false;
 
-  const [isOpen, setIsOpen] = useState(parentActive);
+  const handleToggle = () => {
+    if (onToggle) onToggle();
+  };
 
   return (
     <li>
       {item.children ? (
         <button
           type="button"
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={handleToggle}
           className={cn(
             "w-full cursor-pointer items-center text-left font-semibold transition-colors flex justify-between rounded-[4px] px-2 h-7 text-xs",
             parentActive ? "bg-chrome-panel text-chrome-foreground" : "text-chrome-muted hover:bg-chrome-accent hover:text-chrome-accent-foreground"
@@ -507,6 +513,28 @@ function NavContent({
     [],
   );
 
+  const [openAccordion, setOpenAccordion] = useState<string | null>(null);
+
+  // Initialize the open accordion based on the active path when mounted or when path changes
+  useEffect(() => {
+    for (const group of groups) {
+      for (const item of group.items) {
+        if (item.children) {
+          const parentActive = item.to
+            ? isActivePath(pathname, item.to, item.exact)
+            : item.href
+              ? isActivePath(pathname, item.href.split("?")[0] ?? item.href)
+              : item.children?.some((c) => c.to && isActivePath(pathname, c.to, c.exact)) || false;
+          
+          if (parentActive) {
+            setOpenAccordion(item.title);
+            return; // Only one active parent expected
+          }
+        }
+      }
+    }
+  }, [pathname, groups]);
+
   return (
     <TooltipProvider delayDuration={100}>
       <div className="flex h-full flex-col bg-chrome text-chrome-muted">
@@ -552,7 +580,7 @@ function NavContent({
           ) : null}
         </div>
 
-        <nav className={cn("flex-1 overflow-y-auto", collapsed ? "px-4 py-3" : "space-y-2 px-2 py-2")}>
+        <nav className={cn("flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]", collapsed ? "px-4 py-3" : "space-y-2 px-2 py-2")}>
           {collapsed ? (
             <ul className="space-y-2">
               {mainNav.map((item) => (
@@ -579,6 +607,8 @@ function NavContent({
                       key={item.title}
                       item={item}
                       pathname={pathname}
+                      isOpen={openAccordion === item.title}
+                      onToggle={() => setOpenAccordion(openAccordion === item.title ? null : item.title)}
                       onNavigate={onNavigate}
                       onOpenHelpWelcome={onOpenHelpWelcome}
                     />
