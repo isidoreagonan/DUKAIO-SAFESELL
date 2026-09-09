@@ -19,6 +19,8 @@ import {
   Search,
   Settings,
   ShieldCheck,
+  ShoppingCart,
+  Sparkles,
   Store,
   User,
   Users,
@@ -62,12 +64,35 @@ type NavItem = {
 const mainNav: NavItem[] = [
   { title: "Accueil", icon: LayoutGrid, to: "/dashboard", exact: true },
   
-  { title: "Produits", icon: Package, to: "/dashboard/produits" },
-  { title: "Commandes", icon: ClipboardList, to: "/dashboard/commandes" },
+  {
+    title: "Découverte",
+    icon: Compass,
+    badge: "NEW",
+    children: [
+      { title: "Boutiques", icon: Store, to: "/dashboard/decouverte/boutiques" },
+      { title: "Produits", icon: Package, to: "/dashboard/decouverte/produits" },
+      { title: "Publicités", icon: Megaphone, to: "/dashboard/decouverte/publicites" },
+    ],
+  },
+  {
+    title: "Produits",
+    icon: Package,
+    children: [
+      { title: "Créer avec DUKAIO IA", icon: Sparkles, to: "/dashboard/produits/ia" },
+      { title: "Mes Produits", icon: Package, to: "/dashboard/produits", exact: true },
+    ],
+  },
+  {
+    title: "Commandes",
+    icon: ClipboardList,
+    children: [
+      { title: "Mes Commandes", icon: ClipboardList, to: "/dashboard/commandes", exact: true },
+      { title: "Paniers abandonnés", icon: ShoppingCart, to: "/dashboard/commandes/paniers" },
+    ],
+  },
   { title: "Marketing", icon: Megaphone, to: "/dashboard/marketing", badge: "NEW" },
   { title: "Clients", icon: Users, to: "/dashboard/clients" },
   { title: "Analyses", icon: BarChart3, to: "/dashboard/analyses" },
-  { title: "Découverte", icon: Compass, to: "/dashboard/decouverte/boutiques", badge: "NEW" },
   { title: "Mes favoris", icon: Heart, to: "/dashboard/decouverte/favoris" },
   { title: "Ma boutique", icon: Store, to: "/dashboard/boutique" },
 ];
@@ -208,18 +233,21 @@ function SidebarLink({
   item,
   collapsed,
   active,
+  isChild,
   onNavigate,
   onOpenHelpWelcome,
 }: {
   item: NavItem;
   collapsed?: boolean | undefined;
   active: boolean;
+  isChild?: boolean;
   onNavigate?: (() => void) | undefined;
   onOpenHelpWelcome?: (() => void) | undefined;
 }) {
   const className = cn(
-    "h-10 w-full cursor-pointer items-center text-left text-sm font-semibold transition-colors",
-    collapsed ? "grid place-items-center rounded-[10px] px-0" : "grid grid-cols-[16px_minmax(0,1fr)_auto] gap-3 rounded-[4px] px-3",
+    "w-full cursor-pointer items-center text-left font-semibold transition-colors",
+    isChild ? "h-7 text-xs" : "h-8 text-[13px]",
+    collapsed ? "grid place-items-center rounded-[10px] px-0 h-10" : "grid grid-cols-[16px_minmax(0,1fr)_auto] gap-2.5 rounded-[4px] px-2.5",
     active
       ? collapsed
         ? "bg-primary/20 text-primary"
@@ -228,7 +256,7 @@ function SidebarLink({
   );
   const content = (
     <>
-      <item.icon className="h-4 w-4 shrink-0" />
+      <item.icon className={cn("shrink-0", isChild ? "h-3.5 w-3.5" : "h-4 w-4")} />
       {!collapsed ? <span className="min-w-0 flex-1 truncate">{item.title}</span> : null}
       {!collapsed && item.badge ? (
         item.badge === "PLAN" ? (
@@ -479,7 +507,7 @@ function NavContent({
                       ? isActivePath(pathname, item.to, item.exact)
                       : item.href
                         ? isActivePath(pathname, item.href.split("?")[0] ?? item.href)
-                        : false;
+                        : item.children?.some((c) => c.to && isActivePath(pathname, c.to, c.exact)) || false;
                     return (
                       <li key={item.title}>
                         <SidebarLink
@@ -489,13 +517,14 @@ function NavContent({
                           onNavigate={onNavigate}
                           onOpenHelpWelcome={onOpenHelpWelcome}
                         />
-                        {item.children && parentActive ? (
-                          <ul className="mt-1 space-y-1 border-l border-chrome-border pl-3">
+                        {item.children ? (
+                          <ul className="mt-0.5 space-y-0.5 border-l border-chrome-border/50 pl-2.5 ml-[13px] mb-1">
                             {item.children.map((child) => (
                               <li key={child.title}>
                                 <SidebarLink
                                   item={child}
                                   collapsed={false}
+                                  isChild
                                   active={child.to ? isActivePath(pathname, child.to, child.exact) : false}
                                   onNavigate={onNavigate}
                                 />
