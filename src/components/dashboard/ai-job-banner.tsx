@@ -26,6 +26,7 @@ export function AiJobBanner() {
     queryKey: ["ai-job-current"],
     queryFn: () => aiJobCurrent(),
     refetchInterval: onCreationPage ? false : 3_000,
+    refetchOnMount: "always",
     enabled: !onCreationPage,
     staleTime: 0,
   });

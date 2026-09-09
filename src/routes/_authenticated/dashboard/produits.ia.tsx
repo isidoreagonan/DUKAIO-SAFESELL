@@ -233,6 +233,8 @@ function ProduitIaPage() {
   const { aiLeft, plan, credits, unlimited } = useAiAccess();
   const [upsell, setUpsell] = useState(false);
 
+  /* Détection rapide d'un travail en cours à l'ouverture de la page. */
+  const [checking, setChecking] = useState(!produit);
   const [step, setStep] = useState(jobParam ? 2 : 0);
   const [images, setImages] = useState<string[]>([]);
   const [productUrl, setProductUrl] = useState("");
@@ -578,8 +580,12 @@ function ProduitIaPage() {
               const current = await aiJobCurrent();
               return current ? await aiJobGet({ data: { id: current.id } }) : null;
             })();
-        if (!state) return;
+        if (!state) {
+          setChecking(false);
+          return;
+        }
         applyJob(state);
+        setChecking(false);
         if (state.status === "running") {
           toast.info("Création reprise", {
             description: "DUKAIO AI continue là où il s'était arrêté.",
@@ -595,6 +601,7 @@ function ProduitIaPage() {
         }
       } catch {
         /* aucune création à reprendre */
+        setChecking(false);
       }
     })();
   }, [jobParam, jobId, applyJob, followJob]);
@@ -686,6 +693,22 @@ function ProduitIaPage() {
 
   const working = step === 2 && busy !== null;
   const analyzing = step === 0 && busy !== null;
+
+  /* Pendant la vérification initiale, on affiche un écran d'attente rapide. */
+  if (checking) {
+    return (
+      <DashboardShell>
+        <div className="mx-auto w-full max-w-2xl pb-4">
+          <div className="flex h-[50vh] flex-col items-center justify-center gap-3 text-center">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <p className="text-sm font-medium text-muted-foreground">
+              Vérification des créations en cours…
+            </p>
+          </div>
+        </div>
+      </DashboardShell>
+    );
+  }
 
   return (
     <DashboardShell>
