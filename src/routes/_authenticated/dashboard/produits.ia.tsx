@@ -201,9 +201,9 @@ function Stepper({ step }: { step: number }) {
   );
 }
 
-function Card({ children }: { children: React.ReactNode }) {
+function Card({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <section className="rounded-[10px] border border-border bg-background p-5 sm:p-6">
+    <section className={cn("rounded-[10px] border border-border bg-background p-5 sm:p-6", className)}>
       {children}
     </section>
   );
@@ -738,7 +738,7 @@ function ProduitIaPage() {
 
   return (
     <DashboardShell>
-      <div className="mx-auto w-full max-w-2xl pb-4">
+      <div className={cn("mx-auto w-full pb-4 transition-all duration-300", working ? "max-w-4xl" : "max-w-2xl")}>
         {!analyzing && !working ? (
           <>
             <Link
@@ -1228,70 +1228,193 @@ function ProduitIaPage() {
         ) : null}
 
         {working ? (
-          <div className="mt-12">
+          <div className="mt-8 animate-in fade-in-50 duration-500">
             <div className="text-center">
-              <p className="text-xs font-semibold uppercase tracking-widest text-primary/70">DUKAIO AI</p>
-              <h1 className="mt-2 text-2xl font-extrabold tracking-tight">
-                Génération de votre boutique
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3.5 py-1 text-xs font-semibold text-primary shadow-xs">
+                <Sparkles className="size-3.5 animate-spin text-primary" /> DUKAIO AI EN ACTION
+              </div>
+              <h1 className="mt-3 text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
+                Génération de votre page de vente
               </h1>
-              <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-                {busy}
+              <p className="mx-auto mt-2 max-w-lg text-sm text-muted-foreground">
+                {busy || "Création des visuels studio et rédaction de votre offre optimisée…"}
               </p>
             </div>
 
-            <div className="mx-auto mt-10 max-w-md space-y-3">
-              {PHASES.map((label, index) => {
-                const done = index < phase;
-                const active = index === phase;
-                const upcoming = index > phase;
+            {/* Layout 2 colonnes : Progression à gauche + Vitrine des Visuels en Direct à droite */}
+            <div className="mt-8 grid gap-6 lg:grid-cols-12 items-start">
+              
+              {/* Colonne Gauche : Étapes & Progression */}
+              <div className="lg:col-span-5 space-y-4">
+                <Card className="rounded-[10px] p-5 shadow-xs border-border">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4">
+                    Étapes de création
+                  </h3>
+                  <div className="space-y-3">
+                    {PHASES.map((label, index) => {
+                      const done = index < phase;
+                      const active = index === phase;
+                      const upcoming = index > phase;
 
-                return (
-                  <div
-                    key={label}
-                    className={
-                      "flex items-center gap-3 rounded-lg border px-4 py-3 transition-all " +
-                      (active
-                        ? "border-primary/30 bg-primary/5 shadow-sm"
-                        : done
-                          ? "border-primary/20 bg-primary/[0.02]"
-                          : "border-border bg-background")
-                    }
-                  >
-                    <span className="flex-shrink-0 flex items-center justify-center w-6 h-6">
-                      {done ? (
-                        <span className="grid h-6 w-6 place-items-center rounded-full bg-primary text-primary-foreground">
-                          <Check className="h-3.5 w-3.5" />
-                        </span>
-                      ) : active ? (
-                        <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                      ) : (
-                        <div className="h-3 w-3 rounded-full border-2 border-muted-foreground/25" />
-                      )}
-                    </span>
-                    <span
-                      className={
-                        "text-sm font-medium transition-colors " +
-                        (upcoming ? "text-muted-foreground" : "text-foreground")
-                      }
-                    >
-                      {label}
+                      return (
+                        <div
+                          key={label}
+                          className={cn(
+                            "flex items-center gap-3 rounded-[6px] border px-3.5 py-2.5 transition-all duration-300",
+                            active
+                              ? "border-primary/40 bg-primary/5 shadow-xs ring-1 ring-primary/20"
+                              : done
+                                ? "border-primary/20 bg-primary/[0.03]"
+                                : "border-border/60 bg-muted/20 opacity-60"
+                          )}
+                        >
+                          <span className="flex-shrink-0 flex items-center justify-center w-6 h-6">
+                            {done ? (
+                              <span className="grid h-6 w-6 place-items-center rounded-full bg-primary text-primary-foreground shadow-xs">
+                                <Check className="h-3.5 w-3.5 stroke-[3]" />
+                              </span>
+                            ) : active ? (
+                              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                            ) : (
+                              <div className="h-2.5 w-2.5 rounded-full bg-muted-foreground/30" />
+                            )}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <span
+                              className={cn(
+                                "text-sm font-medium block truncate",
+                                active
+                                  ? "text-primary font-semibold"
+                                  : done
+                                    ? "text-foreground"
+                                    : "text-muted-foreground"
+                              )}
+                            >
+                              {label}
+                            </span>
+                            {active && label === "Visuels" && (
+                              <span className="text-[11px] text-primary/80 font-normal">
+                                {Object.keys(sectionImages).filter((k) => aiTargets.some((t) => t.target === k)).length} / 5 visuels générés
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="mt-5 pt-4 border-t border-border">
+                    <div className="flex items-center justify-between text-xs mb-1.5 font-medium">
+                      <span className="text-muted-foreground">Progression globale</span>
+                      <span className="font-bold text-primary">{percent}%</span>
+                    </div>
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-primary to-orange-500 transition-all duration-500 shadow-xs"
+                        style={{ width: `${percent}%` }}
+                      />
+                    </div>
+                  </div>
+                </Card>
+
+                <div className="rounded-[8px] border border-primary/15 bg-primary/5 p-3.5 text-xs text-muted-foreground flex items-center gap-2.5">
+                  <Sparkles className="size-4 shrink-0 text-primary" />
+                  <span>
+                    Chaque visuel est composé au format studio HD pour maximiser vos conversions.
+                  </span>
+                </div>
+              </div>
+
+              {/* Colonne Droite : Vitrine des Visuels en Direct (Stream en temps réel) */}
+              <div className="lg:col-span-7">
+                <Card className="rounded-[10px] p-5 shadow-xs border-border">
+                  <div className="flex items-center justify-between pb-3 border-b border-border">
+                    <div>
+                      <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
+                        <Images className="size-4 text-primary" /> Visuels marketing IA
+                      </h2>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Apparaissent en direct dès qu'ils sont prêts
+                      </p>
+                    </div>
+                    <span className="rounded-full bg-primary/10 border border-primary/20 px-2.5 py-0.5 text-xs font-bold text-primary">
+                      {Object.keys(sectionImages).filter((k) => aiTargets.some((t) => t.target === k)).length} / 5
                     </span>
                   </div>
-                );
-              })}
-            </div>
 
-            <div className="mx-auto mt-8 max-w-md">
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-primary/80 to-primary transition-all duration-500"
-                  style={{ width: `${percent}%` }}
-                />
+                  <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {aiTargets.map((item, idx) => {
+                      const url = sectionImages[item.target];
+                      const isReady = Boolean(url);
+                      const isCurrentlyGenerating =
+                        !isReady &&
+                        (aiTargets.findIndex((t) => !sectionImages[t.target]) === idx || phase === 2);
+
+                      return (
+                        <div
+                          key={item.target}
+                          className={cn(
+                            "relative overflow-hidden rounded-[8px] border transition-all duration-500 flex flex-col justify-between group",
+                            isReady
+                              ? "border-primary/40 bg-card shadow-xs ring-1 ring-primary/20"
+                              : isCurrentlyGenerating
+                                ? "border-primary bg-primary/5 shadow-md ring-2 ring-primary/40 animate-pulse"
+                                : "border-dashed border-border/80 bg-muted/20 opacity-50"
+                          )}
+                        >
+                          {/* Zone d'image ou placeholder */}
+                          <div className="relative aspect-square w-full overflow-hidden bg-muted/40 flex items-center justify-center">
+                            {isReady ? (
+                              <>
+                                <img
+                                  src={url}
+                                  alt={TARGET_LABELS[item.target] ?? item.target}
+                                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 animate-in fade-in zoom-in-95 duration-700"
+                                />
+                                <div className="absolute top-1.5 right-1.5 rounded-full bg-black/60 backdrop-blur-xs p-1 text-white shadow-xs">
+                                  <Check className="size-3 text-emerald-400 stroke-[3]" />
+                                </div>
+                              </>
+                            ) : isCurrentlyGenerating ? (
+                              <div className="flex flex-col items-center justify-center gap-1.5 p-2 text-center">
+                                <div className="relative">
+                                  <div className="absolute -inset-1 rounded-full bg-primary/30 blur-xs animate-ping" />
+                                  <Loader2 className="size-6 animate-spin text-primary relative" />
+                                </div>
+                                <span className="text-[10px] font-semibold text-primary">
+                                  Génération...
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="flex flex-col items-center justify-center gap-1 text-muted-foreground/50">
+                                <ImagePlus className="size-5" />
+                                <span className="text-[10px]">En attente</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Étiquette bas de carte */}
+                          <div className="p-2 bg-background border-t border-border flex items-center justify-between gap-1">
+                            <span className="text-[11px] font-semibold truncate text-foreground">
+                              {TARGET_LABELS[item.target] ?? item.target}
+                            </span>
+                            {isReady ? (
+                              <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+                                Prêt
+                              </span>
+                            ) : isCurrentlyGenerating ? (
+                              <span className="text-[9px] font-bold text-primary animate-pulse uppercase tracking-wider">
+                                Actif
+                              </span>
+                            ) : null}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Card>
               </div>
-              <div className="mt-2 flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">Progression</span>
-                <span className="font-semibold text-primary">{percent}%</span>
-              </div>
+
             </div>
           </div>
         ) : null}
