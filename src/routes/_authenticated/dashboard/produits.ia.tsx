@@ -217,7 +217,7 @@ function ProduitIaPage() {
   const { aiLeft, plan, credits, unlimited } = useAiAccess();
   const [upsell, setUpsell] = useState(false);
 
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(jobParam ? 2 : 0);
   const [images, setImages] = useState<string[]>([]);
   const [productUrl, setProductUrl] = useState("");
   const [language, setLanguage] = useState("français");
@@ -237,7 +237,7 @@ function ProduitIaPage() {
   /** Visuels déjà présents sur la page du produit : réutilisés tels quels. */
   const [reused, setReused] = useState<FunnelImages>({});
   const prefilledRef = useRef(false);
-  const [busy, setBusy] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(jobParam ? "Reprise de la création en cours…" : null);
   /* 5 visuels clés générés par l'IA, quel que soit le moteur actif. */
   const aiTargets = AI_TARGETS;
   const manualTargets = IMAGE_TARGETS.filter(
