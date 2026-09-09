@@ -723,11 +723,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           <main className="mx-auto w-full max-w-[1400px] px-4 py-5 sm:px-5">{children}</main>
 
-          <footer className="px-4 pb-8 text-center text-xs text-muted-foreground sm:px-6">
-            <Link to="/" className="cursor-pointer hover:text-foreground">
-              Retour au site Dukaio
-            </Link>
-          </footer>
+
         </div>
         <AiJobBanner />
       </div>

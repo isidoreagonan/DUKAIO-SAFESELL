@@ -780,15 +780,6 @@ function ProduitIaPage() {
                     onChange={(event) => setProductUrl(event.target.value)}
                   />
                 </label>
-                <button
-                  type="button"
-                  onClick={() => void analyse()}
-                  disabled={busy !== null || uploading || (images.length === 0 && !productUrl.trim())}
-                  className="btn-3d shrink-0 h-11 inline-flex items-center gap-2 rounded-[6px] px-5 text-sm font-semibold disabled:opacity-60 disabled:grayscale"
-                >
-                  {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                  Générer
-                </button>
               </div>
 
               {/* Sélecteur de langue */}
@@ -799,12 +790,12 @@ function ProduitIaPage() {
                    onChange={(e) => setLanguage(e.target.value)}
                    className="h-9 rounded-[6px] border border-border bg-background px-3 text-sm font-medium outline-none hover:border-primary/50 focus:border-primary"
                  >
-                   <option value="français">🇫🇷 Français</option>
-                   <option value="anglais">🇬🇧 Anglais</option>
-                   <option value="espagnol">🇪🇸 Espagnol</option>
-                   <option value="italien">🇮🇹 Italien</option>
-                   <option value="allemand">🇩🇪 Allemand</option>
-                   <option value="portugais">🇵🇹 Portugais</option>
+                   <option value="français">FR Français</option>
+                   <option value="anglais">EN Anglais</option>
+                   <option value="espagnol">ES Espagnol</option>
+                   <option value="italien">IT Italien</option>
+                   <option value="allemand">DE Allemand</option>
+                   <option value="portugais">PT Portugais</option>
                  </select>
               </div>
             </div>

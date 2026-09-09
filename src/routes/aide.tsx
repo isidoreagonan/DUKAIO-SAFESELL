@@ -487,11 +487,7 @@ function AidePage() {
         </section>
       </main>
 
-      <footer className="px-4 pb-8 text-center text-xs text-muted-foreground sm:px-6">
-        <Link to="/" className="cursor-pointer hover:text-foreground">
-          Retour au site Dukaio
-        </Link>
-      </footer>
+
     </div>
   );
 }
