@@ -999,40 +999,33 @@ function ProduitIaPage() {
         ) : null}
 
         {working ? (
-          <div className="mt-10 text-center">
-            <div className="relative mx-auto grid h-24 w-24 place-items-center">
-              <span className="absolute inset-0 animate-ping rounded-[22px] bg-surface-tint" />
-              <img
-                src="/dukaio-icon.png"
-                alt="Dukaio"
-                className="relative h-[74px] w-[74px] select-none rounded-[18px] object-cover shadow-lg ring-1 ring-black/10"
-                loading="eager"
-                decoding="async"
-              />
-            </div>
-            <h1 className="mt-5 text-2xl font-extrabold tracking-tight">Création en cours</h1>
-            <p className="mt-1 text-sm text-muted-foreground">{busy}</p>
+          <div className="mt-16 text-center">
+            <h1 className="inline-flex items-center gap-2 text-2xl font-extrabold tracking-tight">
+              <Sparkles className="h-6 w-6 text-primary" /> Génération de votre boutique
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground">{busy}</p>
 
-            <ol className="mt-7 flex flex-wrap items-start justify-center gap-6">
+            <ul className="mx-auto mt-12 max-w-sm space-y-4 text-left pl-6">
               {PHASES.map((label, index) => {
                 const done = index < phase;
                 const active = index === phase;
+                const upcoming = index > phase;
+
                 return (
-                  <li key={label} className="w-16 text-center">
-                    <span
-                      className={
-                        "mx-auto grid h-8 w-8 place-items-center rounded-full text-xs font-bold " +
-                        (done || active
-                          ? "bg-primary text-primary-foreground"
-                          : "border border-border text-muted-foreground")
-                      }
-                    >
-                      {done ? <Check className="h-3.5 w-3.5" /> : index + 1}
+                  <li key={label} className="flex items-center gap-3">
+                    <span className="flex-shrink-0 flex items-center justify-center w-5 h-5">
+                      {done ? (
+                         <Check className="h-5 w-5 text-primary" />
+                      ) : active ? (
+                         <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                      ) : (
+                         <div className="h-3 w-3 rounded-full border-2 border-muted-foreground/30" />
+                      )}
                     </span>
                     <span
                       className={
-                        "mt-1.5 block text-[11px] " +
-                        (done || active ? "font-semibold text-primary" : "text-muted-foreground")
+                        "text-sm font-medium transition-colors " +
+                        (upcoming ? "text-muted-foreground" : "text-foreground")
                       }
                     >
                       {label}
@@ -1040,18 +1033,17 @@ function ProduitIaPage() {
                   </li>
                 );
               })}
-            </ol>
+            </ul>
 
-            <div className="mx-auto mt-8 max-w-md">
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+            <div className="mx-auto mt-12 max-w-sm px-6">
+              <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                 <div
                   className="h-full rounded-full bg-primary transition-all duration-500"
                   style={{ width: `${percent}%` }}
                 />
               </div>
-              <div className="mt-2 flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">Progression</span>
-                <span className="font-semibold text-primary">{percent}%</span>
+              <div className="mt-2 text-right text-xs font-semibold text-primary">
+                {percent}%
               </div>
             </div>
           </div>
