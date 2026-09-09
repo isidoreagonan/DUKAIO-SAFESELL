@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useBlocker } from "@tanstack/react-router";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -16,6 +16,13 @@ import {
 import { DashboardShell } from "@/components/dashboard/shell";
 import { MediaLibraryDialog } from "@/components/editor/MediaLibraryDialog";
 import { ImageSelectionDialog } from "@/components/dashboard/ImageSelectionDialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useProducts, useStore } from "@/lib/store";
 import { useUploadMedia } from "@/lib/media";
 import { setPendingAiDraft } from "@/lib/ai-draft";
@@ -233,8 +240,9 @@ function ProduitIaPage() {
   const { aiLeft, plan, credits, unlimited } = useAiAccess();
   const [upsell, setUpsell] = useState(false);
 
-  /* Détection rapide d'un travail en cours à l'ouverture de la page. */
-  const [checking, setChecking] = useState(!produit);
+  /* Marqueur de complétion pour éviter de bloquer lors de l'envoi vers l'éditeur */
+  const completedRef = useRef(false);
+
   const [step, setStep] = useState(jobParam ? 2 : 0);
   const [images, setImages] = useState<string[]>([]);
   const [productUrl, setProductUrl] = useState("");
@@ -258,7 +266,19 @@ function ProduitIaPage() {
   /** Visuels déjà présents sur la page du produit : réutilisés tels quels. */
   const [reused, setReused] = useState<FunnelImages>({});
   const prefilledRef = useRef(false);
-  const [busy, setBusy] = useState<string | null>(jobParam ? "Reprise de la création en cours…" : null);
+  const [busy, setBusy] = useState<string | null>(null);
+
+  /* Bloqueur de navigation : empêche de quitter la page si une création est en cours */
+  const isDirty =
+    !completedRef.current &&
+    (step > 0 || images.length > 0 || productUrl.trim().length > 0 || busy !== null);
+
+  const blocker = useBlocker({
+    shouldBlockFn: () => isDirty,
+    withResolver: true,
+    enableBeforeUnload: () => isDirty,
+  });
+
   /* 5 visuels clés générés par l'IA, quel que soit le moteur actif. */
   const aiTargets = AI_TARGETS;
   const manualTargets = IMAGE_TARGETS.filter(
@@ -580,12 +600,8 @@ function ProduitIaPage() {
               const current = await aiJobCurrent();
               return current ? await aiJobGet({ data: { id: current.id } }) : null;
             })();
-        if (!state) {
-          setChecking(false);
-          return;
-        }
+        if (!state) return;
         applyJob(state);
-        setChecking(false);
         if (state.status === "running") {
           toast.info("Création reprise", {
             description: "DUKAIO AI continue là où il s'était arrêté.",
@@ -601,7 +617,6 @@ function ProduitIaPage() {
         }
       } catch {
         /* aucune création à reprendre */
-        setChecking(false);
       }
     })();
   }, [jobParam, jobId, applyJob, followJob]);
@@ -680,6 +695,7 @@ function ProduitIaPage() {
       });
       /* Le solde de créations IA a changé : on rafraîchit le compteur. */
       void queryClient.invalidateQueries({ queryKey: ["subscription"] });
+      completedRef.current = true;
       void navigate({ to: "/dashboard/editeur" });
     } catch (error) {
       toast.error("Préparation impossible", { description: (error as Error).message });
@@ -693,22 +709,6 @@ function ProduitIaPage() {
 
   const working = step === 2 && busy !== null;
   const analyzing = step === 0 && busy !== null;
-
-  /* Pendant la vérification initiale, on affiche un écran d'attente rapide. */
-  if (checking) {
-    return (
-      <DashboardShell>
-        <div className="mx-auto w-full max-w-2xl pb-4">
-          <div className="flex h-[50vh] flex-col items-center justify-center gap-3 text-center">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            <p className="text-sm font-medium text-muted-foreground">
-              Vérification des créations en cours…
-            </p>
-          </div>
-        </div>
-      </DashboardShell>
-    );
-  }
 
   return (
     <DashboardShell>
@@ -1521,6 +1521,49 @@ function ProduitIaPage() {
         onConfirm={onImagesSelected}
         onSkip={onImagesSkipped}
       />
+
+      {/* Dialogue de confirmation avant de quitter la création */}
+      <Dialog
+        open={blocker.status === "blocked"}
+        onOpenChange={(open) => {
+          if (!open) blocker.reset?.();
+        }}
+      >
+        <DialogContent className="max-w-md rounded-2xl p-6 sm:rounded-2xl text-center border-border shadow-2xl">
+          <div className="mx-auto mt-2 flex size-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400">
+            <ImagePlus className="size-6 text-blue-600 dark:text-blue-400" />
+          </div>
+
+          <DialogHeader className="space-y-2 text-center sm:text-center mt-2">
+            <DialogTitle className="text-xl font-bold tracking-tight text-foreground text-center">
+              Quitter la création ?
+            </DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground text-center max-w-xs mx-auto leading-relaxed">
+              Ton produit n'est pas encore créé. Si tu quittes maintenant, tes images et tes infos seront perdues.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="mt-4 flex items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                completedRef.current = true;
+                blocker.proceed?.();
+              }}
+              className="inline-flex h-10 items-center justify-center rounded-xl border border-input bg-background px-6 text-sm font-medium text-foreground shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer"
+            >
+              Quitter
+            </button>
+            <button
+              type="button"
+              onClick={() => blocker.reset?.()}
+              className="inline-flex h-10 items-center justify-center rounded-xl bg-blue-600 px-6 text-sm font-medium text-white shadow-sm hover:bg-blue-700 transition-colors cursor-pointer"
+            >
+              Continuer la création
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </DashboardShell>
   );
 }
