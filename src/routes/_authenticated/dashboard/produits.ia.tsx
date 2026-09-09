@@ -5,13 +5,23 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
+  CheckCircle2,
+  ExternalLink,
+  FileEdit,
+  FileText,
   ImagePlus,
   Images,
+  Layers,
   Link2,
   Loader2,
+  Palette,
+  RefreshCw,
+  Search,
+  ShieldCheck,
   Sparkles,
   Trash2,
   Upload,
+  Wand2,
 } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard/shell";
 import { MediaLibraryDialog } from "@/components/editor/MediaLibraryDialog";
@@ -735,10 +745,11 @@ function ProduitIaPage() {
 
   const working = step === 2 && busy !== null;
   const analyzing = step === 0 && busy !== null;
+  const isWideLayout = working || (step === 2 && funnel && draft);
 
   return (
     <DashboardShell>
-      <div className={cn("mx-auto w-full pb-4 transition-all duration-300", working ? "max-w-4xl" : "max-w-2xl")}>
+      <div className={cn("mx-auto w-full pb-4 transition-all duration-300", isWideLayout ? "max-w-5xl" : "max-w-2xl")}>
         {!analyzing && !working ? (
           <>
             <Link
@@ -1241,12 +1252,12 @@ function ProduitIaPage() {
               </p>
             </div>
 
-            {/* Layout 2 colonnes : Progression à gauche + Vitrine des Visuels en Direct à droite */}
+            {/* Layout 2 colonnes : Progression à gauche + Contenu dynamique synchronisé à droite */}
             <div className="mt-8 grid gap-6 lg:grid-cols-12 items-start">
               
               {/* Colonne Gauche : Étapes & Progression */}
               <div className="lg:col-span-5 space-y-4">
-                <Card className="rounded-[10px] p-5 shadow-xs border-border">
+                <Card className="rounded-[10px] p-5 shadow-xs border-border bg-card/90 backdrop-blur-md">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-4">
                     Étapes de création
                   </h3>
@@ -1320,359 +1331,531 @@ function ProduitIaPage() {
                 <div className="rounded-[8px] border border-primary/15 bg-primary/5 p-3.5 text-xs text-muted-foreground flex items-center gap-2.5">
                   <Sparkles className="size-4 shrink-0 text-primary" />
                   <span>
-                    Chaque visuel est composé au format studio HD pour maximiser vos conversions.
+                    Chaque section et visuel est composé pour maximiser vos conversions e-commerce.
                   </span>
                 </div>
               </div>
 
-              {/* Colonne Droite : Vitrine des Visuels en Direct (Stream en temps réel) */}
+              {/* Colonne Droite : Vitrine Dynamique synchronisée avec la Phase active */}
               <div className="lg:col-span-7">
-                <Card className="rounded-[10px] p-5 shadow-xs border-border">
-                  <div className="flex items-center justify-between pb-3 border-b border-border">
-                    <div>
-                      <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
-                        <Images className="size-4 text-primary" /> Visuels marketing IA
-                      </h2>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        Apparaissent en direct dès qu'ils sont prêts
-                      </p>
+                {/* PHASE 0 : ANALYSE */}
+                {phase === 0 ? (
+                  <Card className="rounded-[10px] p-5 shadow-xs border-border bg-card/90 backdrop-blur-md">
+                    <div className="flex items-center justify-between pb-3 border-b border-border">
+                      <div className="flex items-center gap-2">
+                        <Search className="size-4 text-primary animate-pulse" />
+                        <h2 className="text-sm font-bold text-foreground">Analyse IA & Extraction</h2>
+                      </div>
+                      <span className="rounded-full bg-primary/10 border border-primary/20 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                        Scan en cours
+                      </span>
                     </div>
-                    <span className="rounded-full bg-primary/10 border border-primary/20 px-2.5 py-0.5 text-xs font-bold text-primary">
-                      {Object.keys(sectionImages).filter((k) => aiTargets.some((t) => t.target === k)).length} / 5
-                    </span>
-                  </div>
-
-                  <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {aiTargets.map((item, idx) => {
-                      const url = sectionImages[item.target];
-                      const isReady = Boolean(url);
-                      const isCurrentlyGenerating =
-                        !isReady &&
-                        (aiTargets.findIndex((t) => !sectionImages[t.target]) === idx || phase === 2);
-
-                      return (
+                    <div className="mt-4 space-y-3">
+                      {[
+                        "Extraction des caractéristiques et arguments clés",
+                        "Identification de l'audience cible et des leviers d'achat",
+                        "Structuration du tunnel de vente haute conversion",
+                      ].map((item, idx) => (
                         <div
-                          key={item.target}
-                          className={cn(
-                            "relative overflow-hidden rounded-[8px] border transition-all duration-500 flex flex-col justify-between group",
-                            isReady
-                              ? "border-primary/40 bg-card shadow-xs ring-1 ring-primary/20"
-                              : isCurrentlyGenerating
-                                ? "border-primary bg-primary/5 shadow-md ring-2 ring-primary/40 animate-pulse"
-                                : "border-dashed border-border/80 bg-muted/20 opacity-50"
-                          )}
+                          key={item}
+                          className="flex items-center gap-3 rounded-[6px] border border-border/80 bg-muted/20 p-3.5"
                         >
-                          {/* Zone d'image ou placeholder */}
-                          <div className="relative aspect-square w-full overflow-hidden bg-muted/40 flex items-center justify-center">
-                            {isReady ? (
-                              <>
-                                <img
-                                  src={url}
-                                  alt={TARGET_LABELS[item.target] ?? item.target}
-                                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 animate-in fade-in zoom-in-95 duration-700"
-                                />
-                                <div className="absolute top-1.5 right-1.5 rounded-full bg-black/60 backdrop-blur-xs p-1 text-white shadow-xs">
-                                  <Check className="size-3 text-emerald-400 stroke-[3]" />
-                                </div>
-                              </>
-                            ) : isCurrentlyGenerating ? (
-                              <div className="flex flex-col items-center justify-center gap-1.5 p-2 text-center">
-                                <div className="relative">
-                                  <div className="absolute -inset-1 rounded-full bg-primary/30 blur-xs animate-ping" />
-                                  <Loader2 className="size-6 animate-spin text-primary relative" />
-                                </div>
-                                <span className="text-[10px] font-semibold text-primary">
-                                  Génération...
-                                </span>
-                              </div>
-                            ) : (
-                              <div className="flex flex-col items-center justify-center gap-1 text-muted-foreground/50">
-                                <ImagePlus className="size-5" />
-                                <span className="text-[10px]">En attente</span>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Étiquette bas de carte */}
-                          <div className="p-2 bg-background border-t border-border flex items-center justify-between gap-1">
-                            <span className="text-[11px] font-semibold truncate text-foreground">
-                              {TARGET_LABELS[item.target] ?? item.target}
-                            </span>
-                            {isReady ? (
-                              <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
-                                Prêt
-                              </span>
-                            ) : isCurrentlyGenerating ? (
-                              <span className="text-[9px] font-bold text-primary animate-pulse uppercase tracking-wider">
-                                Actif
-                              </span>
-                            ) : null}
-                          </div>
+                          <Loader2 className="size-4 animate-spin text-primary shrink-0" />
+                          <span className="text-xs font-medium text-foreground">{item}</span>
                         </div>
-                      );
-                    })}
-                  </div>
-                </Card>
+                      ))}
+                    </div>
+                  </Card>
+                ) : null}
+
+                {/* PHASE 1 : RÉDACTION PERSUASIVE */}
+                {phase === 1 ? (
+                  <Card className="rounded-[10px] p-5 shadow-xs border-border bg-card/90 backdrop-blur-md">
+                    <div className="flex items-center justify-between pb-3 border-b border-border">
+                      <div className="flex items-center gap-2">
+                        <FileEdit className="size-4 text-primary animate-pulse" />
+                        <h2 className="text-sm font-bold text-foreground">Rédaction persuasive en direct</h2>
+                      </div>
+                      <span className="rounded-full bg-primary/10 border border-primary/20 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                        Rédaction IA
+                      </span>
+                    </div>
+                    <div className="mt-4 space-y-3">
+                      <div className="rounded-[6px] border border-primary/30 bg-primary/5 p-3.5 space-y-1.5">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-primary">
+                          Titre & Promesse
+                        </span>
+                        <p className="text-xs font-medium text-foreground">
+                          {draft?.name || "Composition du titre irrésistible…"}
+                        </p>
+                      </div>
+
+                      <div className="rounded-[6px] border border-border bg-muted/20 p-3 space-y-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                          Accroches & Arguments majeurs
+                        </span>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Loader2 className="size-3.5 animate-spin text-primary" />
+                          <span>Formulation des bénéfices et preuves de transformation…</span>
+                        </div>
+                      </div>
+
+                      <div className="rounded-[6px] border border-border bg-muted/20 p-3 space-y-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                          Réponses aux objections & FAQ
+                        </span>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <CheckCircle2 className="size-3.5 text-emerald-500" />
+                          <span>Garantie, livraison et réassurance client préparées</span>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ) : null}
+
+                {/* PHASE 2 : VISUELS MARKETING IA */}
+                {phase === 2 ? (
+                  <Card className="rounded-[10px] p-5 shadow-xs border-border bg-card/90 backdrop-blur-md">
+                    <div className="flex items-center justify-between pb-3 border-b border-border">
+                      <div>
+                        <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
+                          <Images className="size-4 text-primary" /> Visuels marketing IA
+                        </h2>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Apparaissent en direct dès qu'ils sont prêts
+                        </p>
+                      </div>
+                      <span className="rounded-full bg-primary/10 border border-primary/20 px-2.5 py-0.5 text-xs font-bold text-primary">
+                        {Object.keys(sectionImages).filter((k) => aiTargets.some((t) => t.target === k)).length} / 5
+                      </span>
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {aiTargets.map((item, idx) => {
+                        const url = sectionImages[item.target];
+                        const isReady = Boolean(url);
+                        const isCurrentlyGenerating =
+                          !isReady &&
+                          (aiTargets.findIndex((t) => !sectionImages[t.target]) === idx || phase === 2);
+
+                        return (
+                          <div
+                            key={item.target}
+                            className={cn(
+                              "relative overflow-hidden rounded-[8px] border transition-all duration-500 flex flex-col justify-between group",
+                              isReady
+                                ? "border-primary/40 bg-card shadow-xs ring-1 ring-primary/20"
+                                : isCurrentlyGenerating
+                                  ? "border-primary bg-primary/5 shadow-md ring-2 ring-primary/40 animate-pulse"
+                                  : "border-dashed border-border/80 bg-muted/20 opacity-50"
+                            )}
+                          >
+                            <div className="relative aspect-square w-full overflow-hidden bg-muted/40 flex items-center justify-center">
+                              {isReady ? (
+                                <>
+                                  <img
+                                    src={url}
+                                    alt={TARGET_LABELS[item.target] ?? item.target}
+                                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 animate-in fade-in zoom-in-95 duration-700"
+                                  />
+                                  <div className="absolute top-1.5 right-1.5 rounded-full bg-black/60 backdrop-blur-xs p-1 text-white shadow-xs">
+                                    <Check className="size-3 text-emerald-400 stroke-[3]" />
+                                  </div>
+                                </>
+                              ) : isCurrentlyGenerating ? (
+                                <div className="flex flex-col items-center justify-center gap-1.5 p-2 text-center">
+                                  <div className="relative">
+                                    <div className="absolute -inset-1 rounded-full bg-primary/30 blur-xs animate-ping" />
+                                    <Loader2 className="size-6 animate-spin text-primary relative" />
+                                  </div>
+                                  <span className="text-[10px] font-semibold text-primary">
+                                    Génération...
+                                  </span>
+                                </div>
+                              ) : (
+                                <div className="flex flex-col items-center justify-center gap-1 text-muted-foreground/50">
+                                  <ImagePlus className="size-5" />
+                                  <span className="text-[10px]">En attente</span>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="p-2 bg-background border-t border-border flex items-center justify-between gap-1">
+                              <span className="text-[11px] font-semibold truncate text-foreground">
+                                {TARGET_LABELS[item.target] ?? item.target}
+                              </span>
+                              {isReady ? (
+                                <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+                                  Prêt
+                                </span>
+                              ) : isCurrentlyGenerating ? (
+                                <span className="text-[9px] font-bold text-primary animate-pulse uppercase tracking-wider">
+                                  Actif
+                                </span>
+                              ) : null}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </Card>
+                ) : null}
+
+                {/* PHASE 3 ou 4 : PALETTE & FINALISATION */}
+                {phase >= 3 ? (
+                  <Card className="rounded-[10px] p-5 shadow-xs border-border bg-card/90 backdrop-blur-md">
+                    <div className="flex items-center justify-between pb-3 border-b border-border">
+                      <div className="flex items-center gap-2">
+                        <Palette className="size-4 text-primary animate-pulse" />
+                        <h2 className="text-sm font-bold text-foreground">Palette & Assemblage</h2>
+                      </div>
+                      <span className="rounded-full bg-primary/10 border border-primary/20 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                        Harmonisation
+                      </span>
+                    </div>
+                    <div className="mt-4 space-y-3">
+                      <div className="flex items-center gap-2 p-3 rounded-[6px] border border-border bg-muted/20 text-xs">
+                        <CheckCircle2 className="size-4 text-emerald-500 shrink-0" />
+                        <span>Contraste et lisibilité des typographies validés</span>
+                      </div>
+                      <div className="flex items-center gap-2 p-3 rounded-[6px] border border-border bg-muted/20 text-xs">
+                        <CheckCircle2 className="size-4 text-emerald-500 shrink-0" />
+                        <span>Harmonisation de la couleur primaire et des boutons</span>
+                      </div>
+                    </div>
+                  </Card>
+                ) : null}
               </div>
 
             </div>
           </div>
         ) : null}
 
+        {/* ÉCRAN FINAL : VOTRE PAGE EST PRÊTE (DASHBOARD 2 COLONNES HAUT DE GAMME) */}
         {step === 2 && !working && funnel && draft ? (
-          <>
-            <header className="mt-6 text-center">
-              <h1 className="text-2xl font-extrabold tracking-tight">Votre page est prête</h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Ajustez les couleurs, puis ouvrez l'éditeur pour tout retoucher
-              </p>
-            </header>
-
-            <div className="mt-6 grid gap-4">
-              <Card>
-                <h2 className="text-base font-bold">Couleurs proposées</h2>
-                <p className="mt-0.5 text-sm text-muted-foreground">
-                  Elles seront appliquées à votre thème.
-                </p>
-                <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
-                  {(
-                    [
-                      ["primaryColor", "Principale"],
-                      ["softColor", "Douce"],
-                      ["paleColor", "Très claire"],
-                      ["accentColor", "Accent"],
-                      ["inkColor", "Texte"],
-                    ] as const
-                  ).map(([key, label]) => (
-                    <label key={key} className="text-sm">
-                      <span className="mb-1.5 block font-medium">{label}</span>
-                      <input
-                        type="color"
-                        value={palette[key] ?? "#f97316"}
-                        onChange={(event) =>
-                          setPalette((current) => ({ ...current, [key]: event.target.value }))
-                        }
-                        className="h-10 w-full cursor-pointer rounded-[6px] border border-border bg-background"
-                      />
-                    </label>
-                  ))}
+          <div className="mt-4 space-y-6 animate-in fade-in-50 duration-500">
+            
+            {/* Header Félicitations & Résumé Produit */}
+            <div className="relative overflow-hidden rounded-[12px] border border-primary/20 bg-gradient-to-br from-primary/[0.07] via-background to-primary/[0.02] p-5 sm:p-6 shadow-xs backdrop-blur-md">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-3 py-0.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                    <CheckCircle2 className="size-3.5" /> TUNNEL DE VENTE PRÊT
+                  </div>
+                  <h1 className="mt-2 text-xl sm:text-2xl font-extrabold tracking-tight text-foreground">
+                    {draft.name}
+                  </h1>
+                  <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
+                    Votre page de vente est entièrement rédigée, illustrée et prête à convertir.
+                  </p>
                 </div>
-              </Card>
+                <div className="flex sm:flex-col items-baseline sm:items-end justify-between gap-1 border-t sm:border-t-0 pt-2 sm:pt-0 border-border">
+                  <span className="text-xs text-muted-foreground font-medium">Prix de vente</span>
+                  <div className="flex items-center gap-2">
+                    {draft.compareAt && draft.compareAt > draft.price ? (
+                      <span className="text-xs text-muted-foreground line-through">
+                        {draft.compareAt.toLocaleString("fr-FR")} {currency}
+                      </span>
+                    ) : null}
+                    <span className="text-lg font-bold text-primary">
+                      {draft.price.toLocaleString("fr-FR")} {currency}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-              <Card>
-                <h2 className="text-base font-bold">Sections composées</h2>
-                <p className="mt-0.5 text-sm text-muted-foreground">
-                  Le tunnel utilise vos sections DUKAIO existantes, toutes éditables.
-                </p>
-                <ul className="mt-4 grid gap-2 sm:grid-cols-2">
-                  {FUNNEL_ORDER.map((type) => {
-                    const incomplete = funnel.missing.sections.includes(type);
-                    return (
-                      <li
-                        key={type}
-                        className="flex items-center justify-between gap-3 rounded-[6px] border border-border px-3 py-2 text-sm"
-                      >
-                        <span className="font-medium">{getDefinition(type).label}</span>
-                        <span
-                          className={
-                            "text-xs " +
-                            (incomplete ? "font-semibold text-destructive" : "text-muted-foreground")
-                          }
-                        >
-                          {incomplete
-                            ? "À compléter"
-                            : funnel.sections[type]
-                              ? "Texte IA"
-                              : "Réglages par défaut"}
+            {/* Dashboard 2 Colonnes (Affichage PC compact & Glassmorphism) */}
+            <div className="grid gap-6 lg:grid-cols-12 items-start">
+              
+              {/* COLONNE GAUCHE (5/12) : Couleurs, Sections & Contrôle Qualité */}
+              <div className="lg:col-span-5 space-y-5">
+                
+                {/* 1. Palette de Couleurs */}
+                <Card className="rounded-[10px] p-5 shadow-xs border-border bg-card/90 backdrop-blur-md">
+                  <div className="flex items-center justify-between mb-3 pb-2 border-b border-border">
+                    <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
+                      <Palette className="size-4 text-primary" /> Couleurs proposées
+                    </h2>
+                    <span className="text-[11px] text-muted-foreground">Personnalisables</span>
+                  </div>
+                  
+                  {/* Prévisualisation bande de palette */}
+                  <div className="h-3 w-full rounded-full overflow-hidden flex shadow-2xs mb-4">
+                    <div className="flex-1" style={{ backgroundColor: palette["primaryColor"] ?? "#f97316" }} />
+                    <div className="flex-1" style={{ backgroundColor: palette["softColor"] ?? "#fed7aa" }} />
+                    <div className="flex-1" style={{ backgroundColor: palette["paleColor"] ?? "#fff7ed" }} />
+                    <div className="flex-1" style={{ backgroundColor: palette["accentColor"] ?? "#ea580c" }} />
+                    <div className="flex-1" style={{ backgroundColor: palette["inkColor"] ?? "#18181b" }} />
+                  </div>
+
+                  <div className="grid grid-cols-5 gap-2 text-center">
+                    {(
+                      [
+                        ["primaryColor", "Principale"],
+                        ["softColor", "Douce"],
+                        ["paleColor", "Claire"],
+                        ["accentColor", "Accent"],
+                        ["inkColor", "Texte"],
+                      ] as const
+                    ).map(([key, label]) => (
+                      <label key={key} className="block cursor-pointer">
+                        <span className="mb-1 block text-[10px] font-medium truncate text-muted-foreground">
+                          {label}
                         </span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </Card>
+                        <input
+                          type="color"
+                          value={palette[key] ?? "#f97316"}
+                          onChange={(event) =>
+                            setPalette((current) => ({ ...current, [key]: event.target.value }))
+                          }
+                          className="h-8 w-full cursor-pointer rounded-[6px] border border-border bg-background p-0.5"
+                        />
+                      </label>
+                    ))}
+                  </div>
+                </Card>
 
-              <Card>
-                <h2 className="text-base font-bold">Visuels générés par l'IA</h2>
-                <p className="mt-0.5 text-sm text-muted-foreground">
-                  {aiTargets.length} visuels créés automatiquement. Vous pouvez remplacer
-                  n'importe lequel par votre propre photo, sans consommer de crédit.
-                </p>
-                <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
-                  {aiTargets.map(({ target }) => {
-                    const url = sectionImages[target];
-                    return (
-                      <div key={target} className="text-center">
-                        <div className="relative aspect-square overflow-hidden rounded-[6px] border border-border bg-muted/30">
-                          {url ? (
-                            <img
-                              src={url}
-                              alt={TARGET_LABELS[target] ?? target}
-                              className="h-full w-full object-cover"
-                            />
+                {/* 2. Sections Composées */}
+                <Card className="rounded-[10px] p-5 shadow-xs border-border bg-card/90 backdrop-blur-md">
+                  <div className="flex items-center justify-between mb-3 pb-2 border-b border-border">
+                    <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
+                      <Layers className="size-4 text-primary" /> Sections du tunnel
+                    </h2>
+                    <span className="text-xs font-semibold text-primary">
+                      {FUNNEL_ORDER.length} sections
+                    </span>
+                  </div>
+                  <div className="max-h-56 overflow-y-auto pr-1 space-y-1.5">
+                    {FUNNEL_ORDER.map((type) => {
+                      const incomplete = funnel.missing.sections.includes(type);
+                      return (
+                        <div
+                          key={type}
+                          className="flex items-center justify-between gap-2 rounded-[6px] border border-border/80 bg-muted/20 px-3 py-1.5 text-xs"
+                        >
+                          <span className="font-medium text-foreground truncate">
+                            {getDefinition(type).label}
+                          </span>
+                          <span
+                            className={cn(
+                              "text-[10px] px-2 py-0.5 rounded-full font-semibold shrink-0",
+                              incomplete
+                                ? "bg-destructive/10 text-destructive"
+                                : funnel.sections[type]
+                                  ? "bg-primary/10 text-primary"
+                                  : "bg-muted text-muted-foreground"
+                            )}
+                          >
+                            {incomplete ? "À compléter" : funnel.sections[type] ? "Texte IA" : "Standard"}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Card>
+
+                {/* 3. Contrôle Qualité */}
+                <Card className="rounded-[10px] p-5 shadow-xs border-border bg-card/90 backdrop-blur-md">
+                  <h2 className="text-sm font-bold text-foreground flex items-center gap-2 mb-3 pb-2 border-b border-border">
+                    <ShieldCheck className="size-4 text-primary" /> Contrôle qualité DUKAIO
+                  </h2>
+                  <ul className="space-y-2 text-xs">
+                    {(
+                      [
+                        [
+                          "Textes des sections rédigés",
+                          funnel.missing.sections.length === 0,
+                          `${funnel.missing.sections.length} section(s) à compléter`,
+                        ],
+                        [
+                          "5 Visuels marketing IA prêts",
+                          aiTargets.every(({ target }) => sectionImages[target]),
+                          `${aiTargets.filter(({ target }) => !sectionImages[target]).length} visuel(s) restant(s)`,
+                        ],
+                        ["Prix & Réduction configurés", Number(draft.price) > 0, "Ajoutez un prix"],
+                        [
+                          "Balises SEO prêtes",
+                          Boolean(draft.seoTitle && draft.seoDescription),
+                          "SEO incomplet",
+                        ],
+                      ] as [string, boolean, string][]
+                    ).map(([label, ok, hint]) => (
+                      <li key={label} className="flex items-center justify-between gap-2">
+                        <span className="flex items-center gap-2 text-muted-foreground font-medium">
+                          {ok ? (
+                            <CheckCircle2 className="size-3.5 text-emerald-500 shrink-0" />
                           ) : (
-                            <span className="grid h-full w-full place-items-center text-[11px] font-semibold text-destructive">
-                              Manquant
+                            <span className="grid size-3.5 place-items-center rounded-full bg-destructive text-[9px] text-white font-bold">
+                              !
                             </span>
                           )}
-                        </div>
-                        <p className="mt-1 truncate text-[11px] font-medium">
-                          {TARGET_LABELS[target] ?? target}
-                        </p>
-                        {url && reused[target] === url ? (
-                          <p className="text-[10px] text-muted-foreground">Conservé</p>
-                        ) : null}
-                        <label className="mt-1 block w-full cursor-pointer rounded-[6px] border border-dashed border-border px-2 py-1 text-[11px] font-medium hover:bg-accent">
-                          Importer
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(event) => {
-                              const file = event.target.files?.[0];
-                              if (file) importVisual(target, file);
-                              event.target.value = "";
-                            }}
-                          />
-                        </label>
-                      </div>
-                    );
-                  })}
-                </div>
-              </Card>
+                          {label}
+                        </span>
+                        {ok ? (
+                          <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                            Validé
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-destructive">{hint}</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
 
+              </div>
 
-              {manualTargets.length > 0 ? (
-              <Card>
-                <h2 className="text-base font-bold">Vos visuels à importer</h2>
-                <p className="mt-0.5 text-sm text-muted-foreground">
-                  Ces emplacements attendent vos propres photos (facultatif) : les sections gardent
-                  leur visuel par défaut si vous n'importez rien.
-                </p>
-                <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
-                  {manualTargets.map(({ target }) => {
-                    const url = sectionImages[target];
-                    return (
-                      <div key={target} className="text-center">
-                        <label className="block cursor-pointer">
-                          <div className="relative aspect-square overflow-hidden rounded-[6px] border border-dashed border-border bg-muted/30 hover:border-primary/50">
+              {/* COLONNE DROITE (7/12) : Galerie Visuels Studio & Visuels complémentaires */}
+              <div className="lg:col-span-7 space-y-5">
+                
+                {/* 1. Visuels Marketing IA (5 Visuels) */}
+                <Card className="rounded-[10px] p-5 shadow-xs border-border bg-card/90 backdrop-blur-md">
+                  <div className="flex items-center justify-between mb-3 pb-2 border-b border-border">
+                    <div>
+                      <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
+                        <Images className="size-4 text-primary" /> Visuels générés par l'IA
+                      </h2>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        5 visuels studio haute conversion intégrés dans vos sections
+                      </p>
+                    </div>
+                    <span className="rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5 text-[11px] font-bold text-primary">
+                      {aiTargets.filter(t => Boolean(sectionImages[t.target])).length} / 5
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
+                    {aiTargets.map(({ target }) => {
+                      const url = sectionImages[target];
+                      return (
+                        <div
+                          key={target}
+                          className="group relative overflow-hidden rounded-[8px] border border-border bg-muted/20 flex flex-col justify-between"
+                        >
+                          <div className="relative aspect-square w-full overflow-hidden bg-muted/40">
                             {url ? (
                               <img
                                 src={url}
                                 alt={TARGET_LABELS[target] ?? target}
-                                className="h-full w-full object-cover"
+                                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                               />
                             ) : (
-                              <span className="grid h-full w-full place-items-center gap-1 text-[11px] font-medium text-muted-foreground">
-                                <ImagePlus className="mx-auto h-4 w-4" />
-                                Importer
+                              <span className="grid h-full w-full place-items-center text-[11px] font-semibold text-destructive">
+                                Manquant
                               </span>
                             )}
                           </div>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(event) => {
-                              const file = event.target.files?.[0];
-                              if (file) importVisual(target, file);
-                              event.target.value = "";
-                            }}
-                          />
-                        </label>
-                        <p className="mt-1 truncate text-[11px] font-medium">
-                          {TARGET_LABELS[target] ?? target}
+                          
+                          <div className="p-2 bg-background border-t border-border flex items-center justify-between gap-1">
+                            <span className="text-[11px] font-medium truncate">
+                              {TARGET_LABELS[target] ?? target}
+                            </span>
+                            <label className="cursor-pointer text-[10px] font-semibold text-primary hover:underline">
+                              Remplacer
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(event) => {
+                                  const file = event.target.files?.[0];
+                                  if (file) importVisual(target, file);
+                                  event.target.value = "";
+                                }}
+                              />
+                            </label>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Card>
+
+                {/* 2. Visuels complémentaires (facultatifs) */}
+                {manualTargets.length > 0 ? (
+                  <Card className="rounded-[10px] p-5 shadow-xs border-border bg-card/90 backdrop-blur-md">
+                    <div className="flex items-center justify-between mb-3 pb-2 border-b border-border">
+                      <div>
+                        <h2 className="text-sm font-bold text-foreground">
+                          Visuels complémentaires (facultatifs)
+                        </h2>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          Photos personnelles pour le mode d'emploi et la garantie
                         </p>
-                        {url ? (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setSectionImages((current) => {
-                                const next = { ...current };
-                                delete next[target];
-                                return next;
-                              })
-                            }
-                            className="mt-1 w-full rounded-[6px] border border-border px-2 py-1 text-[11px] font-medium hover:bg-accent"
-                          >
-                            Retirer
-                          </button>
-                        ) : null}
                       </div>
-                    );
-                  })}
-                </div>
-              </Card>
-              ) : null}
+                    </div>
 
+                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-2.5 mt-3">
+                      {manualTargets.map(({ target }) => {
+                        const url = sectionImages[target];
+                        return (
+                          <div key={target} className="text-center">
+                            <label className="block cursor-pointer">
+                              <div className="relative aspect-square overflow-hidden rounded-[6px] border border-dashed border-border bg-muted/20 hover:border-primary/50 transition-colors">
+                                {url ? (
+                                  <img
+                                    src={url}
+                                    alt={TARGET_LABELS[target] ?? target}
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : (
+                                  <span className="grid h-full w-full place-items-center gap-1 text-[10px] font-medium text-muted-foreground">
+                                    <ImagePlus className="mx-auto h-3.5 w-3.5" />
+                                    Ajouter
+                                  </span>
+                                )}
+                              </div>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(event) => {
+                                  const file = event.target.files?.[0];
+                                  if (file) importVisual(target, file);
+                                  event.target.value = "";
+                                }}
+                              />
+                            </label>
+                            <p className="mt-1 truncate text-[10px] font-medium text-muted-foreground">
+                              {TARGET_LABELS[target] ?? target}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </Card>
+                ) : null}
 
-              <Card>
-                <h2 className="text-base font-bold">Contrôle qualité</h2>
-                <ul className="mt-3 grid gap-2 text-sm">
-                  {(
-                    [
-                      [
-                        "Textes de toutes les sections",
-                        funnel.missing.sections.length === 0,
-                        `${funnel.missing.sections.length} section(s) à compléter`,
-                      ],
-                      [
-                        `${aiTargets.length} visuels IA en place`,
-                        aiTargets.every(({ target }) => sectionImages[target]),
-                        `${aiTargets.filter(({ target }) => !sectionImages[target]).length} visuel(s) manquant(s)`,
-                      ],
-                      ["Prix renseigné", Number(draft.price) > 0, "Ajoutez un prix de vente"],
-                      [
-                        "SEO complet",
-                        Boolean(draft.seoTitle && draft.seoDescription),
-                        "Titre ou description SEO manquant",
-                      ],
-                    ] as [string, boolean, string][]
-                  ).map(([label, ok, hint]) => (
-                    <li key={label} className="flex items-start gap-2">
-                      <span
-                        className={
-                          "mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full text-[10px] font-bold text-primary-foreground " +
-                          (ok ? "bg-primary" : "bg-destructive")
-                        }
-                      >
-                        {ok ? "✓" : "!"}
-                      </span>
-                      <span>
-                        <span className="font-medium">{label}</span>
-                        {ok ? null : (
-                          <span className="block text-xs text-muted-foreground">{hint}</span>
-                        )}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </Card>
+              </div>
+
             </div>
 
-            <div className="mt-6 flex flex-wrap items-center justify-between gap-2">
+            {/* Barre d'Action Finale */}
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-border">
               <button
                 type="button"
                 onClick={() => setStep(1)}
                 disabled={busy !== null}
-                className="inline-flex items-center gap-2 rounded-[6px] border border-border px-4 py-2.5 text-sm font-medium hover:bg-accent disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-[6px] border border-border bg-background px-4 py-2.5 text-sm font-medium hover:bg-accent cursor-pointer disabled:opacity-60"
               >
-                <ArrowLeft className="h-4 w-4" /> Retour
+                <ArrowLeft className="h-4 w-4" /> Modifier la fiche
               </button>
               <button
                 type="button"
                 onClick={() => void apply()}
                 disabled={busy !== null}
-                className="btn-3d inline-flex items-center gap-2 rounded-[6px] px-5 py-2.5 text-sm font-semibold disabled:opacity-60"
+                className="btn-3d inline-flex items-center gap-2 rounded-[6px] px-6 py-2.5 text-sm font-semibold cursor-pointer disabled:opacity-60"
               >
                 {busy ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Check className="h-4 w-4" />
+                  <ArrowRight className="h-4 w-4" />
                 )}
                 Ouvrir dans l'éditeur
               </button>
             </div>
-          </>
+
+          </div>
         ) : null}
       </div>
 
