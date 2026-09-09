@@ -1529,9 +1529,9 @@ function ProduitIaPage() {
           if (!open) blocker.reset?.();
         }}
       >
-        <DialogContent className="max-w-md rounded-2xl p-6 sm:rounded-2xl text-center border-border shadow-2xl">
-          <div className="mx-auto mt-2 flex size-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400">
-            <ImagePlus className="size-6 text-blue-600 dark:text-blue-400" />
+        <DialogContent className="max-w-md rounded-[10px] p-6 sm:rounded-[10px] text-center border-border shadow-2xl">
+          <div className="mx-auto mt-2 flex size-12 items-center justify-center rounded-[8px] border border-primary/20 bg-primary/10 text-primary">
+            <ImagePlus className="size-6 text-primary" />
           </div>
 
           <DialogHeader className="space-y-2 text-center sm:text-center mt-2">
@@ -1550,14 +1550,14 @@ function ProduitIaPage() {
                 completedRef.current = true;
                 blocker.proceed?.();
               }}
-              className="inline-flex h-10 items-center justify-center rounded-xl border border-input bg-background px-6 text-sm font-medium text-foreground shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer"
+              className="inline-flex h-10 items-center justify-center rounded-[6px] border border-border bg-background px-6 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer"
             >
               Quitter
             </button>
             <button
               type="button"
               onClick={() => blocker.reset?.()}
-              className="inline-flex h-10 items-center justify-center rounded-xl bg-blue-600 px-6 text-sm font-medium text-white shadow-sm hover:bg-blue-700 transition-colors cursor-pointer"
+              className="btn-3d inline-flex h-10 items-center justify-center rounded-[6px] px-6 text-sm font-semibold cursor-pointer"
             >
               Continuer la création
             </button>
