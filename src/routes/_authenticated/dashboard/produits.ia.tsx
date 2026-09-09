@@ -23,6 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 import { useProducts, useStore } from "@/lib/store";
 import { useUploadMedia } from "@/lib/media";
 import { setPendingAiDraft } from "@/lib/ai-draft";
@@ -542,6 +543,31 @@ function ProduitIaPage() {
 
   const compose = async () => {
     if (!store || !draft) return;
+
+    const name = draft.name?.trim() || "";
+    if (!name) {
+      toast.error("Nom du produit obligatoire", {
+        description: "Veuillez renseigner un nom pour votre produit avant de continuer.",
+      });
+      return;
+    }
+
+    const price = Number(draft.price || 0);
+    if (!price || price <= 0) {
+      toast.error("Prix de vente obligatoire", {
+        description: "Veuillez renseigner un prix de vente supérieur à 0 dans le champ de prix.",
+      });
+      return;
+    }
+
+    const compareAt = Number(draft.compareAt || 0);
+    if (compareAt > 0 && compareAt <= price) {
+      toast.error("Prix barré invalide", {
+        description: `Le prix barré (${compareAt.toLocaleString("fr-FR")} ${currency}) doit être supérieur au prix de vente (${price.toLocaleString("fr-FR")} ${currency}).`,
+      });
+      return;
+    }
+
     if (!unlimited && aiLeft <= 0) {
       setUpsell(true);
       return;
@@ -1095,11 +1121,28 @@ function ProduitIaPage() {
                       </label>
                       <input
                         id="ia-prix"
-                        className={field}
-                        inputMode="numeric"
-                        value={String(draft.price ?? 0)}
-                        onChange={(event) => setDraftField("price", Number(event.target.value) || 0)}
+                        type="number"
+                        min="1"
+                        placeholder="Ex : 15 000"
+                        className={cn(
+                          field,
+                          (draft.price !== undefined && draft.price <= 0) && "border-destructive/60 focus:border-destructive"
+                        )}
+                        value={draft.price === 0 ? "" : draft.price}
+                        onChange={(event) => {
+                          const val = event.target.value === "" ? 0 : Math.max(0, Number(event.target.value) || 0);
+                          setDraftField("price", val);
+                        }}
                       />
+                      {draft.price <= 0 ? (
+                        <p className="mt-1 text-xs text-destructive font-medium">
+                          Indiquez un prix de vente supérieur à 0.
+                        </p>
+                      ) : (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Prix final payé par le client
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label className={labelCls} htmlFor="ia-compare">
@@ -1107,16 +1150,28 @@ function ProduitIaPage() {
                       </label>
                       <input
                         id="ia-compare"
-                        className={field}
-                        inputMode="numeric"
-                        value={String(draft.compareAt ?? 0)}
-                        onChange={(event) =>
-                          setDraftField("compareAt", Number(event.target.value) || 0)
-                        }
+                        type="number"
+                        min="1"
+                        placeholder="Ex : 25 000"
+                        className={cn(
+                          field,
+                          draft.compareAt > 0 && draft.compareAt <= draft.price && "border-destructive/60 focus:border-destructive"
+                        )}
+                        value={draft.compareAt === 0 ? "" : draft.compareAt}
+                        onChange={(event) => {
+                          const val = event.target.value === "" ? 0 : Math.max(0, Number(event.target.value) || 0);
+                          setDraftField("compareAt", val);
+                        }}
                       />
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        Affiché barré pour montrer la réduction
-                      </p>
+                      {draft.compareAt > 0 && draft.compareAt <= draft.price ? (
+                        <p className="mt-1 text-xs text-destructive font-medium">
+                          Le prix barré doit être supérieur au prix de vente ({draft.price} {currency}).
+                        </p>
+                      ) : (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Affiché barré pour montrer la réduction
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div>
