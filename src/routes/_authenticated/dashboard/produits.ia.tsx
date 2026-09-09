@@ -578,6 +578,17 @@ function ProduitIaPage() {
       return;
     }
 
+    /* Si la page a DÉJÀ été générée (l'utilisateur est revenu en arrière pour modifier la fiche) :
+       On ne relance JAMAIS la génération IA et on ne consomme aucun crédit supplémentaire.
+       Tous les visuels déjà générés et les textes sont conservés, on applique les nouvelles valeurs. */
+    if (funnel) {
+      setStep(2);
+      toast.success("Modifications appliquées", {
+        description: "Vos visuels et textes générés ont été conservés sans consommer de crédit.",
+      });
+      return;
+    }
+
     if (!unlimited && aiLeft <= 0) {
       setUpsell(true);
       return;
@@ -587,11 +598,6 @@ function ProduitIaPage() {
     setPercent(12);
     setBusy("Rédaction de la page de vente…");
     try {
-      /* Quand le vendeur revient modifier la fiche après une première composition,
-         tous les visuels déjà obtenus (IA ou importés) sont réinjectés dans le
-         nouveau travail. Le serveur ne met alors en file que les emplacements
-         réellement manquants : la rédaction peut changer sans payer ni générer
-         deux fois les mêmes images. */
       const preservedImages = jobId
         ? sectionImages
         : produit
@@ -1230,9 +1236,17 @@ function ProduitIaPage() {
               <button
                 type="button"
                 onClick={() => void compose()}
-                className="btn-3d inline-flex items-center gap-2 rounded-[6px] px-5 py-2.5 text-sm font-semibold"
+                className="btn-3d inline-flex items-center gap-2 rounded-[6px] px-5 py-2.5 text-sm font-semibold cursor-pointer"
               >
-                <Sparkles className="h-4 w-4" /> Générer avec DUKAIO AI
+                {funnel ? (
+                  <>
+                    <Check className="h-4 w-4" /> Appliquer les modifications
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" /> Générer avec DUKAIO AI
+                  </>
+                )}
               </button>
             </div>
           </>
