@@ -6,19 +6,25 @@ import {
   ArrowRight,
   Check,
   CheckCircle2,
+  Coins,
   ExternalLink,
   FileEdit,
   FileText,
+  FolderTree,
   ImagePlus,
   Images,
   Layers,
   Link2,
   Loader2,
+  Package,
   Palette,
+  Percent,
+  Plus,
   RefreshCw,
   Search,
   ShieldCheck,
   Sparkles,
+  Tag,
   Trash2,
   Upload,
   Wand2,
@@ -1060,30 +1066,58 @@ function ProduitIaPage() {
         ) : null}
 
         {step === 1 && draft ? (
-          <>
-            <header className="mt-6 text-center">
-              <p className="text-xs font-semibold uppercase tracking-widest text-primary/70">Étape 2</p>
-              <h1 className="mt-1 text-2xl font-extrabold tracking-tight">Personnalisez votre fiche</h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Tout est modifiable avant la composition de la page
+          <div className="space-y-6 animate-in fade-in-50 duration-500">
+            <header className="mt-4 text-center">
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-0.5 text-xs font-bold text-primary">
+                <Sparkles className="size-3 text-primary" /> ÉTAPE 2 · PERSONNALISATION
+              </div>
+              <h1 className="mt-2 text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
+                Personnalisez votre fiche
+              </h1>
+              <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
+                Tout est modifiable avant la composition de votre tunnel de vente
               </p>
             </header>
 
-            <div className="mt-6 grid gap-4">
-              {/* Images du produit */}
+            <div className="grid gap-5">
+              {/* Galerie des images sélectionnées */}
               {draft.images.length > 0 ? (
-                <Card>
-                  <h2 className="text-sm font-semibold">Images du produit</h2>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    {draft.images.length} image{draft.images.length > 1 ? "s" : ""} sélectionnée{draft.images.length > 1 ? "s" : ""}
-                  </p>
-                  <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5">
+                <Card className="rounded-[10px] p-5 shadow-xs border-border bg-card/90 backdrop-blur-md">
+                  <div className="flex items-center justify-between mb-3 pb-2 border-b border-border">
+                    <div className="flex items-center gap-2">
+                      <Images className="size-4 text-primary" />
+                      <h2 className="text-sm font-bold text-foreground">Images du produit</h2>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-full bg-primary/10 border border-primary/20 px-2.5 py-0.5 text-xs font-bold text-primary">
+                        {draft.images.length} / 5
+                      </span>
+                      {draft.images.length < 5 ? (
+                        <button
+                          type="button"
+                          onClick={() => setPickerOpen(true)}
+                          className="inline-flex items-center gap-1 rounded-[6px] border border-border bg-background px-2.5 py-1 text-xs font-medium text-foreground hover:bg-accent cursor-pointer"
+                        >
+                          <Plus className="size-3 text-primary" /> Ajouter
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 mt-3">
                     {draft.images.map((url, index) => (
-                      <div key={url} className="group relative aspect-square overflow-hidden rounded-lg border border-border">
-                        <img src={url} alt={draft.name} className="h-full w-full object-cover" />
+                      <div
+                        key={url}
+                        className="group relative aspect-square overflow-hidden rounded-[8px] border border-border bg-muted/30 shadow-2xs"
+                      >
+                        <img
+                          src={url}
+                          alt={draft.name}
+                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
                         {index === 0 ? (
-                          <span className="absolute bottom-1 left-1 rounded bg-primary px-1.5 py-0.5 text-[9px] font-bold text-primary-foreground">
-                            Principale
+                          <span className="absolute bottom-1.5 left-1.5 rounded-[4px] bg-primary px-1.5 py-0.5 text-[9px] font-bold text-primary-foreground shadow-xs">
+                            ★ Principale
                           </span>
                         ) : null}
                         <button
@@ -1094,9 +1128,9 @@ function ProduitIaPage() {
                             setDraftField("images", updated);
                             setImages(updated);
                           }}
-                          className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                          className="absolute right-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-full bg-black/70 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-destructive cursor-pointer shadow-xs"
                         >
-                          <Trash2 className="h-3 w-3" />
+                          <Trash2 className="size-3" />
                         </button>
                       </div>
                     ))}
@@ -1104,99 +1138,130 @@ function ProduitIaPage() {
                 </Card>
               ) : null}
 
-              {/* Informations produit */}
-              <Card>
-                <h2 className="text-sm font-semibold mb-4">Informations produit</h2>
+              {/* Formulaire des informations produit */}
+              <Card className="rounded-[10px] p-5 sm:p-6 shadow-xs border-border bg-card/90 backdrop-blur-md">
+                <div className="flex items-center gap-2 mb-4 pb-2 border-b border-border">
+                  <FileEdit className="size-4 text-primary" />
+                  <h2 className="text-sm font-bold text-foreground">Informations de l'offre</h2>
+                </div>
+
                 <div className="grid gap-4">
+                  {/* Nom du produit */}
                   <div>
                     <label className={labelCls} htmlFor="ia-nom">
-                      Nom du produit
+                      Nom du produit <span className="text-destructive">*</span>
                     </label>
-                    <input
-                      id="ia-nom"
-                      className={field}
-                      value={draft.name}
-                      onChange={(event) => setDraftField("name", event.target.value)}
-                    />
+                    <div className="relative">
+                      <input
+                        id="ia-nom"
+                        placeholder="Ex : Brosse Vapeur 3-en-1 pour Chiens & Chats"
+                        className={field}
+                        value={draft.name}
+                        onChange={(event) => setDraftField("name", event.target.value)}
+                      />
+                    </div>
                   </div>
+
+                  {/* Description */}
                   <div>
                     <label className={labelCls} htmlFor="ia-desc">
-                      Description
+                      Description du produit
                     </label>
                     <textarea
                       id="ia-desc"
                       rows={4}
-                      className="w-full resize-none rounded-[6px] border border-border bg-muted/30 p-3.5 text-sm outline-none focus:border-primary/50 focus:bg-background"
+                      placeholder="Présentez les fonctionnalités et bénéfices clés de votre produit…"
+                      className="w-full resize-none rounded-[6px] border border-border bg-muted/30 p-3.5 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/50 focus:bg-background"
                       value={draft.description}
                       onChange={(event) => setDraftField("description", event.target.value)}
                     />
                   </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className={labelCls} htmlFor="ia-prix">
-                        Prix ({currency}) *
-                      </label>
-                      <input
-                        id="ia-prix"
-                        type="number"
-                        min="1"
-                        placeholder="Ex : 15 000"
-                        className={cn(
-                          field,
-                          (draft.price !== undefined && draft.price <= 0) && "border-destructive/60 focus:border-destructive"
+
+                  {/* Tarification & Prix */}
+                  <div className="rounded-[8px] border border-border/80 bg-muted/20 p-4 space-y-3">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <label className={labelCls} htmlFor="ia-prix">
+                          Prix de vente ({currency}) <span className="text-destructive">*</span>
+                        </label>
+                        <input
+                          id="ia-prix"
+                          type="number"
+                          min="1"
+                          placeholder="Ex : 15 000"
+                          className={cn(
+                            field,
+                            draft.price !== undefined && draft.price <= 0 && "border-destructive/60 focus:border-destructive"
+                          )}
+                          value={draft.price === 0 ? "" : draft.price}
+                          onChange={(event) => {
+                            const val = event.target.value === "" ? 0 : Math.max(0, Number(event.target.value) || 0);
+                            setDraftField("price", val);
+                          }}
+                        />
+                        {draft.price <= 0 ? (
+                          <p className="mt-1 text-xs text-destructive font-medium">
+                            Indiquez un prix de vente supérieur à 0.
+                          </p>
+                        ) : (
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Prix final payé par le client
+                          </p>
                         )}
-                        value={draft.price === 0 ? "" : draft.price}
-                        onChange={(event) => {
-                          const val = event.target.value === "" ? 0 : Math.max(0, Number(event.target.value) || 0);
-                          setDraftField("price", val);
-                        }}
-                      />
-                      {draft.price <= 0 ? (
-                        <p className="mt-1 text-xs text-destructive font-medium">
-                          Indiquez un prix de vente supérieur à 0.
-                        </p>
-                      ) : (
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          Prix final payé par le client
-                        </p>
-                      )}
-                    </div>
-                    <div>
-                      <label className={labelCls} htmlFor="ia-compare">
-                        Prix barré (optionnel)
-                      </label>
-                      <input
-                        id="ia-compare"
-                        type="number"
-                        min="1"
-                        placeholder="Ex : 25 000"
-                        className={cn(
-                          field,
-                          draft.compareAt > 0 && draft.compareAt <= draft.price && "border-destructive/60 focus:border-destructive"
+                      </div>
+
+                      <div>
+                        <label className={labelCls} htmlFor="ia-compare">
+                          Prix barré (optionnel)
+                        </label>
+                        <input
+                          id="ia-compare"
+                          type="number"
+                          min="1"
+                          placeholder="Ex : 25 000"
+                          className={cn(
+                            field,
+                            draft.compareAt > 0 && draft.compareAt <= draft.price && "border-destructive/60 focus:border-destructive"
+                          )}
+                          value={draft.compareAt === 0 ? "" : draft.compareAt}
+                          onChange={(event) => {
+                            const val = event.target.value === "" ? 0 : Math.max(0, Number(event.target.value) || 0);
+                            setDraftField("compareAt", val);
+                          }}
+                        />
+                        {draft.compareAt > 0 && draft.compareAt <= draft.price ? (
+                          <p className="mt-1 text-xs text-destructive font-medium">
+                            Le prix barré doit être supérieur au prix ({draft.price} {currency}).
+                          </p>
+                        ) : (
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Affiché barré pour montrer la réduction
+                          </p>
                         )}
-                        value={draft.compareAt === 0 ? "" : draft.compareAt}
-                        onChange={(event) => {
-                          const val = event.target.value === "" ? 0 : Math.max(0, Number(event.target.value) || 0);
-                          setDraftField("compareAt", val);
-                        }}
-                      />
-                      {draft.compareAt > 0 && draft.compareAt <= draft.price ? (
-                        <p className="mt-1 text-xs text-destructive font-medium">
-                          Le prix barré doit être supérieur au prix de vente ({draft.price} {currency}).
-                        </p>
-                      ) : (
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          Affiché barré pour montrer la réduction
-                        </p>
-                      )}
+                      </div>
                     </div>
+
+                    {/* Calculateur de Réduction en direct */}
+                    {draft.compareAt > draft.price && draft.price > 0 ? (
+                      <div className="flex items-center gap-2 rounded-[6px] bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400 animate-in fade-in duration-300">
+                        <CheckCircle2 className="size-4 shrink-0 text-emerald-500" />
+                        <span>
+                          Réduction client affichée :{" "}
+                          <strong>-{Math.round(((draft.compareAt - draft.price) / draft.compareAt) * 100)}%</strong>{" "}
+                          (Économie de {(draft.compareAt - draft.price).toLocaleString("fr-FR")} {currency})
+                        </span>
+                      </div>
+                    ) : null}
                   </div>
+
+                  {/* Catégorie */}
                   <div>
                     <label className={labelCls} htmlFor="ia-cat">
                       Catégorie (optionnel)
                     </label>
                     <input
                       id="ia-cat"
+                      placeholder="Ex : Toilettage Animaux, High-Tech, Maison…"
                       className={field}
                       value={draft.category}
                       onChange={(event) => setDraftField("category", event.target.value)}
@@ -1205,38 +1270,50 @@ function ProduitIaPage() {
                 </div>
               </Card>
 
-              <Card>
-                <label className="flex items-start gap-3 text-sm">
+              {/* Option Studio IA */}
+              <div className="relative overflow-hidden rounded-[10px] border border-primary/30 bg-gradient-to-br from-primary/[0.07] via-primary/[0.02] to-background p-4 sm:p-5 shadow-xs backdrop-blur-md">
+                <label className="flex items-start justify-between gap-4 cursor-pointer">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 flex size-9 items-center justify-center rounded-[8px] border border-primary/20 bg-primary/10 text-primary shrink-0">
+                      <Sparkles className="size-4.5 text-primary" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-foreground">
+                          Générer les 5 visuels studio IA
+                        </span>
+                        <span className="rounded-full bg-primary px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-primary-foreground">
+                          Recommandé
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                        L'IA compose automatiquement 5 visuels haute conversion (Bénéfices, Avant / Après, Comparatif et Appel à l'action). Les photos du mode d'emploi et de la garantie s'importent depuis vos propres images.
+                      </p>
+                    </div>
+                  </div>
                   <input
                     type="checkbox"
                     checked={withVisuals}
                     onChange={(event) => setWithVisuals(event.target.checked)}
-                    className="mt-0.5 h-4 w-4 accent-[var(--color-primary)]"
+                    className="mt-1 size-5 accent-[var(--color-primary)] rounded-[4px] cursor-pointer"
                   />
-                  <span>
-                    <span className="font-medium">Générer les 5 visuels clés</span>
-                    <span className="mt-0.5 block text-muted-foreground">
-                      L'IA crée les visuels de bénéfices, avant / après, comparatif et CTA. Les
-                      photos du mode d'emploi, de l'alternative et de la garantie s'importent
-                      ensuite depuis vos propres images.
-                    </span>
-                  </span>
                 </label>
-              </Card>
+              </div>
             </div>
 
-            <div className="mt-6 flex flex-wrap items-center justify-between gap-2">
+            {/* Barre de navigation d'action */}
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-border">
               <button
                 type="button"
                 onClick={() => setStep(0)}
-                className="inline-flex items-center gap-2 rounded-[6px] border border-border px-4 py-2.5 text-sm font-medium hover:bg-accent"
+                className="inline-flex items-center gap-2 rounded-[6px] border border-border bg-background px-4 py-2.5 text-sm font-medium hover:bg-accent cursor-pointer"
               >
                 <ArrowLeft className="h-4 w-4" /> Retour
               </button>
               <button
                 type="button"
                 onClick={() => void compose()}
-                className="btn-3d inline-flex items-center gap-2 rounded-[6px] px-5 py-2.5 text-sm font-semibold cursor-pointer"
+                className="btn-3d inline-flex items-center gap-2 rounded-[6px] px-6 py-2.5 text-sm font-semibold cursor-pointer"
               >
                 {funnel ? (
                   <>
@@ -1249,7 +1326,7 @@ function ProduitIaPage() {
                 )}
               </button>
             </div>
-          </>
+          </div>
         ) : null}
 
         {working ? (
