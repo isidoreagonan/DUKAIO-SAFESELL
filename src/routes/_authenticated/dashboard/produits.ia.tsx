@@ -777,71 +777,73 @@ function ProduitIaPage() {
                 <span className="text-[#FF9900] font-semibold">Amazon</span>, on s'occupe du reste.
               </p>
               
-              <div className="mt-4 flex max-w-xl mx-auto items-center gap-2">
-                <label className="relative flex-1 block">
+              <div className="mt-4 flex flex-col sm:flex-row max-w-xl mx-auto items-stretch sm:items-center gap-2 px-2 sm:px-0">
+                <label className="relative flex-1 block w-full">
                   <Link2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <input
-                    className={field + " pl-9 h-11"}
+                    className={field + " w-full pl-9 h-11"}
                     placeholder="Entrez l'URL de votre produit AliExpress..."
                     value={productUrl}
                     onChange={(event) => setProductUrl(event.target.value)}
                   />
                 </label>
 
-                {/* Sélecteur de langue avec drapeaux */}
-                <Select value={language} onValueChange={setLanguage}>
-                  <SelectTrigger className="w-[140px] h-11 bg-background hover:bg-muted/50 transition-colors">
-                    <SelectValue placeholder="Langue" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="français">
-                      <div className="flex items-center gap-2">
-                        <img src="https://flagcdn.com/w20/fr.png" alt="Français" width={20} className="rounded-sm" />
-                        <span>Français</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="anglais">
-                      <div className="flex items-center gap-2">
-                        <img src="https://flagcdn.com/w20/gb.png" alt="Anglais" width={20} className="rounded-sm" />
-                        <span>Anglais</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="espagnol">
-                      <div className="flex items-center gap-2">
-                        <img src="https://flagcdn.com/w20/es.png" alt="Espagnol" width={20} className="rounded-sm" />
-                        <span>Espagnol</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="italien">
-                      <div className="flex items-center gap-2">
-                        <img src="https://flagcdn.com/w20/it.png" alt="Italien" width={20} className="rounded-sm" />
-                        <span>Italien</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="allemand">
-                      <div className="flex items-center gap-2">
-                        <img src="https://flagcdn.com/w20/de.png" alt="Allemand" width={20} className="rounded-sm" />
-                        <span>Allemand</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="portugais">
-                      <div className="flex items-center gap-2">
-                        <img src="https://flagcdn.com/w20/pt.png" alt="Portugais" width={20} className="rounded-sm" />
-                        <span>Portugais</span>
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex w-full sm:w-auto items-center gap-2">
+                  {/* Sélecteur de langue avec drapeaux */}
+                  <Select value={language} onValueChange={setLanguage}>
+                    <SelectTrigger className="flex-1 sm:w-[140px] h-11 bg-background hover:bg-muted/50 transition-colors">
+                      <SelectValue placeholder="Langue" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="français">
+                        <div className="flex items-center gap-2">
+                          <img src="https://flagcdn.com/w20/fr.png" alt="Français" width={20} className="rounded-sm" />
+                          <span>Français</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="anglais">
+                        <div className="flex items-center gap-2">
+                          <img src="https://flagcdn.com/w20/gb.png" alt="Anglais" width={20} className="rounded-sm" />
+                          <span>Anglais</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="espagnol">
+                        <div className="flex items-center gap-2">
+                          <img src="https://flagcdn.com/w20/es.png" alt="Espagnol" width={20} className="rounded-sm" />
+                          <span>Espagnol</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="italien">
+                        <div className="flex items-center gap-2">
+                          <img src="https://flagcdn.com/w20/it.png" alt="Italien" width={20} className="rounded-sm" />
+                          <span>Italien</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="allemand">
+                        <div className="flex items-center gap-2">
+                          <img src="https://flagcdn.com/w20/de.png" alt="Allemand" width={20} className="rounded-sm" />
+                          <span>Allemand</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="portugais">
+                        <div className="flex items-center gap-2">
+                          <img src="https://flagcdn.com/w20/pt.png" alt="Portugais" width={20} className="rounded-sm" />
+                          <span>Portugais</span>
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
 
-                <button
-                  type="button"
-                  onClick={() => void analyse()}
-                  disabled={busy !== null || uploading || !productUrl.trim()}
-                  className="btn-3d shrink-0 h-11 inline-flex items-center gap-2 rounded-[6px] px-5 text-sm font-semibold disabled:opacity-60 disabled:grayscale"
-                >
-                  {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                  Générer
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => void analyse()}
+                    disabled={busy !== null || uploading || !productUrl.trim()}
+                    className="btn-3d flex-1 sm:flex-none sm:w-auto h-11 inline-flex justify-center items-center gap-2 rounded-[6px] px-5 text-sm font-semibold disabled:opacity-60 disabled:grayscale"
+                  >
+                    {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                    Générer
+                  </button>
+                </div>
               </div>
               <p className="mt-2 text-xs text-muted-foreground flex items-center justify-center gap-1.5">
                 <Sparkles className="h-3 w-3" />
