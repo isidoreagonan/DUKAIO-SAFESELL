@@ -630,6 +630,7 @@ function ProduitIaPage() {
     setDraft((current) => (current ? { ...current, [key]: value } : current));
 
   const working = step === 2 && busy !== null;
+  const analyzing = step === 0 && busy !== null;
 
   return (
     <DashboardShell>
@@ -647,11 +648,63 @@ function ProduitIaPage() {
           <AiCreditsBadge />
         </div>
 
-        <div className="mt-6">
-          <Stepper step={step} />
-        </div>
+        {!analyzing && !working ? (
+          <div className="mt-6">
+            <Stepper step={step} />
+          </div>
+        ) : null}
 
-        {step === 0 ? (
+        {analyzing ? (
+          <div className="mt-16 text-center">
+            <h1 className="inline-flex items-center gap-2 text-2xl font-extrabold tracking-tight">
+              <Sparkles className="h-6 w-6 text-primary" /> Analyse de votre produit en cours
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Nous récupérons les données et préparons votre boutique optimisée.
+            </p>
+
+            <ul className="mx-auto mt-12 max-w-sm space-y-4 text-left pl-6">
+              <li className="flex items-center gap-3">
+                <span className="flex-shrink-0 flex items-center justify-center w-5 h-5">
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                </span>
+                <span className="text-sm font-medium text-foreground">
+                  Récupération des informations produit
+                </span>
+              </li>
+              <li className="flex items-center gap-3">
+                <span className="flex-shrink-0 flex items-center justify-center w-5 h-5">
+                  <div className="h-3 w-3 rounded-full border-2 border-muted-foreground/30" />
+                </span>
+                <span className="text-sm font-medium text-muted-foreground">
+                  Analyse et préparation des visuels
+                </span>
+              </li>
+              <li className="flex items-center gap-3">
+                <span className="flex-shrink-0 flex items-center justify-center w-5 h-5">
+                  <div className="h-3 w-3 rounded-full border-2 border-muted-foreground/30" />
+                </span>
+                <span className="text-sm font-medium text-muted-foreground">
+                  Préparation de la fiche de vente
+                </span>
+              </li>
+            </ul>
+
+            <div className="mx-auto mt-12 max-w-sm px-6">
+              <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary transition-all duration-[2000ms] animate-pulse"
+                  style={{ width: `60%` }}
+                />
+              </div>
+              <div className="mt-2 text-right text-xs font-semibold text-primary">
+                Analyse en cours...
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {step === 0 && !analyzing ? (
           <>
             <header className="mt-4 text-center">
               <h1 className="text-2xl font-extrabold tracking-tight">Ajoutez une image produit</h1>
