@@ -633,7 +633,7 @@ function ProduitIaPage() {
 
   return (
     <DashboardShell>
-      <div className="mx-auto w-full max-w-2xl pb-10">
+      <div className="mx-auto w-full max-w-2xl pb-4">
         <Link
           to="/dashboard/produits"
           className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
@@ -653,7 +653,7 @@ function ProduitIaPage() {
 
         {step === 0 ? (
           <>
-            <header className="mt-6 text-center">
+            <header className="mt-4 text-center">
               <h1 className="text-2xl font-extrabold tracking-tight">Ajoutez une image produit</h1>
               <p className="mt-1 text-sm text-muted-foreground">
                 Glissez-déposez, collez (Ctrl+V) ou cliquez pour parcourir
@@ -673,7 +673,7 @@ function ProduitIaPage() {
                   void addFiles(Array.from(event.dataTransfer.files));
                 }}
                 className={
-                  "mt-6 grid place-items-center gap-2 rounded-[10px] border border-dashed px-6 py-12 text-center transition-colors " +
+                  "mt-4 grid place-items-center gap-1 rounded-[10px] border border-dashed px-6 py-8 text-center transition-colors " +
                   (dragging ? "border-primary bg-surface-tint" : "border-border bg-muted/20")
                 }
               >
@@ -686,7 +686,7 @@ function ProduitIaPage() {
                 </span>
                 <p className="text-sm font-semibold">Glissez vos images ici</p>
                 <p className="text-sm text-muted-foreground">ou choisissez un produit à importer</p>
-                <div className="mt-4">
+                <div className="mt-3">
                   <button
                     type="button"
                     onClick={() => setPickerOpen(true)}
@@ -695,7 +695,7 @@ function ProduitIaPage() {
                     <Upload className="h-4 w-4" /> Choisir un produit
                   </button>
                 </div>
-                <p className="mt-4 text-xs text-muted-foreground">
+                <p className="mt-3 text-xs text-muted-foreground">
                   JPG, PNG, WebP · Max 5 MB · Jusqu'à {MAX_IMAGES} images
                 </p>
               </div>
@@ -757,7 +757,7 @@ function ProduitIaPage() {
               }}
             />
 
-            <div className="relative my-8 text-center">
+            <div className="relative my-5 text-center">
               <span className="absolute left-0 top-1/2 h-px w-full bg-border" />
               <span className="relative inline-block rounded-full bg-[#E8FFF3] px-3 py-1 text-[11px] font-bold tracking-wide text-[#00A854]">
                 NEW
@@ -777,7 +777,7 @@ function ProduitIaPage() {
                 <span className="text-[#FF9900] font-semibold">Amazon</span>, on s'occupe du reste.
               </p>
               
-              <div className="mt-6 flex max-w-xl mx-auto items-center gap-2">
+              <div className="mt-4 flex max-w-xl mx-auto items-center gap-2">
                 <label className="relative flex-1 block">
                   <Link2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <input
@@ -849,7 +849,7 @@ function ProduitIaPage() {
               </p>
             </div>
 
-            <div className="mt-10 flex justify-center">
+            <div className="mt-6 flex justify-center">
               <button
                 type="button"
                 onClick={() => void analyse()}
