@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ImageIcon, Sparkles, Plus, Pencil, Star, Trash2, Search } from "lucide-react";
-import { useState } from "react";
+import { ImageIcon, Sparkles, Plus, Pencil, Star, Trash2, Search, ArrowRight } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { DashboardShell } from "@/components/dashboard/shell";
 import { AiCreditsBadge, DukaioAiButton } from "@/components/dashboard/ai-credits";
 import { useAiAccess } from "@/lib/entitlements";
 import { useProducts, useDeleteProduct, formatFcfa, type Product } from "@/lib/store";
+import { clearPendingAiDraft, readPendingAiDraft, type PendingAiDraft } from "@/lib/ai-draft";
 import { cn } from "@/lib/utils";
 import { useConfirmDelete } from "@/components/ui/confirm-dialog";
 import { notifyError } from "@/components/ui/notice-dialog";
@@ -67,6 +68,74 @@ const statusLabel: Record<string, { label: string; className: string }> = {
   draft: { label: "Brouillon", className: "bg-muted text-muted-foreground" },
   archived: { label: "Archivé", className: "bg-muted text-muted-foreground" },
 };
+
+function AiDraftRow({
+  draft,
+  onDiscard,
+}: {
+  draft: PendingAiDraft;
+  onDiscard: () => void;
+}) {
+  const confirmDelete = useConfirmDelete();
+  const imageUrl = draft.draft.images?.[0];
+
+  return (
+    <li className="relative grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-[6px] border-2 border-dashed border-primary/40 bg-primary/[0.04] p-3 sm:gap-4 sm:p-4 hover:border-primary/70 transition-all">
+      <span className="relative grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-[6px] bg-surface-tint text-primary border border-primary/20">
+        {imageUrl ? (
+          <img src={imageUrl} alt={draft.draft.name} className="h-full w-full object-cover" />
+        ) : (
+          <ImageIcon className="h-5 w-5" />
+        )}
+        <span className="absolute -bottom-1 -right-1 grid h-5 w-5 place-items-center rounded-full bg-primary text-primary-foreground shadow-sm">
+          <Sparkles className="h-3 w-3" />
+        </span>
+      </span>
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="truncate text-sm font-bold text-foreground">{draft.draft.name}</p>
+          <span className="inline-flex items-center gap-1 shrink-0 rounded-[4px] bg-primary/10 border border-primary/20 px-2 py-0.5 text-[11px] font-bold text-primary">
+            <Sparkles className="h-3 w-3" />
+            Brouillon IA non enregistré
+          </span>
+        </div>
+        <p className="mt-0.5 truncate text-xs text-muted-foreground">
+          {formatFcfa(Number(draft.draft.price ?? 0))} FCFA · Page de vente prête dans l'éditeur
+        </p>
+      </div>
+      <div className="flex shrink-0 items-center gap-2">
+        <Link
+          to="/dashboard/editeur"
+          className="btn-3d flex items-center gap-1.5 rounded-[6px] px-3 py-2 text-xs font-semibold"
+        >
+          <Sparkles className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Reprendre dans l'éditeur</span>
+          <span className="sm:hidden">Reprendre</span>
+          <ArrowRight className="hidden sm:inline h-3.5 w-3.5 ml-0.5" />
+        </Link>
+        <button
+          type="button"
+          aria-label={`Supprimer le brouillon ${draft.draft.name}`}
+          onClick={async () => {
+            if (
+              !(await confirmDelete(
+                `le brouillon IA non enregistré « ${draft.draft.name} »`,
+              ))
+            )
+              return;
+            clearPendingAiDraft();
+            onDiscard();
+            toast.success("Brouillon IA supprimé");
+          }}
+          className="grid h-9 w-9 place-items-center rounded-[6px] border border-border text-muted-foreground hover:border-destructive/40 hover:text-destructive transition-colors"
+          title="Abandonner et supprimer ce brouillon IA"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </div>
+    </li>
+  );
+}
 
 function ProductRow({ product }: { product: Product }) {
   const { allowed: aiAllowed } = useAiAccess();
@@ -144,10 +213,25 @@ function ProduitsPage() {
   const { allowed: aiAllowed } = useAiAccess();
   const { data: products = [], isLoading } = useProducts();
   const [query, setQuery] = useState("");
+  const [pendingAiDraft, setPendingAiDraftState] = useState<PendingAiDraft | null>(() =>
+    readPendingAiDraft(),
+  );
+
+  useEffect(() => {
+    setPendingAiDraftState(readPendingAiDraft());
+    const onFocus = () => setPendingAiDraftState(readPendingAiDraft());
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, []);
+
   const filtered = products.filter((p) =>
     p.name.toLowerCase().includes(query.trim().toLowerCase()),
   );
   const hasProducts = products.length > 0;
+  // Ne montrer la ligne brouillon séparée que si ce n'est pas déjà lié à un produit existant dans la liste
+  const showPendingDraft =
+    pendingAiDraft &&
+    (!pendingAiDraft.productId || !products.some((p) => p.id === pendingAiDraft.productId));
 
   return (
     <DashboardShell>
@@ -157,6 +241,7 @@ function ProduitsPage() {
             Produits{" "}
             <span className="font-display not-italic text-muted-foreground">
               · {products.length}
+              {showPendingDraft ? " (+1 brouillon IA)" : ""}
             </span>
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -176,6 +261,26 @@ function ProduitsPage() {
           </Link>
         </div>
       </header>
+
+      {showPendingDraft ? (
+        <section className="mt-6 rounded-[6px] border border-primary/20 bg-card p-4 sm:p-5 shadow-sm">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-primary">
+              <Sparkles className="h-3.5 w-3.5" />
+              Brouillon IA en attente d'enregistrement
+            </h2>
+            <span className="text-xs text-muted-foreground">
+              Non encore publié dans votre boutique
+            </span>
+          </div>
+          <ul className="space-y-3">
+            <AiDraftRow
+              draft={pendingAiDraft}
+              onDiscard={() => setPendingAiDraftState(null)}
+            />
+          </ul>
+        </section>
+      ) : null}
 
       {hasProducts ? (
         <section className="mt-6 rounded-[6px] border border-border bg-background p-4 sm:p-6">
@@ -267,3 +372,4 @@ function ProduitsPage() {
     </DashboardShell>
   );
 }
+
