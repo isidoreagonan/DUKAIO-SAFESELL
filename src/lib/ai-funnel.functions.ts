@@ -10,6 +10,7 @@ type AnalyzeInput = {
   storeName: string;
   currency: string;
   country: string;
+  language?: string;
 };
 
 /** Analyse les photos et/ou le lien fourni par le vendeur. */
@@ -30,6 +31,7 @@ export const aiAnalyzeSource = createServerFn({ method: "POST" })
       storeName: String(input.storeName ?? "").slice(0, 120),
       currency: String(input.currency ?? "XOF").slice(0, 8),
       country: String(input.country ?? "").slice(0, 80),
+      language: input.language ? String(input.language).slice(0, 20) : undefined,
     };
   })
   .handler(async ({ data, context }) => {
@@ -47,7 +49,7 @@ export const aiAnalyzeSource = createServerFn({ method: "POST" })
     const { analyzeSource } = await import("@/lib/ai-funnel.server");
     return analyzeSource(
       { imageUrls: data.imageUrls, productUrl: data.productUrl },
-      { storeName: data.storeName, currency: data.currency, country: data.country },
+      { storeName: data.storeName, currency: data.currency, country: data.country, language: data.language },
     );
   });
 

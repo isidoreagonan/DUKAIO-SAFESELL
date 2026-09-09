@@ -20,6 +20,8 @@ export type AiJobInput = {
   targets: { target: string; fallback: string }[];
   /** Visuels déjà présents (régénération d'un produit) : conservés tels quels. */
   reused: Record<string, string>;
+  /** Langue de génération de la page. */
+  language?: string;
 };
 
 export type AiJobRow = {
@@ -108,6 +110,7 @@ export async function tickJob(
         currency: job.input.currency,
         priceLabel: job.input.priceLabel,
         comparePriceLabel: job.input.comparePriceLabel,
+        language: job.input.language,
       });
       const byTarget = new Map(funnel.imagePrompts.map((item) => [item.target, item.prompt]));
       const prompts = job.input.targets.map(({ target, fallback }) => ({

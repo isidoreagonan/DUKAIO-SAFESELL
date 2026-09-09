@@ -314,7 +314,7 @@ const strList = (value: unknown): string[] =>
 /** Étape 1 : comprendre le produit à partir des photos et/ou d'un lien. */
 export async function analyzeSource(
   source: AiSource,
-  context: { storeName: string; currency: string; country: string },
+  context: { storeName: string; currency: string; country: string; language?: string },
 ): Promise<ProductDraft> {
   let scraped: ScrapedPage | null = null;
   if (source.productUrl) {
@@ -334,7 +334,7 @@ export async function analyzeSource(
       : "Aucun lien fourni : appuie-toi uniquement sur les photos.",
     "Analyse le produit et renvoie un objet JSON strict :",
     `{"name":"nom commercial court","description":"description de vente en 3 à 5 phrases","price":nombre,"compareAt":nombre,"category":"catégorie","tags":["3 à 6 mots-clés"],"seoTitle":"max 60 caractères","seoDescription":"max 155 caractères","audience":"cible en une phrase","angle":"angle de vente principal en une phrase"}`,
-    "Écris en français, ton commercial crédible, sans superlatif mensonger. price et compareAt exprimés dans la devise de la boutique (0 si inconnu).",
+    `Écris en ${context.language || "français"}, ton commercial crédible, sans superlatif mensonger. price et compareAt exprimés dans la devise de la boutique (0 si inconnu).`,
   ].join("\n\n");
   blocks.push({ type: "text", text: brief });
 
@@ -381,6 +381,7 @@ export async function buildFunnel(input: {
   currency: string;
   priceLabel: string;
   comparePriceLabel: string;
+  language?: string;
 }): Promise<FunnelPayload> {
   const prompt = `Produit : ${input.draft.name}
 Description : ${input.draft.description}
@@ -390,7 +391,7 @@ Boutique : ${input.storeName}. Prix affiché : ${input.priceLabel}${
     input.comparePriceLabel ? ` (au lieu de ${input.comparePriceLabel})` : ""
   }.
 
-Compose une page de vente complète en français. Renvoie exactement cet objet JSON :
+Compose une page de vente complète en ${input.language || "français"}. Renvoie exactement cet objet JSON :
 {
  "palette":{"primaryColor":"#hex","softColor":"#hex","paleColor":"#hex","accentColor":"#hex","inkColor":"#hex"},
  "sections":{

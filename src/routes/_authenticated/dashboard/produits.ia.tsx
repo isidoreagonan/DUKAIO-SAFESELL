@@ -213,6 +213,7 @@ function ProduitIaPage() {
   const [step, setStep] = useState(0);
   const [images, setImages] = useState<string[]>([]);
   const [productUrl, setProductUrl] = useState("");
+  const [language, setLanguage] = useState("français");
   const [pickerOpen, setPickerOpen] = useState(false);
   const [withVisuals, setWithVisuals] = useState(true);
   const [dragging, setDragging] = useState(false);
@@ -379,6 +380,7 @@ function ProduitIaPage() {
           storeName: store.store_name,
           currency,
           country: store.country ?? "",
+          language,
         },
       });
       setDraft(result);
@@ -488,6 +490,7 @@ function ProduitIaPage() {
             fallback: item.fallback(draft.name),
           })),
           reused: preservedImages as Record<string, string>,
+          language,
           ...(produit ? { productId: produit } : {}),
         },
       });
@@ -646,7 +649,7 @@ function ProduitIaPage() {
             <header className="mt-6 text-center">
               <h1 className="text-2xl font-extrabold tracking-tight">Ajoutez une image produit</h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                Glissez-déposez, collez (Ctrl+V) ou choisissez dans votre bibliothèque
+                Glissez-déposez, collez (Ctrl+V) ou cliquez pour parcourir
               </p>
             </header>
 
@@ -667,32 +670,25 @@ function ProduitIaPage() {
                   (dragging ? "border-primary bg-surface-tint" : "border-border bg-muted/20")
                 }
               >
-                <span className="grid h-11 w-11 place-items-center rounded-full bg-surface-tint text-primary">
+                <span className="grid h-11 w-11 place-items-center">
                   {uploading ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
                   ) : (
-                    <Upload className="h-5 w-5" />
+                    <Upload className="h-6 w-6 text-muted-foreground" />
                   )}
                 </span>
                 <p className="text-sm font-semibold">Glissez vos images ici</p>
-                <p className="text-sm text-muted-foreground">ou choisissez un visuel existant</p>
-                <div className="mt-2 flex flex-wrap justify-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => inputRef.current?.click()}
-                    className="btn-3d inline-flex items-center gap-2 rounded-[6px] px-4 py-2.5 text-sm font-semibold"
-                  >
-                    <Upload className="h-4 w-4" /> Choisir un fichier
-                  </button>
+                <p className="text-sm text-muted-foreground">ou choisissez un produit à importer</p>
+                <div className="mt-4">
                   <button
                     type="button"
                     onClick={() => setPickerOpen(true)}
-                    className="inline-flex items-center gap-2 rounded-[6px] border border-border px-4 py-2.5 text-sm font-medium hover:bg-accent"
+                    className="btn-3d inline-flex items-center gap-2 rounded-[6px] px-6 py-2.5 text-sm font-semibold"
                   >
-                    <Images className="h-4 w-4" /> Bibliothèque
+                    <Upload className="h-4 w-4" /> Choisir un produit
                   </button>
                 </div>
-                <p className="mt-2 text-xs text-muted-foreground">
+                <p className="mt-4 text-xs text-muted-foreground">
                   JPG, PNG, WebP · Max 5 MB · Jusqu'à {MAX_IMAGES} images
                 </p>
               </div>
@@ -756,37 +752,69 @@ function ProduitIaPage() {
 
             <div className="relative my-8 text-center">
               <span className="absolute left-0 top-1/2 h-px w-full bg-border" />
-              <span className="relative inline-block rounded-full bg-surface-tint px-3 py-1 text-[11px] font-bold tracking-wide text-primary">
-                OU
+              <span className="relative inline-block rounded-full bg-[#E8FFF3] px-3 py-1 text-[11px] font-bold tracking-wide text-[#00A854]">
+                NEW
               </span>
             </div>
 
             <div className="text-center">
               <h2 className="inline-flex items-center gap-2 text-base font-bold">
-                <Sparkles className="h-4 w-4 text-primary" /> Importer avec{" "}
+                <Sparkles className="h-4 w-4 text-primary" /> Générer avec{" "}
                 <span className="font-display not-italic text-primary">DUKAIO AI</span>
               </h2>
-              <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-                Collez un lien produit AliExpress, Shopify, WooCommerce ou Amazon : on s'occupe du
-                reste.
+              <p className="mx-auto mt-2 max-w-lg text-sm text-muted-foreground leading-relaxed">
+                Transformez un lien produit en page qui convertit. Collez votre lien{" "}
+                <span className="text-[#FF4747] font-semibold">AliExpress</span>,{" "}
+                <span className="text-[#95BF47] font-semibold">Shopify</span>,{" "}
+                <span className="text-[#96588A] font-semibold">WooCommerce</span> ou{" "}
+                <span className="text-[#FF9900] font-semibold">Amazon</span>, on s'occupe du reste.
               </p>
-              <label className="relative mt-4 block">
-                <Link2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  className={field + " pl-9"}
-                  placeholder="Collez un lien produit…"
-                  value={productUrl}
-                  onChange={(event) => setProductUrl(event.target.value)}
-                />
-              </label>
+              
+              <div className="mt-6 flex max-w-md mx-auto items-center gap-2">
+                <label className="relative flex-1 block">
+                  <Link2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    className={field + " pl-9 h-11"}
+                    placeholder="Collez un lien AliExpress, Shopify, WooCommerce ou Amazon..."
+                    value={productUrl}
+                    onChange={(event) => setProductUrl(event.target.value)}
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => void analyse()}
+                  disabled={busy !== null || uploading || (images.length === 0 && !productUrl.trim())}
+                  className="btn-3d shrink-0 h-11 inline-flex items-center gap-2 rounded-[6px] px-5 text-sm font-semibold disabled:opacity-60 disabled:grayscale"
+                >
+                  {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                  Générer
+                </button>
+              </div>
+
+              {/* Sélecteur de langue */}
+              <div className="mt-8 flex justify-center items-center gap-2">
+                 <label className="text-sm font-medium text-muted-foreground">Langue de la boutique :</label>
+                 <select 
+                   value={language}
+                   onChange={(e) => setLanguage(e.target.value)}
+                   className="h-9 rounded-[6px] border border-border bg-background px-3 text-sm font-medium outline-none hover:border-primary/50 focus:border-primary"
+                 >
+                   <option value="français">🇫🇷 Français</option>
+                   <option value="anglais">🇬🇧 Anglais</option>
+                   <option value="espagnol">🇪🇸 Espagnol</option>
+                   <option value="italien">🇮🇹 Italien</option>
+                   <option value="allemand">🇩🇪 Allemand</option>
+                   <option value="portugais">🇵🇹 Portugais</option>
+                 </select>
+              </div>
             </div>
 
-            <div className="mt-8 flex justify-end">
+            <div className="mt-10 flex justify-center">
               <button
                 type="button"
                 onClick={() => void analyse()}
                 disabled={busy !== null || uploading || (images.length === 0 && !productUrl.trim())}
-                className="btn-3d inline-flex items-center gap-2 rounded-[6px] px-5 py-2.5 text-sm font-semibold disabled:opacity-60"
+                className="btn-3d w-[180px] h-11 inline-flex justify-center items-center gap-2 rounded-[6px] px-5 text-sm font-semibold disabled:opacity-60 disabled:grayscale"
               >
                 {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                 Continuer <ArrowRight className="h-4 w-4" />
