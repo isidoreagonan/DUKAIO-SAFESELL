@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { AiCreditsBadge } from "@/components/dashboard/ai-credits";
-import { Eye, Globe, History, Layers, Loader2, MoreHorizontal, PanelLeftClose, PanelLeftOpen, RotateCcw, Save, Sparkles, Upload, X } from "lucide-react";
+import { Eye, Globe, History, Layers, Loader2, MoreHorizontal, RotateCcw, Save, Sparkles, Upload, X } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -70,20 +70,16 @@ function EditeurPage() {
   const [pending, setPending] = useState<"save" | PublishAction | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [helpWelcomeOpen, setHelpWelcomeOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [pinnedExpanded, setPinnedExpanded] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  /* Repliée par défaut pour laisser un maximum d'espace à l'éditeur */
+  const isCollapsed = !pinnedExpanded && !isHovered;
   /* Sur mobile : une seule colonne — on bascule entre sections et aperçu. */
   const [mobileView, setMobileView] = useState<"sections" | "apercu">("sections");
 
-  useEffect(() => {
-    setSidebarCollapsed(localStorage.getItem("dukaio.sidebar") === "collapsed");
-  }, []);
-
-  const toggleSidebar = () =>
-    setSidebarCollapsed((prev) => {
-      const next = !prev;
-      localStorage.setItem("dukaio.sidebar", next ? "collapsed" : "expanded");
-      return next;
-    });
+  const toggleSidebar = () => {
+    setPinnedExpanded((prev) => !prev);
+  };
 
   const catalogue = useMemo(() => products ?? [], [products]);
 
@@ -237,15 +233,17 @@ function EditeurPage() {
     <div className="flex h-screen w-full overflow-hidden bg-background">
       <HelpWelcomeDialog open={helpWelcomeOpen} onClose={() => setHelpWelcomeOpen(false)} />
 
-      {/* Barre de navigation latérale DUKAIO (PC uniquement, repliable) */}
+      {/* Barre de navigation latérale DUKAIO (PC uniquement : compacte par défaut, se déplie au survol ou au clic) */}
       <aside
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
         className={cn(
-          "hidden shrink-0 border-r border-chrome-border bg-chrome transition-[width] duration-200 md:flex flex-col z-30 h-full",
-          sidebarCollapsed ? "w-[76px]" : "w-[260px]",
+          "hidden shrink-0 border-r border-chrome-border bg-chrome transition-[width] duration-300 ease-in-out md:flex flex-col z-30 h-full",
+          isCollapsed ? "w-[76px]" : "w-[260px]",
         )}
       >
         <NavContent
-          collapsed={sidebarCollapsed}
+          collapsed={isCollapsed}
           onToggle={toggleSidebar}
           onOpenHelpWelcome={() => setHelpWelcomeOpen(true)}
         />
@@ -255,19 +253,6 @@ function EditeurPage() {
       <div className="flex min-w-0 flex-1 flex-col h-full overflow-hidden">
         <header className="flex flex-col gap-2 border-b border-border bg-card px-4 py-2.5 sm:flex-row sm:flex-wrap sm:items-center md:grid md:grid-cols-[1fr_auto_1fr] shrink-0">
           <div className="flex min-w-0 items-center gap-2.5 md:justify-self-start">
-            <button
-              type="button"
-              onClick={toggleSidebar}
-              title={sidebarCollapsed ? "Déplier le menu principal" : "Replier le menu principal"}
-              className="hidden md:flex h-8 w-8 shrink-0 items-center justify-center rounded-[6px] border border-border text-muted-foreground transition hover:bg-accent hover:text-foreground"
-            >
-              {sidebarCollapsed ? (
-                <PanelLeftOpen className="h-4 w-4" />
-              ) : (
-                <PanelLeftClose className="h-4 w-4" />
-              )}
-            </button>
-
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5 text-xs font-semibold">
                 <span className="truncate text-sm text-foreground">{store.store_name}</span>

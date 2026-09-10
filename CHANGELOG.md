@@ -7,10 +7,11 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 ## [10/09/2026] - Menu Dashboard Intégré dans l'Éditeur, SEO Complet & Éditeur 3 Panneaux
 
 ### Ajouté & Amélioré
-- **Menu latéral Dashboard (Sidebar DUKAIO) intégré dans l'Éditeur de thème :**
-  - **Barre latérale permanente sur PC :** Le menu de navigation principal du dashboard (Accueil, Produits, Commandes, Marketing, Clients, Analyses, Découverte, Favoris, Paramètres, Déconnexion) est maintenant directement accessible sur la gauche de l'écran dans l'éditeur de thème, sans quitter la page ni devoir chercher un bouton retour.
-  - **Bouton de repli/dépliage (`[|]`) :** Un bouton dédié dans l'en-tête permet de basculer instantanément entre la barre compacte (~76px avec infobulles) et la barre complète (~260px avec libellés), avec persistance de l'état dans `localStorage` (`dukaio.sidebar`).
-  - **Navigation instantanée à 1 clic :** L'utilisateur peut passer d'une section du dashboard à l'éditeur ou quitter l'éditeur d'un simple clic sur n'importe quel élément du menu.
+- **Menu latéral Dashboard fluide & animé (Éditeur de thème) :**
+  - **Suppression du bouton doublon :** Suppression du bouton toggle redondant dans la barre supérieure blanche ; seul le bouton officiel dans la barre latérale DUKAIO est conservé pour un en-tête épuré.
+  - **Repli automatique par défaut :** À l'ouverture de l'éditeur, la barre latérale reste compacte (76px avec icônes uniquement) afin de dédier tout l'espace de travail à l'aperçu et aux réglages de la boutique.
+  - **Animation au survol (Hover Expansion) :** Passer la souris sur la barre de navigation la déplie instantanément et en douceur (`transition-all duration-300`) pour afficher le logo, les libellés et les sous-menus. Elle se replie automatiquement dès que le curseur quitte la zone.
+  - **Épinglage au clic :** Le bouton `[|]` dans la barre latérale permet d'épingler le menu en position ouverte ou repliée selon les besoins du vendeur.
 - **Éditeur de thème 3 panneaux style Shopify (Affichage PC) :**
   - **Panneau gauche (Sections) :** Reste toujours ouvert et accessible avec l'arborescence des sections (Global, Page active, Identité de la boutique, Réglages globaux). La section actuellement active est mise en valeur avec une surbrillance visuelle (`border-primary/50 bg-primary/10`).
   - **Zone centrale (Aperçu direct) :** Rendu de la vitrine en direct avec sélecteur d'appareils (Ordinateur, Tablette, Mobile) et interactivité complète (cliquer sur une section dans l'aperçu l'ouvre directement).
