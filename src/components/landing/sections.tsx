@@ -15,11 +15,11 @@ import {
   FileText,
   Music4,
   Video,
-  Key,
   Package,
   Megaphone,
   BarChart3,
   ShoppingBag,
+  ShieldCheck,
   X,
 } from "lucide-react";
 
