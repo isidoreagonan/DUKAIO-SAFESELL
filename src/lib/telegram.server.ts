@@ -352,22 +352,46 @@ export async function registerAdminTelegramCommands(chatId: string | number): Pr
   }
 }
 
-/** Trouve la boutique liée à un chatId Telegram. */
+const storeLookupCache = new Map<string, { store: any; expiresAt: number }>();
+
+/** Trouve la boutique liée à un chatId Telegram (avec cache ultra-rapide). */
 export async function getStoreByTelegramChatId(chatId: string | number) {
+  const targetId = String(chatId);
+  const now = Date.now();
+  const cached = storeLookupCache.get(targetId);
+  if (cached && cached.expiresAt > now) {
+    return cached.store;
+  }
+
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  
+  // 1. Recherche directe par filtre JSON Supabase
+  const { data: matchedStores } = await supabaseAdmin
+    .from("store_settings")
+    .select("id, store_name, currency, language, subdomain, custom_domain, user_id, theme_config")
+    .contains("theme_config", { telegram: { chatId: targetId } })
+    .limit(1);
+
+  if (matchedStores && matchedStores.length > 0) {
+    storeLookupCache.set(targetId, { store: matchedStores[0], expiresAt: now + 120_000 });
+    return matchedStores[0];
+  }
+
+  // 2. Fallback avec parcours direct
   const { data: stores } = await supabaseAdmin
     .from("store_settings")
     .select("id, store_name, currency, language, subdomain, custom_domain, user_id, theme_config")
-    .order("updated_at", { ascending: false });
+    .order("updated_at", { ascending: false })
+    .limit(100);
 
-  if (!stores) return null;
-  const targetId = String(chatId);
-
-  for (const store of stores) {
-    const theme = (store.theme_config as Record<string, unknown> | null) ?? {};
-    const tg = theme["telegram"] as TelegramStoreConfig | undefined;
-    if (tg && String(tg.chatId) === targetId) {
-      return store;
+  if (stores) {
+    for (const store of stores) {
+      const theme = (store.theme_config as Record<string, unknown> | null) ?? {};
+      const tg = theme["telegram"] as TelegramStoreConfig | undefined;
+      if (tg && String(tg.chatId) === targetId) {
+        storeLookupCache.set(targetId, { store, expiresAt: now + 120_000 });
+        return store;
+      }
     }
   }
 
@@ -380,6 +404,7 @@ export async function linkStoreTelegram(
   chatId: string | number,
   userMeta?: { username?: string; first_name?: string },
 ): Promise<{ ok: boolean; storeName?: string }> {
+  storeLookupCache.delete(String(chatId));
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: store, error } = await supabaseAdmin
     .from("store_settings")
@@ -408,6 +433,7 @@ export async function linkStoreTelegram(
     .update({ theme_config: updatedTheme })
     .eq("id", storeId);
 
+  storeLookupCache.delete(String(chatId));
   return { ok: true, storeName: store.store_name };
 }
 
@@ -422,6 +448,10 @@ export async function unlinkStoreTelegram(storeId: string): Promise<boolean> {
 
   if (!store) return false;
   const currentTheme = (store.theme_config as Record<string, unknown> | null) ?? {};
+  const tg = currentTheme["telegram"] as { chatId?: string } | undefined;
+  if (tg?.chatId) {
+    storeLookupCache.delete(String(tg.chatId));
+  }
   const { telegram: _, ...rest } = currentTheme;
 
   await supabaseAdmin
@@ -1031,7 +1061,8 @@ export async function grantUserAiCredits(
 
 // Cache anti-doublon pour éviter le multi-traitement (webhook retries, concurrence polling, multiples onglets)
 const processedEventsCache = new Map<string, number>();
-const DEDUP_TTL_MS = 15 * 60 * 1000; // 15 minutes
+const inFlightProcessing = new Set<string>();
+const DEDUP_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
 function cleanupDedupCache(): void {
   const now = Date.now();
@@ -1045,10 +1076,12 @@ function cleanupDedupCache(): void {
 export function isTelegramEventProcessed(eventId: string): boolean {
   if (!eventId) return false;
   cleanupDedupCache();
-  if (processedEventsCache.has(eventId)) {
+  if (processedEventsCache.has(eventId) || inFlightProcessing.has(eventId)) {
     return true;
   }
   processedEventsCache.set(eventId, Date.now());
+  inFlightProcessing.add(eventId);
+  setTimeout(() => inFlightProcessing.delete(eventId), 15_000);
   return false;
 }
 
