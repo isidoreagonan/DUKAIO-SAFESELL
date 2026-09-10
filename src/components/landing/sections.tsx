@@ -132,9 +132,9 @@ function ArtOrders() {
 /* Illustration 3 — encaissements / COD */
 function ArtPayments() {
   const rows = [
-    { label: "Commandes livrées", pct: "96%", w: "w-[80%]" },
-    { label: "Payées à la réception", pct: "100%", w: "w-[74%]" },
-    { label: "Zéro impayé en ligne", pct: "0 risque", w: "w-[58%]" },
+    { label: "Commandes livrées", pct: "96%", w: "w-[76%]" },
+    { label: "Payées à la réception", pct: "100%", w: "w-[82%]" },
+    { label: "Zéro impayé en ligne", pct: "0 risque", w: "w-[78%]" },
   ];
   return (
     <div className="relative flex h-56 flex-col justify-center gap-3 px-1">
@@ -144,7 +144,7 @@ function ArtPayments() {
           className="flex items-center gap-2 rounded-full border border-primary/10 bg-card p-1.5 pr-3 shadow-card"
         >
           <span
-            className={`btn-pill flex ${r.w} items-center rounded-full px-3.5 py-2 text-[11px] font-semibold text-white whitespace-nowrap`}
+            className={`btn-pill flex ${r.w} items-center justify-center rounded-full px-3.5 py-2 text-[11px] font-semibold text-white whitespace-nowrap shadow-sm`}
           >
             {r.label}
           </span>
