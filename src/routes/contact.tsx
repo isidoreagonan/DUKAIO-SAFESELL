@@ -5,16 +5,23 @@ import { getIncomingHost } from "@/lib/storefront.functions";
 
 export const Route = createFileRoute("/contact")({
   beforeLoad: async () => {
-    const host =
-      typeof window !== "undefined" ? window.location.host : await getIncomingHost();
-    const handle = storeHandleFromHost(host);
-    if (!handle) throw redirect({ to: "/" });
-    return { handle };
+    try {
+      const host =
+        typeof window !== "undefined" ? window.location.host : await getIncomingHost().catch(() => null);
+      const handle = storeHandleFromHost(host);
+      if (!handle) throw redirect({ to: "/" });
+      return { handle };
+    } catch (e) {
+      if ((e as any)?.isRedirect) throw e;
+      throw redirect({ to: "/" });
+    }
   },
   loader: ({ context }) =>
     context.queryClient.ensureQueryData(storefrontQuery(context.handle)),
-  head: (ctx) => { const context = ctx?.context; const loaderData = ctx?.loaderData as any;
-    const name = loaderData?.store.store_name ?? context.handle;
+  head: (ctx) => {
+    const context = ctx?.context;
+    const loaderData = ctx?.loaderData as any;
+    const name = loaderData?.store?.store_name ?? context?.handle ?? "Boutique";
     const title = `Contactez-nous — ${name}`;
     const description = `Besoin d'aide ou d'informations sur votre commande ? Contactez le service client de ${name}.`;
     return {

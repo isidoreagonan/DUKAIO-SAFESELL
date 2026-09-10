@@ -24,14 +24,24 @@ const description =
 
 export const Route = createFileRoute("/")({
   beforeLoad: async () => {
-    const host =
-      typeof window !== "undefined" ? window.location.host : await getIncomingHost();
-    const handle = storeHandleFromHost(host);
-    return { handle };
+    try {
+      const host =
+        typeof window !== "undefined"
+          ? window.location.host
+          : await getIncomingHost().catch(() => null);
+      const handle = storeHandleFromHost(host);
+      return { handle: handle ?? null };
+    } catch {
+      return { handle: null };
+    }
   },
   loader: async ({ context }) => {
-    if (!context.handle) return null;
-    return context.queryClient.ensureQueryData(storefrontQuery(context.handle));
+    if (!context?.handle) return null;
+    try {
+      return await context.queryClient.ensureQueryData(storefrontQuery(context.handle));
+    } catch {
+      return null;
+    }
   },
   head: (ctx) => {
     const context = ctx?.context;

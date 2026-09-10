@@ -473,8 +473,12 @@ export const submitOrder = createServerFn({ method: "POST" })
 /** Hôte de la requête (SSR) : permet de router boutique.dukaio.com → /s/boutique. */
 export const getIncomingHost = createServerFn({ method: "GET" }).handler(
   async (): Promise<string | null> => {
-    const { getRequestHost } = await import("@tanstack/react-start/server");
-    return getRequestHost({ xForwardedHost: true }) ?? null;
+    try {
+      const { getRequestHost } = await import("@tanstack/react-start/server");
+      return getRequestHost({ xForwardedHost: true }) ?? null;
+    } catch {
+      return null;
+    }
   },
 );
 

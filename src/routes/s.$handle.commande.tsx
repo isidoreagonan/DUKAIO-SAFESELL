@@ -5,17 +5,21 @@ import { getIncomingHost } from "@/lib/storefront.functions";
 
 export const Route = createFileRoute("/s/$handle/commande")({
   beforeLoad: async ({ params }) => {
-    const host =
-      typeof window !== "undefined" ? window.location.host : await getIncomingHost();
-    const handle = storeHandleFromHost(host);
-    if (handle && handle.toLowerCase() === params.handle.toLowerCase()) {
-      throw redirect({ to: "/commande", replace: true });
+    try {
+      const host =
+        typeof window !== "undefined" ? window.location.host : await getIncomingHost().catch(() => null);
+      const handle = storeHandleFromHost(host);
+      if (handle && handle.toLowerCase() === params.handle.toLowerCase()) {
+        throw redirect({ to: "/commande", replace: true });
+      }
+    } catch (e) {
+      if ((e as any)?.isRedirect) throw e;
     }
   },
   loader: ({ context, params }) =>
     context.queryClient.ensureQueryData(storefrontQuery(params.handle)),
   head: ({ params, loaderData }) => {
-    const name = loaderData?.store.store_name ?? params.handle;
+    const name = loaderData?.store?.store_name ?? params.handle;
     const title = `Finaliser ma commande — ${name}`;
     const description = `Renseignez vos coordonnées et validez votre commande chez ${name} : paiement à la livraison, livraison rapide.`;
     return {

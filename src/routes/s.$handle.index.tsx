@@ -5,19 +5,23 @@ import { getIncomingHost } from "@/lib/storefront.functions";
 
 export const Route = createFileRoute("/s/$handle/")({
   beforeLoad: async ({ params }) => {
-    const host =
-      typeof window !== "undefined" ? window.location.host : await getIncomingHost();
-    const handle = storeHandleFromHost(host);
-    if (handle && handle.toLowerCase() === params.handle.toLowerCase()) {
-      throw redirect({ to: "/", replace: true });
+    try {
+      const host =
+        typeof window !== "undefined" ? window.location.host : await getIncomingHost().catch(() => null);
+      const handle = storeHandleFromHost(host);
+      if (handle && handle.toLowerCase() === params.handle.toLowerCase()) {
+        throw redirect({ to: "/", replace: true });
+      }
+    } catch (e) {
+      if ((e as any)?.isRedirect) throw e;
     }
   },
   loader: ({ context, params }) =>
     context.queryClient.ensureQueryData(storefrontQuery(params.handle)),
   head: ({ params, loaderData }) => {
-    const name = loaderData?.store.store_name ?? params.handle;
+    const name = loaderData?.store?.store_name ?? params.handle;
     const description =
-      loaderData?.store.description?.slice(0, 155) ??
+      loaderData?.store?.description?.slice(0, 155) ??
       `Découvrez les produits de ${name} et commandez en ligne en quelques clics.`;
     const title = `${name} — Boutique en ligne`;
     return {

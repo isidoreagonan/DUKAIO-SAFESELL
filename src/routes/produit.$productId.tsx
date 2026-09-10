@@ -5,18 +5,26 @@ import { getIncomingHost } from "@/lib/storefront.functions";
 
 export const Route = createFileRoute("/produit/$productId")({
   beforeLoad: async () => {
-    const host =
-      typeof window !== "undefined" ? window.location.host : await getIncomingHost();
-    const handle = storeHandleFromHost(host);
-    if (!handle) throw redirect({ to: "/" });
-    return { handle };
+    try {
+      const host =
+        typeof window !== "undefined" ? window.location.host : await getIncomingHost().catch(() => null);
+      const handle = storeHandleFromHost(host);
+      if (!handle) throw redirect({ to: "/" });
+      return { handle };
+    } catch (e) {
+      if ((e as any)?.isRedirect) throw e;
+      throw redirect({ to: "/" });
+    }
   },
   loader: ({ context }) =>
     context.queryClient.ensureQueryData(storefrontQuery(context.handle)),
-  head: (ctx) => { const params = ctx.params as any; const context = ctx?.context; const loaderData = ctx?.loaderData as any;
-    const product = loaderData?.products.find((p) => p.id === params.productId);
+  head: (ctx) => {
+    const params = ctx.params as any;
+    const context = ctx?.context;
+    const loaderData = ctx?.loaderData as any;
+    const product = loaderData?.products?.find((p: any) => p.id === params?.productId);
     const store = loaderData?.store;
-    const storeName = store?.store_name ?? context.handle;
+    const storeName = store?.store_name ?? context?.handle ?? "Boutique";
     const title = product ? `${product.name} — ${storeName}` : storeName;
     const description =
       product?.description?.slice(0, 155) ??
