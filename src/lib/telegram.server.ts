@@ -1029,6 +1029,29 @@ export async function grantUserAiCredits(
   );
 }
 
+// Cache anti-doublon pour éviter le multi-traitement (webhook retries, concurrence polling, multiples onglets)
+const processedEventsCache = new Map<string, number>();
+const DEDUP_TTL_MS = 15 * 60 * 1000; // 15 minutes
+
+function cleanupDedupCache(): void {
+  const now = Date.now();
+  for (const [key, ts] of processedEventsCache.entries()) {
+    if (now - ts > DEDUP_TTL_MS) {
+      processedEventsCache.delete(key);
+    }
+  }
+}
+
+export function isTelegramEventProcessed(eventId: string): boolean {
+  if (!eventId) return false;
+  cleanupDedupCache();
+  if (processedEventsCache.has(eventId)) {
+    return true;
+  }
+  processedEventsCache.set(eventId, Date.now());
+  return false;
+}
+
 let lastUpdateOffset = 0;
 let isPolling = false;
 
@@ -1041,6 +1064,11 @@ export async function processTelegramIncomingMessage(message: {
   caption?: string;
   photo?: Array<{ file_id: string; width: number; height: number; file_size?: number }>;
 }): Promise<{ ok: boolean; linked?: boolean; storeName?: string }> {
+  const dedupKey = `msg_${message.chat.id}_${message.message_id}`;
+  if (isTelegramEventProcessed(dedupKey)) {
+    return { ok: true };
+  }
+
   const text = (message.text || message.caption || "").trim();
   const chat = message.chat;
   const from = message.from;
@@ -1217,7 +1245,13 @@ export async function processTelegramCallbackQuery(query: {
   const chatId = query.message?.chat.id;
   if (!chatId || !data) return;
 
-  await answerCallbackQuery(query.id);
+  const dedupKey = `cb_${query.id}`;
+  if (isTelegramEventProcessed(dedupKey)) {
+    return;
+  }
+
+  // Acquittement immédiat pour fermer le loading Telegram et éviter les retries
+  void answerCallbackQuery(query.id);
 
   if (data === "cmd_stats") {
     await sendStoreStats(chatId);
@@ -1236,7 +1270,7 @@ export async function processTelegramCallbackQuery(query: {
   }
 }
 
-/** Interroge l'API Telegram pour traiter les nouveaux messages (polling en continu). */
+/** Interroge l'API Telegram pour traiter les nouveaux messages (polling sécurisé avec commit d'offset et déduplication). */
 export async function pollTelegramUpdates(): Promise<number> {
   if (isPolling) return 0;
   isPolling = true;
@@ -1255,13 +1289,23 @@ export async function pollTelegramUpdates(): Promise<number> {
       }>;
     };
 
-    if (!data.ok || !Array.isArray(data.result)) return 0;
+    if (!data.ok || !Array.isArray(data.result) || data.result.length === 0) {
+      return 0;
+    }
 
     let count = 0;
+    let maxUpdateId = lastUpdateOffset;
+
     for (const update of data.result) {
-      if (update.update_id >= lastUpdateOffset) {
-        lastUpdateOffset = update.update_id + 1;
+      if (update.update_id >= maxUpdateId) {
+        maxUpdateId = update.update_id + 1;
       }
+
+      const updateDedupKey = `upd_${update.update_id}`;
+      if (isTelegramEventProcessed(updateDedupKey)) {
+        continue;
+      }
+
       try {
         if (update.message) {
           await processTelegramIncomingMessage(update.message);
@@ -1274,6 +1318,14 @@ export async function pollTelegramUpdates(): Promise<number> {
         console.error("[Telegram Update Error]", err);
       }
     }
+
+    lastUpdateOffset = maxUpdateId;
+
+    // Confirmer définitivement l'offset auprès des serveurs Telegram pour purger la file
+    fetch(`${TELEGRAM_API}${token}/getUpdates?offset=${maxUpdateId}&limit=1&timeout=0`, {
+      cache: "no-store",
+    }).catch(() => {});
+
     return count;
   } catch (err) {
     console.error("[Telegram Poll Error]", err);

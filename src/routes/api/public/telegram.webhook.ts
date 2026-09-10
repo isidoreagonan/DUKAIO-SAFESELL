@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import {
   processTelegramIncomingMessage,
   processTelegramCallbackQuery,
+  isTelegramEventProcessed,
 } from "@/lib/telegram.server";
 
 type TelegramUpdate = {
@@ -38,6 +39,10 @@ async function handleTelegramUpdate(request: Request): Promise<Response> {
     const update = (await request.json()) as TelegramUpdate;
     if (!update) {
       return Response.json({ ok: true, skipped: true });
+    }
+
+    if (update.update_id && isTelegramEventProcessed(`upd_${update.update_id}`)) {
+      return Response.json({ ok: true, skipped: "duplicate" });
     }
 
     if (update.callback_query) {
