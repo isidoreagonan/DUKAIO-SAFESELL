@@ -128,12 +128,12 @@ function ArtDigital() {
   );
 }
 
-/* Illustration 3 — encaissements */
+/* Illustration 3 — encaissements / COD */
 function ArtPayments() {
   const rows = [
-    { label: "Mobile Money", pct: "62%", w: "w-[62%]" },
-    { label: "Carte bancaire", pct: "24%", w: "w-[54%]" },
-    { label: "Paiement à la livraison", pct: "14%", w: "w-[72%]" },
+    { label: "Commandes livrées", pct: "96%", w: "w-[80%]" },
+    { label: "Payées à la réception", pct: "100%", w: "w-[74%]" },
+    { label: "Zéro impayé en ligne", pct: "0 risque", w: "w-[58%]" },
   ];
   return (
     <div className="relative flex h-56 flex-col justify-center gap-3 px-1">
@@ -143,7 +143,7 @@ function ArtPayments() {
           className="flex items-center gap-2 rounded-full border border-primary/10 bg-card p-1.5 pr-3 shadow-card"
         >
           <span
-            className={`btn-pill flex ${r.w} items-center rounded-full px-3.5 py-2 text-[11px] font-semibold`}
+            className={`btn-pill flex ${r.w} items-center rounded-full px-3.5 py-2 text-[11px] font-semibold text-white whitespace-nowrap`}
           >
             {r.label}
           </span>
@@ -152,7 +152,7 @@ function ArtPayments() {
       ))}
       <p className="mt-2 inline-flex items-center gap-2 text-[11px] font-medium text-muted-foreground">
         <ArrowUpRight className="size-3.5 text-primary" />
-        Versements automatiques chaque semaine
+        Suivi des encaissements en temps réel
       </p>
     </div>
   );
@@ -172,8 +172,8 @@ const pillars = [
   },
   {
     art: ArtPayments,
-    title: "Encaissement",
-    text: "Mobile money, carte bancaire et paiement à la livraison. Vos revenus arrivent directement sur votre compte.",
+    title: "Payé à la livraison",
+    text: "Vos clients commandent en toute confiance et paient à la réception de leur colis. Vous livrez, vous encaissez — sans attente ni frais cachés.",
   },
 ];
 

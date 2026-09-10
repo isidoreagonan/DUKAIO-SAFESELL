@@ -53,18 +53,21 @@ async function discoveryPlanOf(ctx: AuthedContext): Promise<DiscoveryPlanKey> {
 
 
 
-/** Liens signés pour les copies durables des visuels (le stockage est privé). */
+/** Liens publics et permanents pour les copies durables des visuels stockés dans Supabase. */
 async function withSignedMedia(ads: DiscoveryAd[]): Promise<DiscoveryAd[]> {
-  const paths = ads.map((ad) => ad.media_path).filter((value): value is string => !!value);
-  if (paths.length === 0) return ads;
+  if (ads.length === 0) return ads;
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data } = await supabaseAdmin.storage.from("store-media").createSignedUrls(paths, 3600);
-    const map = new Map((data ?? []).map((item) => [item.path ?? "", item.signedUrl]));
-    return ads.map((ad) => ({
-      ...ad,
-      media_signed_url: ad.media_path ? map.get(ad.media_path) ?? null : null,
-    }));
+    return ads.map((ad) => {
+      if (ad.media_path) {
+        const { data } = supabaseAdmin.storage.from("store-media").getPublicUrl(ad.media_path);
+        return {
+          ...ad,
+          media_signed_url: data?.publicUrl ?? null,
+        };
+      }
+      return ad;
+    });
   } catch {
     return ads;
   }
@@ -136,7 +139,8 @@ async function freeSampleDomains(
   let query = ctx.supabase
     .from("discovery_ads")
     .select("landing_domain, traction_score")
-    .not("landing_domain", "is", null);
+    .not("landing_domain", "is", null)
+    .or("media_path.not.is.null,thumbnail_url.not.is.null,image_url.not.is.null");
   if (rules.country) query = query.eq("country", rules.country);
   if (rules.category) query = query.eq("category", rules.category);
   const { data } = await query.order("traction_score", { ascending: false }).limit(2000);
@@ -193,7 +197,10 @@ export const listDiscoveryAds = createServerFn({ method: "POST" })
           ...(rules.country ? { country: rules.country } : {}),
           ...(rules.category ? { category: rules.category } : {}),
         };
-    let query = ctx.supabase.from("discovery_ads").select("*");
+    let query = ctx.supabase
+      .from("discovery_ads")
+      .select("*")
+      .or("media_path.not.is.null,thumbnail_url.not.is.null,image_url.not.is.null");
 
     if (!rules.filters) {
       const domains = await freeSampleDomains(ctx, rules);
@@ -413,7 +420,10 @@ export const listDiscoveryAdvertisers = createServerFn({ method: "POST" })
           ...(rules.country ? { country: rules.country } : {}),
           ...(rules.category ? { category: rules.category } : {}),
         };
-    let query = ctx.supabase.from("discovery_ads").select("*");
+    let query = ctx.supabase
+      .from("discovery_ads")
+      .select("*")
+      .or("media_path.not.is.null,thumbnail_url.not.is.null,image_url.not.is.null");
 
 
     if (data.country) query = query.eq("country", data.country);
@@ -616,7 +626,10 @@ export const listDiscoveryProducts = createServerFn({ method: "POST" })
           ...(rules.country ? { country: rules.country } : {}),
           ...(rules.category ? { category: rules.category } : {}),
         };
-    let query = ctx.supabase.from("discovery_ads").select("*");
+    let query = ctx.supabase
+      .from("discovery_ads")
+      .select("*")
+      .or("media_path.not.is.null,thumbnail_url.not.is.null,image_url.not.is.null");
 
     if (data.category) query = query.eq("category", data.category);
     if (data.country) query = query.eq("country", data.country);

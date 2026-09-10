@@ -593,13 +593,13 @@ export async function runDiscoveryScan(input: ScanInput = {}): Promise<ScanResul
     .in("external_id", ids);
   const known = new Map((existing ?? []).map((row) => [row.external_id, row.media_path]));
 
-  // Les téléchargements sont parallèles et bornés : ils ne retiennent plus
-  // l'enregistrement pendant plusieurs minutes après la fin du robot.
-  const mirrorCandidates = deduped.filter((row) => !known.get(row.external_id)).slice(0, 12);
+  // Les téléchargements sont parallèles : chaque visuel est sauvegardé durablement dans store-media
+  const mirrorCandidates = deduped.filter((row) => !known.get(row.external_id));
   const mirroredPaths = new Map<string, string>();
   await Promise.all(
     mirrorCandidates.map(async (row) => {
-      const path = await mirrorThumbnail(supabaseAdmin as never, row.external_id, row.thumbnail_url);
+      const url = row.thumbnail_url || row.image_url;
+      const path = await mirrorThumbnail(supabaseAdmin as never, row.external_id, url);
       if (path) mirroredPaths.set(row.external_id, path);
     }),
   );
@@ -769,14 +769,33 @@ export async function runGoogleAdsScan(input: ScanInput = {}): Promise<ScanResul
   const ids = rows.map((row) => String(row["external_id"]));
   const { data: existing } = await supabaseAdmin
     .from("discovery_ads")
-    .select("external_id")
+    .select("external_id, media_path")
     .eq("platform", "google_ads")
     .in("external_id", ids);
-  const known = new Set((existing ?? []).map((row) => row.external_id));
+  const known = new Map((existing ?? []).map((row) => [row.external_id, row.media_path]));
+
+  const mirrorCandidates = rows.filter((row) => !known.get(String(row["external_id"])));
+  const mirroredPaths = new Map<string, string>();
+  await Promise.all(
+    mirrorCandidates.map(async (row) => {
+      const extId = String(row["external_id"]);
+      const url = (row["thumbnail_url"] || row["image_url"]) as string | null;
+      const path = await mirrorThumbnail(supabaseAdmin as never, extId, url);
+      if (path) mirroredPaths.set(extId, path);
+    }),
+  );
+
+  const withMedia = rows.map((row) => {
+    const extId = String(row["external_id"]);
+    return {
+      ...row,
+      media_path: known.get(extId) ?? mirroredPaths.get(extId) ?? null,
+    };
+  });
 
   const { error } = await supabaseAdmin
     .from("discovery_ads")
-    .upsert(rows as never, { onConflict: "platform,external_id" });
+    .upsert(withMedia as never, { onConflict: "platform,external_id" });
 
   const inserted = ids.filter((id) => !known.has(id)).length;
   const updated = ids.length - inserted;

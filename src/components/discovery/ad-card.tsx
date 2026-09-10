@@ -12,6 +12,8 @@ export function AdCard({ ad, onAnalyse }: { ad: DiscoveryAd; onAnalyse: (id: str
   const traction = tractionLabel(ad.traction_score);
   const media = adMedia(ad);
 
+  if (broken || !media) return null;
+
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-[6px] border border-border bg-background transition-shadow hover:shadow-[0_12px_28px_-20px_rgba(15,23,42,0.45)]">
       <header className="flex items-center gap-2 px-2.5 py-2 sm:px-3 sm:py-2.5">
