@@ -18,7 +18,7 @@ export const Route = createFileRoute("/_authenticated/dashboard/produits/")({
       {
         name: "description",
         content:
-          "Créez et gérez vos produits physiques et digitaux DUKAIO : génération assistée par IA ou création manuelle.",
+          "Créez et gérez votre catalogue de produits physiques DUKAIO : génération assistée par IA ou création manuelle.",
       },
       { property: "og:title", content: "Produits | DUKAIO" },
       {

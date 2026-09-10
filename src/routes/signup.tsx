@@ -9,19 +9,24 @@ import { AuthShell, Field } from "@/components/landing/auth-shell";
 import { GoogleButton } from "@/components/landing/google-button";
 import { confirmSignup, resendSignupCode, startSignup } from "@/lib/account-auth.functions";
 
-const title = "Créer un compte vendeur DUKAIO";
+const title = "Créer ma boutique en ligne gratuitement | DUKAIO";
 const description =
-  "Ouvrez votre boutique DUKAIO en quelques minutes : vitrine en ligne, produits physiques et digitaux, paiements Mobile Money et suivi des commandes.";
+  "Ouvrez votre boutique en ligne sur DUKAIO en quelques minutes : catalogue produits, commandes WhatsApp & web, livraisons et paiement à la réception (COD).";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({
     meta: [
       { title },
       { name: "description", content: description },
+      { property: "og:site_name", content: "DUKAIO" },
       { property: "og:title", content: title },
       { property: "og:description", content: description },
       { property: "og:type", content: "website" },
+      { property: "og:image", content: "https://dukaio.com/og-image.png" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: title },
+      { name: "twitter:description", content: description },
+      { name: "twitter:image", content: "https://dukaio.com/og-image.png" },
     ],
   }),
   component: SignupPage,

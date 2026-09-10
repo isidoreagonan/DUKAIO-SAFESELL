@@ -14,7 +14,7 @@ import { Footer } from "@/components/landing/social";
 
 const title = "À propos de DUKAIO — L'histoire d'AGONAN Isidore Abraham";
 const description =
-  "Derrière DUKAIO : AGONAN Isidore Abraham, créateur de contenu et e-commerçant, qui construit la plateforme permettant à chaque vendeur africain de vendre ses produits physiques et digitaux en ligne.";
+  "Derrière DUKAIO : AGONAN Isidore Abraham, créateur de contenu et e-commerçant, qui construit la plateforme permettant à chaque vendeur de vendre ses produits physiques en ligne et d'encaisser à la livraison (COD).";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
@@ -40,8 +40,8 @@ export const Route = createFileRoute("/about")({
 
 const stats = [
   { value: "100%", label: "Bootstrapé, sans investisseur" },
-  { value: "2", label: "Types de produits : physique & digital" },
-  { value: "3", label: "Moyens de paiement dès le départ" },
+  { value: "COD", label: "Paiement à la livraison sécurisé" },
+  { value: "0 FCFA", label: "Frais cachés ou abonnement forcé" },
   { value: "1", label: "Objectif : votre première vente" },
 ];
 
@@ -59,7 +59,7 @@ const values = [
   {
     icon: ShieldCheck,
     title: "Confiance sur l'argent",
-    text: "Paiements traçables, commandes claires, revenus lisibles. Un vendeur doit savoir exactement où va chaque franc.",
+    text: "Commandes traçables, livraisons claires, encaissements lisibles. Un vendeur doit savoir exactement où va chaque franc.",
   },
   {
     icon: Sparkles,
@@ -81,13 +81,13 @@ const timeline = [
   },
   {
     year: "Aujourd'hui",
-    title: "Une plateforme, deux types de produits",
-    text: "DUKAIO réunit la boutique, les paiements mobiles, les livraisons et la vente de produits digitaux dans un seul tableau de bord, accessible depuis un téléphone.",
+    title: "Une plateforme pensée pour le COD",
+    text: "DUKAIO réunit la boutique, le catalogue de produits physiques, la gestion des commandes et le suivi des livraisons dans un seul tableau de bord accessible depuis un téléphone.",
   },
   {
     year: "Demain",
     title: "Faire vendre tout un continent",
-    text: "L'ambition : que n'importe quel vendeur, d'une bassine de produits à une marque installée, puisse encaisser en ligne en moins d'une heure.",
+    text: "L'ambition : que n'importe quel vendeur, d'une boutique de quartier à une marque installée, puisse vendre et livrer partout en toute simplicité.",
   },
 ];
 

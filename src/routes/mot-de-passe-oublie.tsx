@@ -8,20 +8,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { AuthShell, Field } from "@/components/landing/auth-shell";
 import { confirmPasswordReset, startPasswordReset } from "@/lib/account-auth.functions";
 
-const title = "Mot de passe oublié | DUKAIO";
+const title = "Réinitialisation du mot de passe | DUKAIO";
 const description =
-  "Recevez un code à 6 chiffres par e-mail pour choisir un nouveau mot de passe et retrouver l'accès à votre boutique DUKAIO.";
+  "Recevez un code sécurisé par e-mail pour choisir un nouveau mot de passe et retrouver l'accès à votre espace vendeur DUKAIO.";
 
 export const Route = createFileRoute("/mot-de-passe-oublie")({
   head: () => ({
     meta: [
       { title },
       { name: "description", content: description },
+      { property: "og:site_name", content: "DUKAIO" },
       { property: "og:title", content: title },
       { property: "og:description", content: description },
       { property: "og:type", content: "website" },
+      { property: "og:image", content: "https://dukaio.com/og-image.png" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "robots", content: "noindex" },
+      { name: "robots", content: "noindex, follow" },
     ],
   }),
   component: ForgotPasswordPage,

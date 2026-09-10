@@ -88,7 +88,7 @@ export function renderBrandEmail({ title, intro, code, body, footNote, cta }: Bl
         <tr><td style="padding:26px 32px 30px 32px;">
           <div style="height:1px;background:#f5e6d8;"></div>
           <p style="margin:16px 0 0 0;font-size:12px;line-height:1.6;color:${MUTED};">
-            DUKAIO — vendez vos produits physiques et digitaux en ligne.<br />© ${year} DUKAIO. Tous droits réservés.
+            DUKAIO — vendez vos produits en ligne et encaissez à la livraison.<br />© ${year} DUKAIO. Tous droits réservés.
           </p>
         </td></tr>
       </table>
@@ -164,7 +164,7 @@ export function renderReceiptEmail(input: {
         <tr><td style="padding:26px 32px 30px 32px;">
           <div style="height:1px;background:#f5e6d8;"></div>
           <p style="margin:16px 0 0 0;font-size:12px;line-height:1.6;color:${MUTED};">
-            DUKAIO — vendez vos produits physiques et digitaux en ligne.<br />© ${year} DUKAIO. Tous droits réservés.
+            DUKAIO — vendez vos produits en ligne et encaissez à la livraison.<br />© ${year} DUKAIO. Tous droits réservés.
           </p>
         </td></tr>
       </table>

@@ -15,19 +15,26 @@ import {
 export const Route = createFileRoute("/tendances/")({
   head: () => ({
     meta: [
-      { title: "Radar publicitaire — produits en tendance | Dukaio" },
+      { title: "Tendances E-commerce & Produits Gagnants | DUKAIO" },
       {
         name: "description",
         content:
-          "Découvrez les publicités et produits qui cartonnent en Afrique francophone : filtres par pays, catégorie, genre et modèle de vente.",
+          "Découvrez les publicités, niches et produits gagnants qui cartonnent en Afrique francophone : filtres par pays, catégorie et paiement à la livraison (COD).",
       },
-      { property: "og:title", content: "Radar publicitaire Dukaio" },
+      { property: "og:site_name", content: "DUKAIO" },
+      { property: "og:title", content: "Tendances E-commerce & Produits Gagnants | DUKAIO" },
       {
         property: "og:description",
-        content: "Les produits et publicités en tendance en Afrique francophone.",
+        content: "Découvrez les publicités, niches et produits gagnants qui cartonnent en Afrique francophone.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://dukaio.com/tendances" },
+      { property: "og:image", content: "https://dukaio.com/og-image.png" },
+      { property: "og:image:secure_url", content: "https://dukaio.com/og-image.png" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Tendances E-commerce & Produits Gagnants | DUKAIO" },
+      { name: "twitter:description", content: "Découvrez les publicités, niches et produits gagnants qui cartonnent en Afrique francophone." },
+      { name: "twitter:image", content: "https://dukaio.com/og-image.png" },
     ],
   }),
   component: TrendsPage,

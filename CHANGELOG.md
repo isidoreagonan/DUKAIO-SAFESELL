@@ -4,20 +4,41 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 > **Note d'environnement :** Ce projet a été initialement généré avec Lovable, mais a été entièrement migré sur Antigravity. Il n'est plus synchronisé avec Lovable Cloud et utilise désormais exclusivement la propre instance Supabase de l'utilisateur.
 
-## [10/09/2026] - Refonte Graphiques Découverte, Rendu des Images & Sécurité des Données
+## [10/09/2026] - SEO Complet, Alignement COD & Image de Partage Réseaux Sociaux
 
 ### Ajouté & Amélioré
+- **Stratégie SEO complète de toutes les pages publiques :**
+  - Configuration individualisée des balises `<title>`, méta-descriptions percutantes, mots-clés stratégiques et tags Open Graph (`og:title`, `og:description`, `og:image`, `og:url`) sur l'ensemble des routes publiques :
+    - `/` (Accueil) : `DUKAIO — Créez votre boutique en ligne et vendez partout`
+    - `/about` (À propos) : `À propos de DUKAIO — L'histoire d'AGONAN Isidore Abraham`
+    - `/tendances` (Découverte) : `Tendances E-commerce & Produits Gagnants | DUKAIO`
+    - `/login` (Connexion) : `Connexion Vendeur — Accédez à votre espace | DUKAIO`
+    - `/signup` (Inscription) : `Créer ma boutique en ligne gratuitement | DUKAIO`
+    - `/mot-de-passe-oublie` : `Réinitialisation du mot de passe | DUKAIO` (`noindex, follow`)
+    - `/rejoindre` : `Rejoindre une équipe de vente | DUKAIO`
+    - `/mentions-legales` : `Mentions légales | DUKAIO`
+    - `/confidentialite` : `Politique de confidentialité & CGU | DUKAIO`
+- **Génération & configuration du Sitemap Google & Robots.txt :**
+  - Création de `public/sitemap.xml` respectant le standard `sitemaps.org` avec toutes les URLs canoniques, priorités (`1.0`, `0.9`, `0.8`, `0.7`, `0.3`), fréquences de rafraîchissement et intégration de l'image de partage. Prêt pour soumission immédiate sur Google Search Console (`sitemap.google.com`).
+  - Création de `public/robots.txt` autorisant l'indexation de toutes les pages publiques et protégeant les espaces privés (`/dashboard/`, `/admin/`, `/api/`).
+- **Alignement 100% Produits Physiques & Paiement à la livraison (COD) :**
+  - **Suppression intégrale** de toutes les mentions de « produits digitaux », « cartes bancaires » et « mobile money » sur l'ensemble des pages publiques, balises SEO, témoignages, FAQ et mentions légales.
+  - **Nouvelle phrase d'accroche SEO & Réseaux Sociaux officielle :**
+    - Titre : `DUKAIO — Vendez vos produits. Encaissez à la livraison.`
+    - Description : `DUKAIO est la plateforme e-commerce tout-en-un pour vendre vos produits physiques : création de boutique en quelques clics, gestion des commandes, suivi des livraisons et encaissement à la réception (COD).`
+  - **Harmonisation complète du Hero et des piliers de la Landing Page :**
+    - Titre Hero : *« Vendez vos produits. Encaissez à la livraison. »*
+    - Piliers : Vitrine connectée, Gestion des commandes & stocks physiques, Encaissements sécurisés à la livraison.
+- **Image officielle de partage réseaux sociaux (`og-image.png`) :**
+  - Déploiement de l'image officielle haute résolution *« Livrez à vos clients partout.png »* (1200x630px) avec dimensions explicites pour garantir un aperçu visuel élégant lors des partages sur WhatsApp, Facebook, Telegram, Twitter, etc.
 - **Photo officielle du fondateur (Page À propos & Landing) :** Intégration de la photo officielle d'**AGONAN Isidore Abraham** (`isidore.png`) sur la page [about.tsx](file:///c:/Users/DELL/Desktop/DUKAIO%20SAFESELL/src/routes/about.tsx) dans la section *« Le fondateur »* avec badge et présentation.
-- **Graphiques d'analyse e-commerce réalistes & ondulés :** Refonte complète du module `src/components/discovery/charts.tsx` avec le composant interactif `StoreAnalyticsCard` et le générateur de trajectoire `generateStoreAnalyticsTimeline`. Fini les lignes plates ou barres isolées : les graphes présentent des courbes fines, douces et réalistes avec des fluctuations naturelles (pics publicitaires, rebonds de vente, creux de saisonnalité).
+- **Graphiques d'analyse e-commerce réalistes & ondulés :** Refonte complète du module `src/components/discovery/charts.tsx` avec le composant interactif `StoreAnalyticsCard` et le générateur de trajectoire `generateStoreAnalyticsTimeline`. Fini les lignes plates ou barres isolées : les graphes présentent des courbes fines, douces et réalistes avec des fluctuations naturelles.
 - **Infobulles interactives complètes (« qui parlent » au survol) :** Survol d'un point de la courbe affichant en temps réel le C.A. estimé (en FCFA avec badge $+/-X\%$), le nombre de commandes, le panier moyen, le trafic web (visites + visiteurs uniques), les pubs actives et le budget média estimé.
-- **Image officielle de partage SEO & Réseaux Sociaux (Open Graph / WhatsApp / Twitter) :** Intégration de l'image officielle de marque (`og-image.png` issue de *« Livrez à vos clients partout.png »*) configurée dans [__root.tsx](file:///c:/Users/DELL/Desktop/DUKAIO%20SAFESELL/src/routes/__root.tsx), [index.tsx](file:///c:/Users/DELL/Desktop/DUKAIO%20SAFESELL/src/routes/index.tsx) et [about.tsx](file:///c:/Users/DELL/Desktop/DUKAIO%20SAFESELL/src/routes/about.tsx) (`og:image`, `og:image:secure_url`, `twitter:image`, 1200x630) pour un affichage instantané lors du partage du lien `dukaio.com` sur WhatsApp, Facebook, Twitter, Telegram, LinkedIn, etc.
-- **Adaptation Landing Page au modèle COD (Cash on Delivery / Paiement à la livraison) :** Mise à jour de la section piliers dans [sections.tsx](file:///c:/Users/DELL/Desktop/DUKAIO%20SAFESELL/src/components/landing/sections.tsx) avec la nouvelle carte *« Payé à la livraison »* (Commandes livrées 96%, Payées à la réception 100%, Zéro impayé en ligne 0 risque, Suivi des encaissements en temps réel).
-- **Sélecteur de métrique dynamique :** Possibilité de basculer la courbe principale en 1 clic entre **C.A.**, **Trafic**, **Commandes** et **Pubs**.
 - **Nettoyage & Stockage permanent Supabase des visuels Découverte :**
-  - Purge complète des anciennes annonces aux liens temporaires Meta CDN expirés (HTTP 403) qui polluaient la grille.
-  - Sauvegarde et réplication automatique de tous les visuels actifs directement dans le stockage Supabase (`store-media/discovery/`) avec URLs publiques permanentes (zéro expiration, temps de chargement instantané).
-  - Élimination totale des encadrés gris « Visuel expiré chez Meta » : le composant [AdCard](file:///c:/Users/DELL/Desktop/DUKAIO%20SAFESELL/src/components/discovery/ad-card.tsx) et les flux ne présentent que des annonces 100% complètes avec leurs créatives visuelles actives.
-- **Sécurisation de l'affichage des images (`SafeImage`) :** Création du composant `SafeImage` ([safe-image.tsx](file:///c:/Users/DELL/Desktop/DUKAIO%20SAFESELL/src/components/discovery/safe-image.tsx)) avec politique `referrerPolicy="no-referrer"` et gestion d'erreur `onError` pour charger les images Meta CDN sans blocage et remplacer les visuels expirés par des avatars et icônes soignés sans icône brisée ([product-table.tsx](file:///c:/Users/DELL/Desktop/DUKAIO%20SAFESELL/src/components/discovery/product-table.tsx), [store-card.tsx](file:///c:/Users/DELL/Desktop/DUKAIO%20SAFESELL/src/components/discovery/store-card.tsx), [ad-card.tsx](file:///c:/Users/DELL/Desktop/DUKAIO%20SAFESELL/src/components/discovery/ad-card.tsx), [analysis-dialog.tsx](file:///c:/Users/DELL/Desktop/DUKAIO%20SAFESELL/src/components/discovery/analysis-dialog.tsx)).
+  - Purge complète des anciennes annonces aux liens temporaires Meta CDN expirés (HTTP 403).
+  - Sauvegarde et réplication automatique de tous les visuels actifs directement dans le stockage Supabase (`store-media/discovery/`) avec URLs publiques permanentes.
+  - Élimination totale des encadrés gris « Visuel expiré chez Meta ».
+- **Sécurisation de l'affichage des images (`SafeImage`) :** Création du composant `SafeImage` ([safe-image.tsx](file:///c:/Users/DELL/Desktop/DUKAIO%20SAFESELL/src/components/discovery/safe-image.tsx)) avec politique `referrerPolicy="no-referrer"` et gestion d'erreur `onError`.
 
 ### Corrigé
 - **Suppression des chiffres aberrants (160+ milliards de FCFA) :** Filtrage strict dans `src/lib/traffic.functions.ts` des domaines de redirection génériques (`fb.me`, `fb.com`, `instagram.com`, `wa.me`, `bit.ly`, `linktr.ee`, `tiktok.com`, etc.) afin que le trafic mondial des géants de la tech ne vienne plus fausser les chiffres d'une boutique.

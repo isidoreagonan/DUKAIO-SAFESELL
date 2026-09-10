@@ -16,12 +16,12 @@ const cases = [
     image: ucMode,
   },
   {
-    word: "Digital",
-    title: "Produits digitaux",
-    text: "Ebooks, formations et fichiers sont livrés automatiquement dès que le paiement est confirmé. Vous vendez même pendant votre sommeil.",
-    statLabel: "Livraison",
-    statValue: "Instantanée",
-    cta: "Télécharger le fichier",
+    word: "Maison",
+    title: "Maison & Électroménager",
+    text: "Présentez vos articles avec photos haute définition, fiches détaillées et options de livraison rapide à domicile avec paiement à la réception.",
+    statLabel: "Panier moyen",
+    statValue: "35 000 FCFA",
+    cta: "Commander · Paiement à la livraison",
     image: ucDigital,
   },
   {

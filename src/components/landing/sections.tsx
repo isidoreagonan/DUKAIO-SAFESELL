@@ -97,9 +97,9 @@ function ArtStore() {
   );
 }
 
-/* Illustration 2 — livraison digitale en orbite */
-function ArtDigital() {
-  const icons = [FileText, Music4, Video, Key, Package, Download];
+/* Illustration 2 — gestion des commandes & stocks */
+function ArtOrders() {
+  const icons = [Package, Boxes, Truck, Sparkles, ShoppingBag, ArrowUpRight];
   return (
     <div className="relative h-56">
       <div
@@ -107,7 +107,7 @@ function ArtDigital() {
         className="absolute left-1/2 top-1/2 size-44 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary/20"
       />
       <Chip className="absolute left-1/2 top-1/2 size-16 -translate-x-1/2 -translate-y-1/2 !rounded-full bg-primary text-primary-foreground shadow-float">
-        <Download className="size-7" />
+        <Package className="size-7" />
       </Chip>
       {icons.map((Icon, i) => {
         const angle = (i / icons.length) * Math.PI * 2 - Math.PI / 2;
@@ -163,12 +163,12 @@ const pillars = [
   {
     art: ArtStore,
     title: "Boutique en ligne",
-    text: "Votre vitrine personnalisée à votre marque, avec panier, promotions et un lien partageable sur WhatsApp, Instagram et TikTok.",
+    text: "Votre vitrine personnalisée à votre marque, avec panier, promotions et un lien unique partageable sur WhatsApp, Facebook, TikTok et Instagram.",
   },
   {
-    art: ArtDigital,
-    title: "Produits digitaux",
-    text: "Ebooks, formations, licences ou fichiers audio : la livraison se déclenche automatiquement dès que le paiement est confirmé.",
+    art: ArtOrders,
+    title: "Gestion des stocks & colis",
+    text: "Fiches produits détaillées, gestion des variantes (tailles, couleurs), suivi des niveaux de stock et bordereaux d'expédition prêts en 1 clic.",
   },
   {
     art: ArtPayments,
@@ -184,7 +184,7 @@ export function Pillars() {
         <SectionTitle
           title="Tout ce qu'il faut pour vendre,"
           accent="sans complexité."
-          subtitle="Catalogue, paiements et livraisons restent synchronisés — que vous vendiez un carton de produits ou un fichier PDF."
+          subtitle="Catalogue de produits physiques, gestion des commandes et suivi des livraisons restent synchronisés en temps réel."
         />
 
         <div className="mt-14 grid gap-6 md:grid-cols-3">
@@ -217,8 +217,8 @@ const steps = [
   },
   {
     n: "03.",
-    title: "Encaissez et livrez",
-    text: "Paiement mobile ou carte, suivi de commande, étiquette de livraison : tout se déclenche automatiquement.",
+    title: "Livrez et encaissez à la réception",
+    text: "Suivi de commande en temps réel, bordereau de livraison et encaissement à la réception du colis en toute confiance.",
   },
   {
     n: "04.",
@@ -350,32 +350,32 @@ const features = [
   {
     icon: Boxes,
     title: "Stocks & variantes",
-    text: "Tailles, couleurs, seuils d'alerte et ruptures gérés automatiquement.",
+    text: "Tailles, couleurs, seuils d'alerte et gestion des ruptures en temps réel.",
   },
   {
-    icon: Download,
-    title: "Livraison digitale",
-    text: "Fichiers protégés, liens à durée limitée, envoi instantané après paiement.",
+    icon: Package,
+    title: "Fiches produits vendeuses",
+    text: "Photos haute résolution, descriptions optimisées et panier d'achat fluide.",
   },
   {
     icon: Truck,
-    title: "Livraisons & retraits",
-    text: "Zones de livraison, tarifs, points de retrait et suivi de colis.",
+    title: "Livraisons & suivi de colis",
+    text: "Zones de livraison, bordereaux d'expédition et suivi des statuts de livraison.",
   },
   {
     icon: Megaphone,
-    title: "Promos & codes",
-    text: "Réductions, ventes flash et codes promo pour relancer vos clients.",
+    title: "Promos & réductions",
+    text: "Ventes flash, réductions automatiques et codes promo pour booster vos ventes.",
   },
   {
     icon: BarChart3,
     title: "Statistiques claires",
-    text: "Marges, sources de trafic et clients fidèles dans un seul écran.",
+    text: "Marges, meilleures ventes et historique des livraisons dans un seul écran.",
   },
   {
-    icon: CreditCard,
-    title: "Paiements sécurisés",
-    text: "Transactions chiffrées et versements réguliers sur votre compte.",
+    icon: ShieldCheck,
+    title: "Encaissement COD garanti",
+    text: "Paiement sécurisé à la réception du colis avec zéro impayé en ligne.",
   },
 ];
 
@@ -410,20 +410,20 @@ export function FeatureGrid() {
 
 const others = [
   "Frais fixes même sans vente",
-  "Produits digitaux non pris en charge",
-  "Paiement mobile absent",
-  "Boutique difficile à personnaliser",
+  "Gestion fastidieuse des commandes sur cahier",
+  "Pas de suivi clair des livraisons",
+  "Boutique difficile à créer et personnaliser",
   "Support par email uniquement",
-  "Statistiques limitées",
+  "Statistiques complexes ou inexistantes",
 ];
 
 const dukaio = [
-  "Commission uniquement quand vous vendez",
-  "Physique et digital dans la même boutique",
-  "Mobile money, carte et paiement à la livraison",
-  "Vitrine à votre image en quelques clics",
-  "Support humain par chat 7j/7",
-  "Tableau de bord complet inclus",
+  "Boutique prête en 5 minutes sans développeur",
+  "Optimisé à 100% pour le paiement à la livraison (COD)",
+  "Gestion centralisée des commandes et des colis",
+  "Vitrine à votre marque avec panier instantané",
+  "Support humain dédié par WhatsApp / chat 7j/7",
+  "Tableau de bord complet avec vos vrais chiffres",
 ];
 
 export function Comparison() {

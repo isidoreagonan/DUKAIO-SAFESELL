@@ -20,19 +20,15 @@ export function Hero() {
         </span>
 
         <h1 className="mt-7 text-[2.6rem] font-extrabold leading-[1.02] tracking-tight sm:text-6xl md:text-[4.5rem]">
-          Vendez vos produits
+          Vendez vos produits.
           <br />
           <span className="font-display font-normal italic text-primary">
-            physiques &amp; digitaux
-          </span>{" "}
-          en
-          <br />
-          quelques minutes
+            Encaissez à la livraison.
+          </span>
         </h1>
 
         <p className="mx-auto mt-6 max-w-xl text-base text-muted-foreground sm:text-lg">
-          DUKAIO réunit votre vitrine, votre catalogue, vos livraisons et vos encaissements Mobile
-          Money dans un seul espace vendeur. Sans code, sans frais cachés.
+          DUKAIO réunit votre vitrine, votre catalogue, vos commandes et vos livraisons avec paiement à la réception (COD) dans un seul espace vendeur. Sans code, sans frais cachés.
         </p>
 
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -54,7 +50,7 @@ export function Hero() {
         <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-medium text-muted-foreground">
           <li className="inline-flex items-center gap-1.5">
             <ShieldCheck className="size-3.5 text-primary" />
-            Paiements sécurisés
+            Paiement à la livraison
           </li>
           <li className="inline-flex items-center gap-1.5">
             <Zap className="size-3.5 text-primary" />

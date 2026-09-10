@@ -11,19 +11,22 @@ export const Route = createFileRoute("/rejoindre")({
   validateSearch: z.object({ token: z.string().optional() }),
   head: () => ({
     meta: [
-      { title: "Rejoindre une équipe | DUKAIO" },
+      { title: "Rejoindre une équipe de vente | DUKAIO" },
       {
         name: "description",
         content:
-          "Acceptez votre invitation et rejoignez l'équipe d'une boutique DUKAIO pour gérer commandes, produits ou livraisons.",
+          "Acceptez votre invitation et rejoignez l'équipe d'une boutique DUKAIO pour gérer les commandes, les produits et les livraisons.",
       },
-      { property: "og:title", content: "Rejoindre une équipe | DUKAIO" },
+      { property: "og:site_name", content: "DUKAIO" },
+      { property: "og:title", content: "Rejoindre une équipe de vente | DUKAIO" },
       {
         property: "og:description",
         content: "Acceptez votre invitation à rejoindre une boutique DUKAIO.",
       },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
+      { property: "og:image", content: "https://dukaio.com/og-image.png" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: "https://dukaio.com/og-image.png" },
     ],
   }),
   component: JoinPage,

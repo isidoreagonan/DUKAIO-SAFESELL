@@ -1,14 +1,9 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
+# Directives d'indexation pour Google et les moteurs de recherche
 User-agent: *
 Allow: /
+Disallow: /dashboard/
+Disallow: /admin/
+Disallow: /api/
+
+# Sitemap officiel DUKAIO
+Sitemap: https://dukaio.com/sitemap.xml

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <!-- Page d'accueil officielle -->
+  <url>
+    <loc>https://dukaio.com/</loc>
+    <lastmod>2026-09-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://dukaio.com/og-image.png</image:loc>
+      <image:title>DUKAIO — Créez votre boutique en ligne et vendez partout</image:title>
+      <image:caption>La plateforme e-commerce tout-en-un pour l'Afrique francophone en paiement à la livraison (COD).</image:caption>
+    </image:image>
+  </url>
+
+  <!-- Page À propos & Histoire du fondateur -->
+  <url>
+    <loc>https://dukaio.com/about</loc>
+    <lastmod>2026-09-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://dukaio.com/isidore.png</image:loc>
+      <image:title>AGONAN Isidore Abraham — Fondateur de DUKAIO</image:title>
+      <image:caption>Histoire et vision du fondateur de la plateforme e-commerce DUKAIO.</image:caption>
+    </image:image>
+  </url>
+
+  <!-- Tendances & Radar des Produits Gagnants -->
+  <url>
+    <loc>https://dukaio.com/tendances</loc>
+    <lastmod>2026-09-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Rejoindre la communauté -->
+  <url>
+    <loc>https://dukaio.com/rejoindre</loc>
+    <lastmod>2026-09-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Inscription Vendeur -->
+  <url>
+    <loc>https://dukaio.com/signup</loc>
+    <lastmod>2026-09-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Connexion Vendeur -->
+  <url>
+    <loc>https://dukaio.com/login</loc>
+    <lastmod>2026-09-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Mentions Légales -->
+  <url>
+    <loc>https://dukaio.com/mentions-legales</loc>
+    <lastmod>2026-09-10</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+
+  <!-- Politique de Confidentialité & CGU -->
+  <url>
+    <loc>https://dukaio.com/confidentialite</loc>
+    <lastmod>2026-09-10</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+</urlset>

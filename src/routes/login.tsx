@@ -7,19 +7,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { AuthShell, Field } from "@/components/landing/auth-shell";
 import { GoogleButton } from "@/components/landing/google-button";
 
-const title = "Connexion à votre espace vendeur DUKAIO";
+const title = "Connexion Vendeur — Accédez à votre espace | DUKAIO";
 const description =
-  "Connectez-vous à DUKAIO pour gérer votre boutique, vos produits physiques et digitaux, vos commandes et vos encaissements Mobile Money.";
+  "Connectez-vous à votre espace DUKAIO pour gérer votre boutique en ligne, votre catalogue de produits, vos commandes et vos livraisons.";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
       { title },
       { name: "description", content: description },
+      { property: "og:site_name", content: "DUKAIO" },
       { property: "og:title", content: title },
       { property: "og:description", content: description },
       { property: "og:type", content: "website" },
+      { property: "og:image", content: "https://dukaio.com/og-image.png" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: title },
+      { name: "twitter:description", content: description },
+      { name: "twitter:image", content: "https://dukaio.com/og-image.png" },
     ],
   }),
   component: LoginPage,

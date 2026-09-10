@@ -3,19 +3,24 @@ import { Building2, Server, Mail, Scale } from "lucide-react";
 
 import { LegalLayout } from "./confidentialite";
 
-const title = "Mentions légales — DUKAIO";
+const title = "Mentions légales | DUKAIO";
 const description =
-  "Mentions légales de DUKAIO : éditeur Dolapo ECOM LLC, directeur de publication AGONAN Isidore, siège social, contact et informations d'hébergement.";
+  "Mentions légales de DUKAIO : éditeur Dolapo ECOM LLC, directeur de publication AGONAN Isidore Abraham, contact et informations d'hébergement.";
 
 export const Route = createFileRoute("/mentions-legales")({
   head: () => ({
     meta: [
       { title },
       { name: "description", content: description },
+      { property: "og:site_name", content: "DUKAIO" },
       { property: "og:title", content: title },
       { property: "og:description", content: description },
       { property: "og:type", content: "website" },
+      { property: "og:image", content: "https://dukaio.com/og-image.png" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: title },
+      { name: "twitter:description", content: description },
+      { name: "twitter:image", content: "https://dukaio.com/og-image.png" },
     ],
   }),
   component: LegalPage,
@@ -50,7 +55,7 @@ const extras = [
   },
   {
     title: "Responsabilité des contenus vendeurs",
-    body: "Chaque vendeur est seul responsable des produits, descriptions, prix et fichiers digitaux publiés dans sa boutique. DUKAIO agit comme prestataire technique et retire tout contenu illicite signalé à contact@dukaio.com.",
+    body: "Chaque vendeur est seul responsable des produits, descriptions, prix, photos et contenus publiés dans sa boutique. DUKAIO agit comme prestataire technique et retire tout contenu illicite signalé à contact@dukaio.com.",
   },
   {
     title: "Signalement d'un abus",

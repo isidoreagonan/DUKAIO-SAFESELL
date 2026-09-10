@@ -8,39 +8,39 @@ import bubble from "@/assets/faq-bubble.png";
 const testimonials = [
   {
     quote:
-      "Avant je notais mes commandes WhatsApp dans un cahier. Aujourd'hui tout arrive dans DUKAIO et je ne perds plus une vente.",
+      "Avant je notais mes commandes WhatsApp dans un cahier. Aujourd'hui tout arrive dans DUKAIO et je ne perds plus une seule vente.",
     name: "Awa Diallo",
     role: "Boutique de cosmétiques",
   },
   {
     quote:
-      "Je vends mes formations en ligne : le client paie et reçoit son fichier tout seul, même la nuit.",
+      "Mes clients commandent directement sur ma boutique en quelques clics. Je prépare les colis et j'encaisse à la livraison sans stress.",
     name: "Kevin Mensah",
-    role: "Créateur de contenu",
+    role: "Maroquinerie & Chaussures",
   },
   {
     quote:
-      "Le paiement mobile a tout changé. Mes clients commandent depuis Instagram et paient en deux minutes.",
+      "Le paiement à la livraison a tout changé. Mes clients ont confiance, ils commandent facilement et règlent dès la réception du colis.",
     name: "Fatou Ndiaye",
     role: "Prêt-à-porter",
   },
   {
     quote:
-      "J'ai enfin des vrais chiffres : je sais quels produits me rapportent et lesquels je dois arrêter.",
+      "J'ai enfin des vrais chiffres : je sais quels produits physiques me rapportent le plus et comment organiser mes stocks.",
     name: "Serge Kouadio",
     role: "Électronique & accessoires",
   },
   {
     quote:
-      "La boutique était en ligne le même jour. Sans développeur, sans budget pub au départ.",
+      "La boutique était en ligne le même jour. Sans développeur, sans frais cachés : j'ai pu lancer mes ventes immédiatement.",
     name: "Linda Okoro",
-    role: "Décoration artisanale",
+    role: "Décoration & Maison",
   },
   {
     quote:
-      "Physique et digital dans la même boutique, c'est exactement ce qui me manquait ailleurs.",
+      "La gestion des commandes et le suivi des livreurs dans un seul tableau de bord, c'est exactement ce qu'il me fallait.",
     name: "Ibrahim Traoré",
-    role: "Librairie & ebooks",
+    role: "Mode & Accessoires",
   },
 ];
 
@@ -79,7 +79,7 @@ export function Testimonials() {
             <span className="font-display font-normal text-primary">DUKAIO.</span>
           </h2>
           <p className="mt-4 text-muted-foreground">
-            Des milliers de commandes traitées chaque mois par des vendeurs comme vous.
+            Des milliers de commandes physiques livrées chaque mois par des vendeurs comme vous.
           </p>
         </div>
 
@@ -105,23 +105,23 @@ export function Testimonials() {
 const faqs = [
   {
     q: "Combien de temps pour ouvrir ma boutique ?",
-    a: "Moins de dix minutes : vous créez votre compte, ajoutez vos premiers produits et votre lien de boutique est immédiatement partageable.",
+    a: "Moins de cinq minutes : vous créez votre compte, ajoutez vos premiers produits physiques avec photos et prix, et votre lien de boutique est immédiatement prêt à être partagé.",
   },
   {
-    q: "Puis-je vendre des produits digitaux ?",
-    a: "Oui. Ebooks, formations, licences ou fichiers audio : DUKAIO livre automatiquement le fichier à l'acheteur dès que le paiement est confirmé.",
+    q: "Comment fonctionne le paiement à la livraison (COD) ?",
+    a: "Vos clients passent commande sur votre vitrine en toute confiance et règlent directement à la réception de leur colis. Vous livrez, vous encaissez sans intermédiaire bloquant et sans risque d'impayé en ligne.",
   },
   {
-    q: "Quels moyens de paiement sont acceptés ?",
-    a: "Mobile money, carte bancaire et paiement à la livraison selon votre zone. Les fonds sont ensuite versés sur votre compte.",
+    q: "Comment gérer mes commandes et mes livraisons ?",
+    a: "Dès qu'un client passe commande, vous recevez une notification instantanée. Vous pouvez imprimer le bordereau, attribuer la livraison et mettre à jour le statut en un clic.",
   },
   {
     q: "Ai-je besoin de compétences techniques ?",
-    a: "Aucune. Tout se fait depuis un tableau de bord simple, sans code, sans hébergement à gérer.",
+    a: "Aucune. Tout se fait depuis un tableau de bord simple et intuitif conçu pour smartphone et ordinateur, sans code ni configuration complexe.",
   },
   {
     q: "Puis-je utiliser mon propre nom de domaine ?",
-    a: "Oui, à partir du plan Vendeur Pro vous connectez votre domaine personnalisé en quelques clics.",
+    a: "Oui, à partir du plan Vendeur Pro vous connectez votre propre nom de domaine personnalisé en quelques clics.",
   },
 ];
 
@@ -140,7 +140,7 @@ export function Faq() {
             <span className="font-display font-normal text-primary">posées</span>
           </h2>
           <p className="mt-4 max-w-xs text-sm text-muted-foreground">
-            Une autre question ? Notre équipe vous répond par chat 7j/7.
+            Une autre question ? Notre équipe vous répond par WhatsApp et chat 7j/7.
           </p>
           <img
             src={bubble}
@@ -203,7 +203,7 @@ export function FinalCta() {
             <span className="font-display font-normal">DUKAIO ?</span>
           </h2>
           <p className="mx-auto mt-4 max-w-lg text-sm text-primary-foreground/85 sm:text-base">
-            Créez votre boutique gratuitement et encaissez votre première commande dès aujourd'hui.
+            Créez votre boutique gratuitement et encaissez vos commandes à la livraison dès aujourd'hui.
           </p>
           <a
             href="#"
@@ -221,7 +221,7 @@ export function FinalCta() {
 const footerCols = [
   {
     title: "Produit",
-    links: ["Fonctionnalités", "Tarifs", "Produits digitaux", "Paiements"],
+    links: ["Fonctionnalités", "Tarifs", "Livraisons COD", "Boutique en ligne"],
   },
   { title: "Ressources", links: ["Centre d'aide", "Guide du vendeur", "Blog", "Statut"] },
   { title: "Entreprise", links: ["À propos", "Contact", "Partenaires", "Mentions légales"] },
@@ -235,8 +235,7 @@ export function Footer() {
           <div>
             <DukaioLogo className="h-8" />
             <p className="mt-4 max-w-xs text-sm text-muted-foreground">
-              La plateforme e-commerce qui permet à chaque vendeur de vendre ses produits physiques
-              et digitaux en ligne.
+              La plateforme e-commerce qui permet à chaque vendeur de vendre ses produits physiques en ligne et d'encaisser à la livraison.
             </p>
           </div>
 

@@ -18,8 +18,9 @@ import { Pricing } from "@/components/landing/pricing";
 import { Testimonials, Faq, FinalCta, Footer } from "@/components/landing/social";
 
 const title = "DUKAIO — Créez votre boutique en ligne et vendez partout";
+const ogTitle = "DUKAIO — Vendez vos produits. Encaissez à la livraison.";
 const description =
-  "DUKAIO est la plateforme e-commerce qui permet à chaque vendeur de vendre ses produits physiques et digitaux : boutique en ligne, paiements mobile et carte, livraisons et statistiques.";
+  "DUKAIO est la plateforme e-commerce tout-en-un pour vendre vos produits physiques : créez votre boutique en ligne en quelques clics, gérez vos commandes, vos livraisons et encaissez à la réception (COD).";
 
 export const Route = createFileRoute("/")({
   beforeLoad: async () => {
@@ -57,7 +58,7 @@ export const Route = createFileRoute("/")({
         { title },
         { name: "description", content: description },
         { property: "og:site_name", content: "DUKAIO" },
-        { property: "og:title", content: title },
+        { property: "og:title", content: ogTitle },
         { property: "og:description", content: description },
         { property: "og:type", content: "website" },
         { property: "og:url", content: "https://dukaio.com" },
@@ -66,9 +67,9 @@ export const Route = createFileRoute("/")({
         { property: "og:image:type", content: "image/png" },
         { property: "og:image:width", content: "1200" },
         { property: "og:image:height", content: "630" },
-        { property: "og:image:alt", content: "DUKAIO — Livrez à vos clients partout" },
+        { property: "og:image:alt", content: "DUKAIO — Vendez vos produits. Encaissez à la livraison." },
         { name: "twitter:card", content: "summary_large_image" },
-        { name: "twitter:title", content: title },
+        { name: "twitter:title", content: ogTitle },
         { name: "twitter:description", content: description },
         { name: "twitter:image", content: "https://dukaio.com/og-image.png" },
       ],

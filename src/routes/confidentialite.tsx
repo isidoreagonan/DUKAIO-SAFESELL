@@ -4,19 +4,24 @@ import { ShieldCheck, ShoppingBag } from "lucide-react";
 import { Nav } from "@/components/landing/nav";
 
 
-const title = "Politique de confidentialité & CGU — DUKAIO";
+const title = "Politique de confidentialité & CGU | DUKAIO";
 const description =
-  "Politique de confidentialité de DUKAIO : collecte, utilisation, protection et conservation de vos données, vos droits, ainsi que les conditions générales d'utilisation (CGU).";
+  "Politique de confidentialité et conditions d'utilisation de DUKAIO : protection des données personnelles, conditions d'utilisation et sécurité des vendeurs.";
 
 export const Route = createFileRoute("/confidentialite")({
   head: () => ({
     meta: [
       { title },
       { name: "description", content: description },
+      { property: "og:site_name", content: "DUKAIO" },
       { property: "og:title", content: title },
       { property: "og:description", content: description },
       { property: "og:type", content: "website" },
+      { property: "og:image", content: "https://dukaio.com/og-image.png" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: title },
+      { name: "twitter:description", content: description },
+      { name: "twitter:image", content: "https://dukaio.com/og-image.png" },
     ],
   }),
   component: PrivacyPage,
@@ -28,7 +33,7 @@ const sections: { id: string; num: string; title: string; body: string[] }[] = [
     num: "01",
     title: "Définitions",
     body: [
-      "« DUKAIO » désigne la plateforme e-commerce éditée par Dolapo ECOM LLC, permettant à un vendeur de créer une boutique en ligne et de vendre des produits physiques et digitaux.",
+      "« DUKAIO » désigne la plateforme e-commerce éditée par Dolapo ECOM LLC, permettant à un vendeur de créer une boutique en ligne et de vendre des produits physiques.",
       "« Vendeur » désigne toute personne physique ou morale qui crée un compte pour vendre sur DUKAIO. « Acheteur » désigne toute personne qui commande un produit via une boutique DUKAIO. « Données personnelles » désigne toute information permettant d'identifier directement ou indirectement une personne physique.",
     ],
   },
@@ -135,15 +140,15 @@ const cgu = [
   },
   {
     title: "Produits autorisés",
-    body: "Sont interdits : produits illégaux, contrefaçons, contenus haineux ou pornographiques, armes, substances réglementées, et fichiers digitaux dont le vendeur ne détient pas les droits.",
+    body: "Sont interdits : produits illégaux, contrefaçons, contenus haineux, armes, substances réglementées ou tout article portant atteinte aux droits de tiers.",
   },
   {
-    title: "Commandes, paiements et versements",
-    body: "DUKAIO encaisse les paiements pour le compte du vendeur via Mobile Money et carte bancaire, puis reverse les fonds selon le calendrier de versement indiqué dans l'espace vendeur, déduction faite des frais applicables.",
+    title: "Commandes et paiements à la livraison",
+    body: "Les commandes passées sur les boutiques DUKAIO sont soumises au modèle de paiement à la réception (COD). Le vendeur gère la livraison et encaisse directement le montant convenu auprès de l'acheteur.",
   },
   {
     title: "Livraison, retours et litiges",
-    body: "Le vendeur est responsable de l'expédition des produits physiques et de la disponibilité des fichiers digitaux. En cas de litige, DUKAIO peut suspendre un versement le temps de l'instruction du dossier.",
+    body: "Le vendeur est seul responsable de l'emballage, de l'expédition conforme des produits physiques et de la relation client lors de la remise du colis.",
   },
   {
     title: "Propriété intellectuelle",

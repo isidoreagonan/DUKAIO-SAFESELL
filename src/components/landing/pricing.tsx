@@ -20,8 +20,8 @@ export function Pricing() {
             <span className="font-display font-normal text-primary">zéro complication.</span>
           </h2>
           <p className="mt-4 text-muted-foreground">
-            La formule Découverte est gratuite pour toujours, tout se fait à la main. Passez à
-            Starter ou Pro pour débloquer l'IA, par mobile money ou carte bancaire, sans engagement.
+            La formule Découverte est gratuite pour toujours. Passez à
+            Starter ou Pro pour débloquer l'IA, les automatisations et les fonctionnalités avancées, sans engagement.
           </p>
 
 
@@ -57,7 +57,7 @@ export function Pricing() {
                     <span
                       className={`flex size-11 items-center justify-center rounded-2xl ${
                         plan.popular
-                          ? "bg-primary text-primary-foreground"
+                           ? "bg-primary text-primary-foreground"
                           : "bg-accent text-primary"
                       }`}
                     >
@@ -85,7 +85,7 @@ export function Pricing() {
                   </div>
                   <p className="mt-1.5 text-sm text-muted-foreground">
                     {price === 0
-                      ? "Gratuit à vie, sans carte bancaire."
+                      ? "Gratuit à vie, sans engagement."
                       : period === "yearly"
                         ? `Vous économisez ${formatFcfa(yearlySaving(key))} FCFA par an.`
                         : "Sans engagement, annulable à tout moment."}
