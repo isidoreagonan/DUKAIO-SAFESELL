@@ -89,11 +89,15 @@ export const getStorefront = createServerFn({ method: "GET" })
     if (!handle) return null;
 
     const sb = publicClient();
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(handle);
+    const filter = isUuid
+      ? `id.eq.${handle},subdomain.eq.${handle},custom_domain.eq.${handle}`
+      : `subdomain.eq.${handle},custom_domain.eq.${handle}`;
+
     const { data: stores, error } = await sb
       .from("store_settings")
       .select("*")
-      .eq("is_published", true)
-      .or(`subdomain.eq.${handle},custom_domain.eq.${handle}`)
+      .or(filter)
       .limit(1);
     if (error) throw error;
     const store = stores?.[0];
@@ -404,6 +408,16 @@ export const submitOrder = createServerFn({ method: "POST" })
         await sendCustomerOrderEmail(data.customer.email, payload).catch((error) =>
           console.error("[order-email:customer]", error),
         );
+      }
+
+      /* Notification Telegram instantanée sur le bot DUKAIO */
+      try {
+        const { sendTelegramOrderNotification } = await import("@/lib/telegram.server");
+        await sendTelegramOrderNotification(store.id, payload).catch((error) =>
+          console.error("[telegram-notification:storefront]", error),
+        );
+      } catch {
+        /* non-bloquant */
       }
     } catch (error) {
       console.error("[order-email]", error);

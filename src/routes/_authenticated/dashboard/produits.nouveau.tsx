@@ -362,17 +362,32 @@ function NouveauProduitPage() {
 
   return (
     <DashboardShell>
-      <Link
-        to="/dashboard/produits"
-        className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="h-4 w-4" /> Retour aux produits
-      </Link>
+      <div className="mx-auto w-full max-w-3xl py-2 sm:py-4">
+        {/* En-tête supérieur avec bouton Retour et statut */}
+        <div className="mb-4 flex items-center justify-between">
+          <Link
+            to="/dashboard/produits"
+            className="inline-flex items-center gap-2 rounded-[6px] border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> Retour aux produits
+          </Link>
 
-      <div className="mx-auto mt-6 w-full max-w-3xl">
-        <Stepper step={step} />
+          <div className="flex items-center gap-2">
+            <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+              {id ? "Mode Modification" : "Nouveau Produit"}
+            </span>
+            <span className="text-xs font-medium text-muted-foreground">
+              Étape {step} sur 4
+            </span>
+          </div>
+        </div>
 
-        <header className="mt-6 text-center">
+        {/* Barre d'étapes (Stepper) */}
+        <div className="rounded-[8px] border border-border bg-background p-4 sm:p-5 shadow-xs">
+          <Stepper step={step} />
+        </div>
+
+        <header className="my-6 text-center">
           <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">
             {step === 1 && (
               <>
@@ -403,7 +418,7 @@ function NouveauProduitPage() {
           </p>
         </header>
 
-        <div className="mt-6 grid gap-4">
+        <div className="grid gap-4">
           {step === 1 && (
             <>
               <Panel>

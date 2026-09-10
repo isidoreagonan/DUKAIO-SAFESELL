@@ -74,6 +74,7 @@ import { Route as ApiPublicBillingLigdicashRouteImport } from './routes/api/publ
 import { Route as ApiPublicBillingPawapayRouteImport } from './routes/api/public/billing.pawapay'
 import { Route as ApiPublicCronDecouverteRouteImport } from './routes/api/public/cron.decouverte'
 import { Route as ApiPublicCronRelancesRouteImport } from './routes/api/public/cron.relances'
+import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram.webhook'
 import { Route as SHandleProduitIndexRouteImport } from './routes/s.$handle.produit.index'
 import { Route as SHandleProduitProductIdRouteImport } from './routes/s.$handle.produit.$productId'
 import { Route as AuthenticatedDashboardMarketingEmailsIdRouteImport } from './routes/_authenticated/dashboard/marketing.emails.$id'
@@ -438,6 +439,12 @@ const ApiPublicCronRelancesRoute = ApiPublicCronRelancesRouteImport.update({
   path: '/api/public/cron/relances',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTelegramWebhookRoute =
+  ApiPublicTelegramWebhookRouteImport.update({
+    id: '/api/public/telegram/webhook',
+    path: '/api/public/telegram/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const SHandleProduitIndexRoute = SHandleProduitIndexRouteImport.update({
   id: '/s/$handle/produit/',
   path: '/s/$handle/produit/',
@@ -531,6 +538,7 @@ export interface FileRoutesByFullPath {
   '/api/public/billing/pawapay': typeof ApiPublicBillingPawapayRoute
   '/api/public/cron/decouverte': typeof ApiPublicCronDecouverteRoute
   '/api/public/cron/relances': typeof ApiPublicCronRelancesRoute
+  '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
   '/s/$handle/produit/$productId': typeof SHandleProduitProductIdRoute
   '/dashboard/clients/': typeof AuthenticatedDashboardClientsIndexRoute
   '/dashboard/commandes/': typeof AuthenticatedDashboardCommandesIndexRoute
@@ -601,6 +609,7 @@ export interface FileRoutesByTo {
   '/api/public/billing/pawapay': typeof ApiPublicBillingPawapayRoute
   '/api/public/cron/decouverte': typeof ApiPublicCronDecouverteRoute
   '/api/public/cron/relances': typeof ApiPublicCronRelancesRoute
+  '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
   '/s/$handle/produit/$productId': typeof SHandleProduitProductIdRoute
   '/dashboard/clients': typeof AuthenticatedDashboardClientsIndexRoute
   '/dashboard/commandes': typeof AuthenticatedDashboardCommandesIndexRoute
@@ -675,6 +684,7 @@ export interface FileRoutesById {
   '/api/public/billing/pawapay': typeof ApiPublicBillingPawapayRoute
   '/api/public/cron/decouverte': typeof ApiPublicCronDecouverteRoute
   '/api/public/cron/relances': typeof ApiPublicCronRelancesRoute
+  '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
   '/s/$handle/produit/$productId': typeof SHandleProduitProductIdRoute
   '/_authenticated/dashboard/clients/': typeof AuthenticatedDashboardClientsIndexRoute
   '/_authenticated/dashboard/commandes/': typeof AuthenticatedDashboardCommandesIndexRoute
@@ -749,6 +759,7 @@ export interface FileRouteTypes {
     | '/api/public/billing/pawapay'
     | '/api/public/cron/decouverte'
     | '/api/public/cron/relances'
+    | '/api/public/telegram/webhook'
     | '/s/$handle/produit/$productId'
     | '/dashboard/clients/'
     | '/dashboard/commandes/'
@@ -819,6 +830,7 @@ export interface FileRouteTypes {
     | '/api/public/billing/pawapay'
     | '/api/public/cron/decouverte'
     | '/api/public/cron/relances'
+    | '/api/public/telegram/webhook'
     | '/s/$handle/produit/$productId'
     | '/dashboard/clients'
     | '/dashboard/commandes'
@@ -892,6 +904,7 @@ export interface FileRouteTypes {
     | '/api/public/billing/pawapay'
     | '/api/public/cron/decouverte'
     | '/api/public/cron/relances'
+    | '/api/public/telegram/webhook'
     | '/s/$handle/produit/$productId'
     | '/_authenticated/dashboard/clients/'
     | '/_authenticated/dashboard/commandes/'
@@ -935,6 +948,7 @@ export interface RootRouteChildren {
   ApiPublicBillingPawapayRoute: typeof ApiPublicBillingPawapayRoute
   ApiPublicCronDecouverteRoute: typeof ApiPublicCronDecouverteRoute
   ApiPublicCronRelancesRoute: typeof ApiPublicCronRelancesRoute
+  ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
   SHandleProduitProductIdRoute: typeof SHandleProduitProductIdRoute
   SHandleProduitIndexRoute: typeof SHandleProduitIndexRoute
   ApiPublicECRidRoute: typeof ApiPublicECRidRoute
@@ -1398,6 +1412,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronRelancesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/telegram/webhook': {
+      id: '/api/public/telegram/webhook'
+      path: '/api/public/telegram/webhook'
+      fullPath: '/api/public/telegram/webhook'
+      preLoaderRoute: typeof ApiPublicTelegramWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/s/$handle/produit/': {
       id: '/s/$handle/produit/'
       path: '/s/$handle/produit'
@@ -1596,6 +1617,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicBillingPawapayRoute: ApiPublicBillingPawapayRoute,
   ApiPublicCronDecouverteRoute: ApiPublicCronDecouverteRoute,
   ApiPublicCronRelancesRoute: ApiPublicCronRelancesRoute,
+  ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
   SHandleProduitProductIdRoute: SHandleProduitProductIdRoute,
   SHandleProduitIndexRoute: SHandleProduitIndexRoute,
   ApiPublicECRidRoute: ApiPublicECRidRoute,

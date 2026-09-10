@@ -25,8 +25,16 @@ import {
   X,
   Smartphone,
   BarChart3,
+  Send,
 } from "lucide-react";
 import { TrackingTab } from "@/components/dashboard/tracking-settings";
+import {
+  getTelegramConnectInfo,
+  testTelegramNotification,
+  toggleTelegramNotifications,
+  disconnectTelegram,
+  syncTelegramUpdates,
+} from "@/lib/telegram.functions";
 
 
 import { toast } from "sonner";
@@ -634,7 +642,212 @@ function RegionalTab() {
           )
         }
       />
+
+      {store ? <TelegramSettingsCard storeId={store.id} themeConfig={store.theme_config} /> : null}
     </Panel>
+  );
+}
+
+function TelegramSettingsCard({ storeId, themeConfig }: { storeId: string; themeConfig?: unknown }) {
+  const queryClient = useQueryClient();
+  const [connecting, setConnecting] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [toggling, setToggling] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
+
+  const getConnectInfo = useServerFn(getTelegramConnectInfo);
+  const sendTest = useServerFn(testTelegramNotification);
+  const toggleNotif = useServerFn(toggleTelegramNotifications);
+  const disconnect = useServerFn(disconnectTelegram);
+  const syncUpdates = useServerFn(syncTelegramUpdates);
+
+  const theme = (themeConfig as Record<string, unknown> | null) ?? {};
+  const telegram = theme["telegram"] as
+    | { chatId?: string; username?: string; firstName?: string; enabled?: boolean }
+    | undefined;
+
+  const isLinked = Boolean(telegram?.chatId);
+  const isEnabled = telegram?.enabled !== false;
+
+  // Polling automatique des messages /start depuis Telegram pour synchronisation en direct
+  useEffect(() => {
+    const checkUpdates = async () => {
+      try {
+        const res = await syncUpdates();
+        if (res?.count && res.count > 0) {
+          void queryClient.invalidateQueries({ queryKey: ["store"] });
+        }
+      } catch {
+        /* ignorer */
+      }
+    };
+
+    void checkUpdates();
+    const interval = setInterval(checkUpdates, 2000);
+    return () => clearInterval(interval);
+  }, [syncUpdates, queryClient]);
+
+  const handleConnect = async () => {
+    setConnecting(true);
+    try {
+      const res = await getConnectInfo({ data: { storeId } });
+      window.open(res.url, "_blank", "noopener,noreferrer");
+      toast.info("Liaison Telegram initiée", {
+        description: "Appuyez sur 'Démarrer' (Start) dans Telegram pour activer les notifications.",
+      });
+    } catch (err) {
+      toast.error("Impossible de générer le lien", { description: (err as Error).message });
+    } finally {
+      setConnecting(false);
+    }
+  };
+
+  const handleTest = async () => {
+    setTesting(true);
+    try {
+      await sendTest({ data: { storeId } });
+      toast.success("Message de test envoyé sur Telegram !");
+    } catch (err) {
+      toast.error("Échec de l'envoi", { description: (err as Error).message });
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  const handleToggle = async (enabled: boolean) => {
+    setToggling(true);
+    try {
+      await toggleNotif({ data: { storeId, enabled } });
+      void queryClient.invalidateQueries({ queryKey: ["store"] });
+      toast.success(enabled ? "Notifications Telegram activées" : "Notifications Telegram mises en pause");
+    } catch (err) {
+      toast.error("Erreur", { description: (err as Error).message });
+    } finally {
+      setToggling(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    setDisconnecting(true);
+    try {
+      await disconnect({ data: { storeId } });
+      void queryClient.invalidateQueries({ queryKey: ["store"] });
+      toast.success("Compte Telegram dissocié");
+    } catch (err) {
+      toast.error("Erreur", { description: (err as Error).message });
+    } finally {
+      setDisconnecting(false);
+    }
+  };
+
+  return (
+    <div className="mt-8 rounded-[8px] border border-border bg-card p-4 sm:p-5 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
+        <div className="flex items-center gap-3">
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-[6px] bg-[#229ED9]/10 text-[#229ED9]">
+            <Send className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-bold text-foreground">Bot Telegram Officiel (@DukaioOfficialBot)</h3>
+              {isLinked ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                  <Check className="h-3 w-3" /> Connecté
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                  Non connecté
+                </span>
+              )}
+            </div>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Recevez instantanément chaque nouvelle commande sur Telegram avec les coordonnées complètes du client.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {isLinked ? (
+        <div className="mt-4 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-[6px] border border-border bg-muted/20 p-3 text-xs">
+            <div>
+              <p className="font-semibold text-foreground">
+                Compte Telegram lié :{" "}
+                <span className="text-[#229ED9]">
+                  {telegram?.username ? `@${telegram.username}` : telegram?.firstName || "Utilisateur Telegram"}
+                </span>
+              </p>
+              <p className="mt-0.5 text-muted-foreground">
+                ID Chat : <code className="text-[11px] font-mono">{telegram?.chatId}</code>
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleTest}
+                disabled={testing}
+                className="btn-3d inline-flex items-center gap-1.5 rounded-[6px] px-3 py-1.5 text-xs font-semibold"
+              >
+                {testing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                Tester la notification
+              </button>
+              <button
+                type="button"
+                onClick={handleDisconnect}
+                disabled={disconnecting}
+                className="grid h-8 px-2.5 place-items-center rounded-[6px] border border-border text-xs text-muted-foreground hover:border-destructive/40 hover:text-destructive transition-colors"
+              >
+                {disconnecting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Déconnecter"}
+              </button>
+            </div>
+          </div>
+
+          <label className="flex items-center gap-3 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              className="h-4 w-4 accent-[var(--primary)]"
+              checked={isEnabled}
+              disabled={toggling}
+              onChange={(e) => void handleToggle(e.target.checked)}
+            />
+            <span>Activer les notifications instantanées de commande sur Telegram</span>
+          </label>
+        </div>
+      ) : (
+        <div className="mt-4 space-y-3">
+          <div className="space-y-1.5 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <Check className="h-3.5 w-3.5 text-primary shrink-0" />
+              <span>Notification push immédiate dès qu'une commande est passée</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Check className="h-3.5 w-3.5 text-primary shrink-0" />
+              <span>Nom, téléphone, ville, adresse et articles commandés</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Check className="h-3.5 w-3.5 text-primary shrink-0" />
+              <span>Bouton direct pour contacter le client sur WhatsApp avec message pré-rempli</span>
+            </div>
+          </div>
+
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={handleConnect}
+              disabled={connecting}
+              className="btn-3d inline-flex items-center gap-2 rounded-[6px] px-4 py-2 text-xs font-bold"
+            >
+              {connecting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+              Connecter mon compte Telegram (1 clic)
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

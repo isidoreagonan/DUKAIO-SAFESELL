@@ -197,6 +197,16 @@ export async function placeOrder(opts: {
         console.error("[order-email:customer]", error),
       );
     }
+
+    /* Notification Telegram instantanée sur le bot DUKAIO */
+    try {
+      const { sendTelegramOrderNotification } = await import("@/lib/telegram.server");
+      await sendTelegramOrderNotification(store.id, payload).catch((error) =>
+        console.error("[telegram-notification:order]", error),
+      );
+    } catch {
+      /* non-bloquant */
+    }
   } catch (error) {
     console.error("[order-email]", error);
   }
