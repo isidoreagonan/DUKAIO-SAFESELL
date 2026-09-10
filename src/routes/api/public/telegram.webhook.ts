@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import {
   processTelegramIncomingMessage,
   processTelegramCallbackQuery,
-  isTelegramEventProcessed,
+  tryClaimTelegramEvent,
 } from "@/lib/telegram.server";
 
 type TelegramUpdate = {
@@ -41,34 +41,32 @@ async function handleTelegramUpdate(request: Request): Promise<Response> {
       return Response.json({ ok: true, skipped: true });
     }
 
-    if (update.update_id && isTelegramEventProcessed(`upd_${update.update_id}`)) {
-      return Response.json({ ok: true, skipped: "duplicate_update" });
+    if (update.update_id) {
+      const claimed = await tryClaimTelegramEvent(`upd_${update.update_id}`);
+      if (!claimed) {
+        return Response.json({ ok: true, skipped: "duplicate_update" });
+      }
     }
 
     if (update.callback_query) {
       const cbKey = `cb_${update.callback_query.id}`;
-      if (isTelegramEventProcessed(cbKey)) {
+      const claimed = await tryClaimTelegramEvent(cbKey);
+      if (!claimed) {
         return Response.json({ ok: true, skipped: "duplicate_callback" });
       }
 
-      // 1. Acknowledgment instantané pour que Telegram coupe le spinner et les retries
-      void processTelegramCallbackQuery(update.callback_query).catch((err) => {
-        console.error("[Telegram Webhook Callback Error]", err);
-      });
-
+      await processTelegramCallbackQuery(update.callback_query);
       return Response.json({ ok: true, handled: "callback_query" });
     }
 
     if (update.message) {
       const msgKey = `msg_${update.message.chat.id}_${update.message.message_id}`;
-      if (isTelegramEventProcessed(msgKey)) {
+      const claimed = await tryClaimTelegramEvent(msgKey);
+      if (!claimed) {
         return Response.json({ ok: true, skipped: "duplicate_message" });
       }
 
-      void processTelegramIncomingMessage(update.message).catch((err) => {
-        console.error("[Telegram Webhook Message Error]", err);
-      });
-
+      await processTelegramIncomingMessage(update.message);
       return Response.json({ ok: true, handled: "message" });
     }
 

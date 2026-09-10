@@ -1107,6 +1107,49 @@ export function isTelegramEventProcessed(eventId: string): boolean {
   return false;
 }
 
+/**
+ * Verrou atomique distribué dans Supabase : garantit qu'un événement n'est traité
+ * qu'UNE SEULE FOIS dans tout le cluster Vercel/Serverless (même avec plusieurs containers).
+ */
+export async function tryClaimTelegramEvent(eventId: string): Promise<boolean> {
+  if (!eventId) return false;
+
+  // 1. Filtre ultra-rapide en mémoire locale
+  if (isTelegramEventProcessed(eventId)) {
+    return false;
+  }
+
+  // 2. Filtre persistant dans Supabase pour synchroniser toutes les instances Vercel
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const threshold = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+
+    const { data: existing } = await supabaseAdmin
+      .from("discovery_scans")
+      .select("id")
+      .eq("source", "tg_event")
+      .eq("keyword", eventId)
+      .gte("created_at", threshold)
+      .limit(1);
+
+    if (existing && existing.length > 0) {
+      return false; // Déjà pris en charge par un autre container !
+    }
+
+    await supabaseAdmin
+      .from("discovery_scans")
+      .insert({
+        source: "tg_event",
+        keyword: eventId,
+      });
+
+    return true;
+  } catch {
+    // Si Supabase est inaccessible temporairement, fallback sur le filtre mémoire
+    return true;
+  }
+}
+
 let lastUpdateOffset = 0;
 let isPolling = false;
 
