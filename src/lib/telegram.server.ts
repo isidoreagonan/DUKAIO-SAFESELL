@@ -1162,11 +1162,6 @@ export async function processTelegramIncomingMessage(message: {
   caption?: string;
   photo?: Array<{ file_id: string; width: number; height: number; file_size?: number }>;
 }): Promise<{ ok: boolean; linked?: boolean; storeName?: string }> {
-  const dedupKey = `msg_${message.chat.id}_${message.message_id}`;
-  if (isTelegramEventProcessed(dedupKey)) {
-    return { ok: true };
-  }
-
   const text = (message.text || message.caption || "").trim();
   const chat = message.chat;
   const from = message.from;
@@ -1342,11 +1337,6 @@ export async function processTelegramCallbackQuery(query: {
   const data = query.data;
   const chatId = query.message?.chat.id;
   if (!chatId || !data) return;
-
-  const dedupKey = `cb_${query.id}`;
-  if (isTelegramEventProcessed(dedupKey)) {
-    return;
-  }
 
   // Acquittement immédiat pour fermer le loading Telegram et éviter les retries
   void answerCallbackQuery(query.id);

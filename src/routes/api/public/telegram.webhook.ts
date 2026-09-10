@@ -82,7 +82,17 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
   server: {
     handlers: {
       POST: ({ request }) => handleTelegramUpdate(request),
-      GET: () => Response.json({ ok: true, bot: "DukaioOfficialBot", status: "active" }),
+      GET: async () => {
+        try {
+          const token = process.env["TELEGRAM_BOT_TOKEN"];
+          if (!token) return Response.json({ ok: false, error: "TELEGRAM_BOT_TOKEN non configuré sur ce serveur." });
+          const res = await fetch(`https://api.telegram.org/bot${token}/getWebhookInfo`);
+          const info = await res.json();
+          return Response.json({ ok: true, bot: "DukaioOfficialBot", status: "active", webhookInfo: info });
+        } catch (e) {
+          return Response.json({ ok: false, error: (e as Error).message });
+        }
+      },
     },
   },
 });
