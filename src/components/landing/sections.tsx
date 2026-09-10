@@ -20,6 +20,7 @@ import {
   BarChart3,
   ShoppingBag,
   ShieldCheck,
+  Sparkles,
   X,
 } from "lucide-react";
 
