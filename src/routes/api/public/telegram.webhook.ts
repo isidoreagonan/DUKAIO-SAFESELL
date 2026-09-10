@@ -86,9 +86,26 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
         try {
           const token = process.env["TELEGRAM_BOT_TOKEN"];
           if (!token) return Response.json({ ok: false, error: "TELEGRAM_BOT_TOKEN non configuré sur ce serveur." });
-          const res = await fetch(`https://api.telegram.org/bot${token}/getWebhookInfo`);
-          const info = await res.json();
-          return Response.json({ ok: true, bot: "DukaioOfficialBot", status: "active", webhookInfo: info });
+
+          const webhookUrl = "https://dukaio.com/api/public/telegram/webhook";
+          
+          // 1. Configurer officiellement le Webhook Telegram sur dukaio.com
+          const setRes = await fetch(
+            `https://api.telegram.org/bot${token}/setWebhook?url=${encodeURIComponent(webhookUrl)}&drop_pending_updates=true&allowed_updates=["message","callback_query"]`,
+          );
+          const setResult = await setRes.json();
+
+          // 2. Vérifier les informations du Webhook
+          const infoRes = await fetch(`https://api.telegram.org/bot${token}/getWebhookInfo`);
+          const info = await infoRes.json();
+
+          return Response.json({
+            ok: true,
+            bot: "DukaioOfficialBot",
+            status: "active",
+            setWebhookResult: setResult,
+            webhookInfo: info,
+          });
         } catch (e) {
           return Response.json({ ok: false, error: (e as Error).message });
         }
