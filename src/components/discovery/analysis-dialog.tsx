@@ -31,7 +31,14 @@ import {
   type DiscoveryAd,
 } from "@/lib/discovery";
 import { SourceBadge, SourceHeaderBadge } from "@/components/discovery/meta-badge";
-import { Bars, LineChart, Sparkline } from "@/components/discovery/charts";
+import {
+  Bars,
+  LineChart,
+  Sparkline,
+  StoreAnalyticsCard,
+  generateStoreAnalyticsTimeline,
+} from "@/components/discovery/charts";
+import { SafeImage } from "@/components/discovery/safe-image";
 import { cn } from "@/lib/utils";
 
 type Tab = "apercu" | "produits" | "creatives" | "annonceur";
@@ -143,23 +150,52 @@ export function AdAnalysisDialog({
     !!adId && (tab === "produits" || tab === "apercu") && !(data?.store?.products_count ?? 0),
   );
   const traffic = useDomainTraffic(data?.ad.landing_domain);
-
-  if (!adId) return null;
-
   const ad = data?.ad;
   const stats = data?.stats;
   const store = (data?.store?.products_count ? data.store : (liveStore.data ?? data?.store)) ?? null;
   const products = (store?.products ?? []) as { title?: string; price?: number; image?: string | null; url?: string | null }[];
-  const estimate =
-    store && stats
-      ? estimateRevenue({
-          avgPrice: store.avg_price,
-          currency: store.currency,
-          activeAds: stats.activeAds,
-          avgDays: ad?.active_days ?? 30,
-          followers: stats.followers,
-        })
-      : null;
+
+  const estimate = useMemo(() => {
+    if (!store || !stats) return null;
+    return estimateRevenue({
+      avgPrice: store.avg_price,
+      currency: store.currency,
+      activeAds: stats.activeAds,
+      avgDays: ad?.active_days ?? 30,
+      followers: stats.followers,
+    });
+  }, [store, stats, ad?.active_days]);
+
+  const analyticsTimeline = useMemo(() => {
+    if (!ad || !stats) return [];
+    return generateStoreAnalyticsTimeline({
+      seedKey: `${ad.id}-${ad.landing_domain || ""}-${ad.page_name || ""}`,
+      baseMonthlyVisits: traffic.data?.monthlyVisits ?? null,
+      estimate: estimate,
+      activeAds: stats.activeAds,
+      totalAds: stats.totalAds,
+      tractionScore: ad.traction_score,
+      followers: stats.followers,
+      activeDays: ad.active_days,
+      monthsCount: 10,
+    });
+  }, [ad, stats, traffic.data?.monthlyVisits, estimate]);
+
+  const trafficHistory = useMemo(() => {
+    if (analyticsTimeline.length > 0) {
+      return analyticsTimeline.map((p) => ({ month: p.month, total: p.visits }));
+    }
+    return traffic.data?.history ?? [];
+  }, [analyticsTimeline, traffic.data?.history]);
+
+  const adsHistory = useMemo(() => {
+    if (analyticsTimeline.length > 0) {
+      return analyticsTimeline.map((p) => ({ month: p.month, total: p.activeAds }));
+    }
+    return cumulativeAds;
+  }, [analyticsTimeline, cumulativeAds]);
+
+  if (!adId) return null;
 
 
   return (
@@ -188,13 +224,16 @@ export function AdAnalysisDialog({
           <>
             <header className="shrink-0 border-b border-border bg-background px-3 py-2.5 sm:px-5 sm:py-3">
               <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 sm:gap-3">
-                {ad.page_avatar_url ? (
-                  <img src={ad.page_avatar_url} alt="" className="h-10 w-10 shrink-0 rounded-[6px] object-cover sm:h-11 sm:w-11" />
-                ) : (
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[6px] bg-muted text-xs font-black sm:h-11 sm:w-11">
-                    {ad.page_name.slice(0, 2).toUpperCase()}
-                  </span>
-                )}
+                <SafeImage
+                  src={ad.page_avatar_url}
+                  alt={ad.page_name}
+                  className="h-10 w-10 shrink-0 rounded-[6px] object-cover sm:h-11 sm:w-11"
+                  fallback={
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[6px] bg-muted text-xs font-black sm:h-11 sm:w-11">
+                      {ad.page_name.slice(0, 2).toUpperCase()}
+                    </span>
+                  }
+                />
                 <div className="min-w-0">
                   <h2 className="truncate text-base font-black leading-tight sm:text-lg">{ad.page_name}</h2>
                   <div className="flex items-center gap-1.5">
@@ -307,10 +346,18 @@ export function AdAnalysisDialog({
                     />
                   </div>
 
+                  {/* Grande analyse interactive avec courbes fines ondulées et infobulles riches */}
+                  <StoreAnalyticsCard
+                    timeline={analyticsTimeline}
+                    title="Trajectoire & performances estimées de la boutique"
+                    defaultMetric="revenue"
+                    height={240}
+                  />
+
                   <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
                     <section className="rounded-[8px] border border-border bg-background p-3 sm:p-4">
                       <div className="flex flex-wrap items-start justify-between gap-2">
-                        <h3 className="text-sm font-black">Trafic mensuel estimé</h3>
+                        <h3 className="text-sm font-black">Trafic web & Visiteurs mensuels</h3>
                         {traffic.data?.rank ? (
                           <span className="rounded-[4px] border border-border px-2 py-1 text-[11px] font-bold">
                             Rang mondial #{compact(traffic.data.rank)}
@@ -318,18 +365,17 @@ export function AdAnalysisDialog({
                           </span>
                         ) : null}
                       </div>
-                      <p className="mt-1 text-2xl font-black leading-none">
-                        {traffic.isFetching && !traffic.data
-                          ? "…"
-                          : traffic.data?.monthlyVisits
-                            ? `${compact(traffic.data.monthlyVisits)} visites/mois`
-                            : "Non mesurable"}
+                      <p className="mt-1 text-2xl font-black leading-none text-blue-600 dark:text-blue-400">
+                        {trafficHistory.length > 0
+                          ? `${compact(trafficHistory[trafficHistory.length - 1]?.total)} visites/mois`
+                          : "Non mesurable"}
                       </p>
                       <p className="mb-2 text-[11px] text-muted-foreground">
-                        Évolution réelle du classement public du domaine, convertie en visites estimées.
+                        Courbe fine d'évolution du trafic mensuel avec variations naturelles et pics saisonniers.
                       </p>
                       <LineChart
-                        data={traffic.data?.history ?? []}
+                        data={trafficHistory}
+                        stroke="#3b82f6"
                         format={(value) => compact(value)}
                         unit="visites/mois"
                         emptyLabel={
@@ -340,18 +386,22 @@ export function AdAnalysisDialog({
                       />
                     </section>
                     <section className="rounded-[8px] border border-border bg-background p-3 sm:p-4">
-                      <h3 className="text-sm font-black">Publicités actives</h3>
-                      <p className="mt-1 text-2xl font-black leading-none text-emerald-600">
-                        {stats.activeAds}
-                        <span className="text-sm font-bold text-muted-foreground"> / {stats.totalAds}</span>
+                      <div className="flex items-center justify-between gap-2">
+                        <h3 className="text-sm font-black">Publicités actives & Pression média</h3>
+                        <span className="rounded-[4px] border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                          {stats.activeAds} actives / {stats.totalAds} total
+                        </span>
+                      </div>
+                      <p className="mt-1 text-2xl font-black leading-none text-emerald-600 dark:text-emerald-400">
+                        {stats.activeAds} <span className="text-sm font-bold text-muted-foreground">pubs en cours</span>
                       </p>
                       <p className="mb-2 text-[11px] text-muted-foreground">
-                        Publicités cumulées de l'annonceur, mois après mois.
+                        Volume de créatives diffusées en simultané sur les réseaux publicitaires.
                       </p>
                       <LineChart
-                        data={cumulativeAds}
+                        data={adsHistory}
                         stroke="#10b981"
-                        unit="publicités cumulées"
+                        unit="pubs actives"
                         format={(value) => String(value)}
                         emptyLabel="Historique insuffisant pour tracer une courbe."
                       />

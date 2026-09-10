@@ -695,7 +695,7 @@ export async function sendStoreStats(chatId: string | number): Promise<void> {
   const { data: orders } = await supabaseAdmin
     .from("orders")
     .select("amount, status, created_at")
-    .eq("store_id", store.id)
+    .or(`store_id.eq.${store.id},user_id.eq.${store.user_id}`)
     .gte("created_at", todayStart.toISOString());
 
   const list = orders || [];
@@ -738,12 +738,16 @@ export async function sendLatestOrders(chatId: string | number): Promise<void> {
   }
 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data: orders } = await supabaseAdmin
+  const { data: orders, error: ordersErr } = await supabaseAdmin
     .from("orders")
-    .select("id, order_number, customer_name, customer_phone, city, amount, status, created_at")
-    .eq("store_id", store.id)
+    .select("id, order_number, customer_name, customer_phone, shipping_city, shipping_address, amount, status, created_at")
+    .or(`store_id.eq.${store.id},user_id.eq.${store.user_id}`)
     .order("created_at", { ascending: false })
     .limit(5);
+
+  if (ordersErr) {
+    console.error("[Telegram Latest Orders Error]", ordersErr);
+  }
 
   if (!orders || orders.length === 0) {
     await sendTelegramMessage(
@@ -759,7 +763,8 @@ export async function sendLatestOrders(chatId: string | number): Promise<void> {
   const currency = store.currency || "FCFA";
   const items = orders.map((o) => {
     const statusEmoji = o.status === "delivered" ? "✅" : o.status === "cancelled" ? "❌" : "⏳";
-    return `• <b>${o.order_number}</b> — <b>${money(Number(o.amount || 0), currency)}</b>\n  👤 ${escapeHtml(o.customer_name || "Client")} (${o.city || "Livraison"})\n  📞 <code>${o.customer_phone}</code> · ${statusEmoji} <i>${o.status}</i>`;
+    const city = o.shipping_city || o.shipping_address || "Livraison";
+    return `• <b>${o.order_number}</b> — <b>${money(Number(o.amount || 0), currency)}</b>\n  👤 ${escapeHtml(o.customer_name || "Client")} (${escapeHtml(city)})\n  📞 <code>${o.customer_phone || "Non renseigné"}</code> · ${statusEmoji} <i>${o.status || "En attente"}</i>`;
   });
 
   const message = [

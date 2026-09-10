@@ -3,6 +3,7 @@ import { BarChart3, ExternalLink, Film, ImageOff, Play } from "lucide-react";
 import { adMedia, countryLabel, flagUrl, tractionLabel, type DiscoveryAd } from "@/lib/discovery";
 import { FavoriteButton } from "@/components/discovery/favorite-button";
 import { SourceBadge } from "@/components/discovery/meta-badge";
+import { SafeImage } from "@/components/discovery/safe-image";
 import { cn } from "@/lib/utils";
 
 /** Carte publicité : en-tête annonceur, texte dépliable, visuel, destination, analyse. */
@@ -14,13 +15,16 @@ export function AdCard({ ad, onAnalyse }: { ad: DiscoveryAd; onAnalyse: (id: str
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-[6px] border border-border bg-background transition-shadow hover:shadow-[0_12px_28px_-20px_rgba(15,23,42,0.45)]">
       <header className="flex items-center gap-2 px-2.5 py-2 sm:px-3 sm:py-2.5">
-        {ad.page_avatar_url ? (
-          <img src={ad.page_avatar_url} alt="" className="h-8 w-8 shrink-0 rounded-full object-cover sm:h-9 sm:w-9" />
-        ) : (
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-muted text-[10px] font-black sm:h-9 sm:w-9">
-            {ad.page_name.slice(0, 2).toUpperCase()}
-          </span>
-        )}
+        <SafeImage
+          src={ad.page_avatar_url}
+          alt={ad.page_name}
+          className="h-8 w-8 shrink-0 rounded-full object-cover sm:h-9 sm:w-9"
+          fallback={
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-muted text-[10px] font-black sm:h-9 sm:w-9">
+              {ad.page_name.slice(0, 2).toUpperCase()}
+            </span>
+          }
+        />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-bold leading-tight">{ad.page_name}</p>
           <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
@@ -50,6 +54,7 @@ export function AdCard({ ad, onAnalyse }: { ad: DiscoveryAd; onAnalyse: (id: str
             src={media}
             alt=""
             loading="lazy"
+            referrerPolicy="no-referrer"
             onError={() => setBroken(true)}
             className="h-full w-full object-cover"
           />

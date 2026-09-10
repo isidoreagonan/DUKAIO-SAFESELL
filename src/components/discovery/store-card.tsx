@@ -2,6 +2,7 @@ import { BarChart3, CalendarDays, Film, Megaphone, Package, Users } from "lucide
 import { Sparkline } from "@/components/discovery/charts";
 import { FavoriteButton } from "@/components/discovery/favorite-button";
 import { PlatformBadge, platformName } from "@/components/discovery/platform-badge";
+import { SafeImage } from "@/components/discovery/safe-image";
 import { compact, countryLabel, flagUrl, formatDate, moneyRange, tractionLabel, type DiscoveryStore } from "@/lib/discovery";
 import { cn } from "@/lib/utils";
 
@@ -25,13 +26,16 @@ export function StoreCard({ store, onAnalyse }: { store: DiscoveryStore; onAnaly
   return (
     <article className="flex h-full flex-col rounded-[6px] border border-border bg-background p-2 sm:p-2.5">
       <div className="flex items-center gap-2">
-        {store.avatar ? (
-          <img src={store.avatar} alt="" className="h-7 w-7 shrink-0 rounded-[4px] object-cover sm:h-8 sm:w-8" />
-        ) : (
-          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-[4px] bg-muted text-[10px] font-black sm:h-8 sm:w-8">
-            {store.pageName.slice(0, 2).toUpperCase()}
-          </span>
-        )}
+        <SafeImage
+          src={store.avatar}
+          alt={store.pageName}
+          className="h-7 w-7 shrink-0 rounded-[4px] object-cover sm:h-8 sm:w-8"
+          fallback={
+            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-[4px] bg-muted text-[10px] font-black sm:h-8 sm:w-8">
+              {store.pageName.slice(0, 2).toUpperCase()}
+            </span>
+          }
+        />
         <div className="min-w-0 flex-1">
           <p className="truncate text-xs font-black leading-tight">{store.pageName}</p>
           <p className="flex items-center gap-1 truncate text-[10px] text-muted-foreground">
@@ -110,7 +114,7 @@ export function StoreCard({ store, onAnalyse }: { store: DiscoveryStore; onAnaly
                   onClick={() => onAnalyse(item.id)}
                   className="relative cursor-pointer overflow-hidden rounded-[3px] bg-muted"
                 >
-                  <img src={item.thumb} alt="" loading="lazy" className="aspect-[4/3] w-full object-cover" />
+                  <SafeImage src={item.thumb} alt="" className="aspect-[4/3] w-full object-cover" />
                   <span className="absolute bottom-0 left-0 right-0 bg-slate-900/70 py-0.5 text-[9px] font-bold text-white">
                     {item.days} j
                   </span>
@@ -124,11 +128,10 @@ export function StoreCard({ store, onAnalyse }: { store: DiscoveryStore; onAnaly
       {store.productImages.length > 0 ? (
         <div className="mt-1.5 hidden grid-cols-6 gap-1 sm:grid">
           {store.productImages.map((url, index) => (
-            <img
+            <SafeImage
               key={`${store.key}-p-${index}`}
               src={url}
               alt=""
-              loading="lazy"
               className="aspect-[4/3] w-full rounded-[3px] bg-muted object-cover"
             />
           ))}

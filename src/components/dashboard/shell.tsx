@@ -102,6 +102,7 @@ const mainNav: NavItem[] = [
 ];
 
 const accountNav: NavItem[] = [
+  { title: "Paramètres", icon: Settings, to: "/dashboard/parametres" },
   { title: "Équipe", icon: UsersRound, to: "/dashboard/equipe" },
   { title: "Abonnement", icon: Crown, href: "/dashboard/parametres?tab=abonnement", badge: "PLAN" },
 ];
@@ -406,7 +407,32 @@ function SidebarUser({
 
   if (collapsed) {
     return (
-      <div className="space-y-4 px-4 pb-5">
+      <div className="space-y-3 px-3 pb-5">
+        <Tooltip delayDuration={100}>
+          <TooltipTrigger asChild>
+            <div className="grid h-10 w-full place-items-center rounded-[4px] bg-primary text-xs font-black text-primary-foreground">
+              {initials(name) || "D"}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="text-xs">
+            {name}
+          </TooltipContent>
+        </Tooltip>
+        <Tooltip delayDuration={100}>
+          <TooltipTrigger asChild>
+            <Link
+              to="/dashboard/parametres"
+              onClick={onNavigate}
+              aria-label="Paramètres"
+              className="grid h-10 w-full cursor-pointer place-items-center rounded-[10px] text-chrome-muted transition-colors hover:bg-chrome-accent hover:text-chrome-accent-foreground"
+            >
+              <Settings className="h-5 w-5" />
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="text-xs">
+            Paramètres
+          </TooltipContent>
+        </Tooltip>
         <Tooltip delayDuration={100}>
           <TooltipTrigger asChild>
             <button
@@ -420,20 +446,6 @@ function SidebarUser({
           </TooltipTrigger>
           <TooltipContent side="right" className="text-xs">
             Centre d'aide
-          </TooltipContent>
-        </Tooltip>
-        <Tooltip delayDuration={100}>
-          <TooltipTrigger asChild>
-            <Link
-              to="/dashboard/parametres"
-              onClick={onNavigate}
-              className="grid h-10 w-full cursor-pointer place-items-center rounded-[4px] bg-primary text-xs font-black text-primary-foreground"
-            >
-              {initials(name) || "D"}
-            </Link>
-          </TooltipTrigger>
-          <TooltipContent side="right" className="text-xs">
-            Profil
           </TooltipContent>
         </Tooltip>
         <Tooltip delayDuration={100}>
@@ -457,11 +469,7 @@ function SidebarUser({
 
   return (
     <div className="space-y-1 border-t border-chrome-border p-2">
-      <Link
-        to="/dashboard/parametres"
-        onClick={onNavigate}
-        className="flex min-w-0 cursor-pointer items-center gap-2.5 rounded-[4px] bg-chrome-panel p-2 transition-colors hover:bg-chrome-accent"
-      >
+      <div className="flex min-w-0 items-center justify-between gap-2 rounded-[4px] bg-chrome-panel p-2">
         <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[4px] bg-primary text-xs font-black uppercase text-primary-foreground">
           {initials(name) || "D"}
         </span>
@@ -472,7 +480,22 @@ function SidebarUser({
           </div>
           <span className="block truncate text-[10px] text-chrome-muted">{user?.email ?? "—"}</span>
         </div>
-      </Link>
+        <Tooltip delayDuration={100}>
+          <TooltipTrigger asChild>
+            <Link
+              to="/dashboard/parametres"
+              onClick={onNavigate}
+              aria-label="Paramètres"
+              className="grid h-7 w-7 shrink-0 cursor-pointer place-items-center rounded-[4px] text-chrome-muted transition-colors hover:bg-chrome-accent hover:text-chrome-foreground"
+            >
+              <Settings className="h-4 w-4" />
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="text-xs">
+            Paramètres
+          </TooltipContent>
+        </Tooltip>
+      </div>
       <button
         type="button"
         onClick={signOut}

@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { PlatformLogo } from "@/components/discovery/platform-badge";
-import { ExternalLink, ImageOff, LineChart, MoreVertical } from "lucide-react";
+import { ExternalLink, LineChart, MoreVertical } from "lucide-react";
 import { MiniTrend } from "@/components/discovery/charts";
 import { FavoriteButton } from "@/components/discovery/favorite-button";
+import { SafeImage } from "@/components/discovery/safe-image";
 import { compact, toFcfa, type DiscoveryProduct } from "@/lib/discovery";
 
 function priceLabel(product: DiscoveryProduct) {
@@ -119,11 +120,11 @@ export function ProductTable({
               <td className="px-4 py-4">
                 <div className="flex items-center gap-3">
                   <span className="grid h-[60px] w-[60px] shrink-0 place-items-center overflow-hidden rounded-[8px] border border-border bg-muted">
-                    {product.image ? (
-                      <img src={product.image} alt="" loading="lazy" className="h-full w-full object-cover" />
-                    ) : (
-                      <ImageOff className="h-4 w-4 text-muted-foreground" />
-                    )}
+                    <SafeImage
+                      src={product.image}
+                      alt={product.title}
+                      className="h-full w-full object-cover"
+                    />
                   </span>
                   <div className="min-w-0">
                     <p className="line-clamp-2 text-[14px] font-bold leading-snug">{product.title}</p>
@@ -143,17 +144,16 @@ export function ProductTable({
 
               <td className="px-4 py-4">
                 <div className="flex items-center gap-2.5">
-                  {product.avatar ? (
-                    <img
-                      src={product.avatar}
-                      alt=""
-                      className="h-10 w-10 shrink-0 rounded-[8px] border border-border object-cover"
-                    />
-                  ) : (
-                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[8px] border border-border bg-muted text-[12px] font-black">
-                      {product.pageName.slice(0, 1).toUpperCase()}
-                    </span>
-                  )}
+                  <SafeImage
+                    src={product.avatar}
+                    alt={product.pageName}
+                    className="h-10 w-10 shrink-0 rounded-[8px] border border-border object-cover"
+                    fallback={
+                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[8px] border border-border bg-muted text-[12px] font-black">
+                        {product.pageName.slice(0, 1).toUpperCase()}
+                      </span>
+                    }
+                  />
                   {product.domain ? (
                     <a
                       href={`https://${product.domain}`}
@@ -168,7 +168,6 @@ export function ProductTable({
                   ) : (
                     <span className="max-w-[130px] truncate text-[13px] font-medium">{product.pageName}</span>
                   )}
-
                 </div>
               </td>
 

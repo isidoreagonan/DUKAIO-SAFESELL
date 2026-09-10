@@ -1,18 +1,21 @@
 /**
  * Cloche de notifications : commandes à traiter, stocks épuisés et créations DUKAIO AI.
- * Le point rouge disparaît quand le vendeur ouvre le panneau.
+ * Inclut le bouton "Marquer tout comme lu" pour effacer les notifications lues.
  */
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Bell, ClipboardList, Loader2, PackageX, Sparkles } from "lucide-react";
+import { Bell, CheckCheck, ClipboardList, Loader2, PackageX, Sparkles, X } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useOrders, useProducts, formatFcfa } from "@/lib/store";
 import { aiJobCurrent } from "@/lib/ai-job.functions";
 import { readPendingAiDraft } from "@/lib/ai-draft";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const SEEN_KEY = "dukaio.notifications.seen";
+const CLEARED_AT_KEY = "dukaio.notifications.cleared_at";
+const DISMISSED_KEY = "dukaio.notifications.dismissed_ids";
 
 type Note = {
   id: string;
@@ -45,13 +48,22 @@ export function NotificationsBell() {
   });
 
   const [seen, setSeen] = useState(0);
+  const [clearedAt, setClearedAt] = useState(0);
+  const [dismissedIds, setDismissedIds] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
     setSeen(Number(localStorage.getItem(SEEN_KEY) ?? 0));
+    setClearedAt(Number(localStorage.getItem(CLEARED_AT_KEY) ?? 0));
+    try {
+      const stored = localStorage.getItem(DISMISSED_KEY);
+      if (stored) setDismissedIds(JSON.parse(stored));
+    } catch {
+      setDismissedIds([]);
+    }
   }, []);
 
-  const notes = useMemo<Note[]>(() => {
+  const allNotes = useMemo<Note[]>(() => {
     const list: Note[] = [];
 
     /* 1. Notifications DUKAIO AI prioritaires */
@@ -132,8 +144,13 @@ export function NotificationsBell() {
       });
     }
 
-    return list.sort((a, b) => b.at - a.at).slice(0, 15);
+    return list.sort((a, b) => b.at - a.at).slice(0, 20);
   }, [orders, products, aiJob]);
+
+  // Filtre les notifications non effacées
+  const notes = useMemo(() => {
+    return allNotes.filter((n) => n.at > clearedAt && !dismissedIds.includes(n.id));
+  }, [allNotes, clearedAt, dismissedIds]);
 
   const unread = notes.filter((n) => n.at > seen).length;
 
@@ -146,11 +163,32 @@ export function NotificationsBell() {
     }
   };
 
+  const markAllAsRead = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const now = Date.now();
+    const allIds = allNotes.map((n) => n.id);
+    localStorage.setItem(CLEARED_AT_KEY, String(now));
+    localStorage.setItem(SEEN_KEY, String(now));
+    localStorage.setItem(DISMISSED_KEY, JSON.stringify(allIds));
+    setClearedAt(now);
+    setSeen(now);
+    setDismissedIds(allIds);
+    toast.success("Toutes les notifications ont été marquées comme lues.");
+  };
+
+  const dismissOne = (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const next = [...dismissedIds, id];
+    localStorage.setItem(DISMISSED_KEY, JSON.stringify(next));
+    setDismissedIds(next);
+  };
+
   return (
     <Popover open={open} onOpenChange={markSeen}>
       <PopoverTrigger
         aria-label="Notifications"
-        className="relative hidden h-10 w-10 place-items-center rounded-[6px] border border-border transition-colors hover:bg-muted sm:grid"
+        className="relative hidden h-10 w-10 place-items-center rounded-[6px] border border-border transition-colors hover:bg-muted sm:grid cursor-pointer"
       >
         <Bell className="h-4 w-4" />
         {unread > 0 ? (
@@ -159,36 +197,49 @@ export function NotificationsBell() {
           </span>
         ) : null}
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-[340px] rounded-[6px] p-0 shadow-lg border border-border bg-popover">
+      <PopoverContent align="end" className="w-[360px] rounded-[6px] p-0 shadow-xl border border-border bg-popover">
         <div className="border-b border-border px-4 py-3 bg-muted/20">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-bold">Notifications</p>
-            {unread > 0 ? (
-              <span className="rounded-[4px] bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
-                {unread} non lue{unread > 1 ? "s" : ""}
-              </span>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-bold text-foreground">Notifications</p>
+              {unread > 0 ? (
+                <span className="rounded-[4px] bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+                  {unread} non lue{unread > 1 ? "s" : ""}
+                </span>
+              ) : null}
+            </div>
+            {notes.length > 0 ? (
+              <button
+                type="button"
+                onClick={markAllAsRead}
+                className="flex items-center gap-1.5 rounded-[4px] px-2 py-1 text-xs font-semibold text-primary hover:bg-primary/10 transition-colors cursor-pointer"
+                title="Marquer tout comme lu et vider la liste"
+              >
+                <CheckCheck className="h-3.5 w-3.5" />
+                <span>Tout marquer lu</span>
+              </button>
             ) : null}
           </div>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {notes.length ? `${notes.length} élément(s) à suivre` : "Tout est à jour"}
+            {notes.length ? `${notes.length} notification${notes.length > 1 ? "s" : ""} à suivre` : "Tout est à jour"}
           </p>
         </div>
         {notes.length ? (
           <ul className="max-h-[360px] divide-y divide-border overflow-y-auto">
             {notes.map((n) => (
-              <li key={n.id}>
+              <li key={n.id} className="group relative">
                 <Link
                   to={n.to as any}
                   search={n.search as any}
                   onClick={() => setOpen(false)}
                   className={cn(
-                    "flex gap-3 px-4 py-3 transition-colors hover:bg-muted/80",
+                    "flex items-start gap-3 px-4 py-3 transition-colors hover:bg-muted/80 pr-9",
                     n.isAi && "bg-primary/[0.03]",
                   )}
                 >
                   <span
                     className={cn(
-                      "grid h-8 w-8 shrink-0 place-items-center rounded-[6px]",
+                      "mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-[6px]",
                       n.isAi
                         ? "bg-primary text-primary-foreground"
                         : "bg-accent text-accent-foreground",
@@ -204,17 +255,25 @@ export function NotificationsBell() {
                     </span>
                   </span>
                 </Link>
+                <button
+                  type="button"
+                  onClick={(e) => dismissOne(e, n.id)}
+                  title="Effacer cette notification"
+                  className="absolute right-2.5 top-3.5 hidden h-6 w-6 place-items-center rounded-[4px] text-muted-foreground hover:bg-muted hover:text-foreground group-hover:grid cursor-pointer transition-colors"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
               </li>
             ))}
           </ul>
         ) : (
           <div className="px-4 py-8 text-center">
-            <span className="mx-auto grid h-10 w-10 place-items-center rounded-[6px] bg-surface-tint text-primary">
-              <Sparkles className="h-4 w-4" />
+            <span className="mx-auto grid h-10 w-10 place-items-center rounded-[6px] bg-primary/10 text-primary">
+              <CheckCheck className="h-5 w-5" />
             </span>
-            <p className="mt-3 text-sm font-semibold">Aucune notification</p>
+            <p className="mt-3 text-sm font-semibold text-foreground">Tout est lu et à jour !</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Vos nouvelles commandes et alertes IA apparaîtront ici.
+              Vos nouvelles commandes et alertes IA apparaîtront ici en temps réel.
             </p>
           </div>
         )}

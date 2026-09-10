@@ -33,6 +33,38 @@ function apex(domain: string) {
   return clean;
 }
 
+const IGNORED_GENERIC_DOMAINS = new Set([
+  "facebook.com",
+  "m.facebook.com",
+  "fb.me",
+  "fb.com",
+  "instagram.com",
+  "instagr.am",
+  "wa.me",
+  "whatsapp.com",
+  "api.whatsapp.com",
+  "chat.whatsapp.com",
+  "tiktok.com",
+  "t.me",
+  "telegram.me",
+  "bit.ly",
+  "tinyurl.com",
+  "linktr.ee",
+  "cutt.ly",
+  "goo.gl",
+  "forms.gle",
+  "docs.google.com",
+  "drive.google.com",
+  "youtube.com",
+  "youtu.be",
+  "google.com",
+  "twitter.com",
+  "x.com",
+  "linkedin.com",
+  "snapchat.com",
+  "pinterest.com",
+]);
+
 export const getDomainTraffic = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({ domain: z.string().min(3).max(120) }).parse(data))
@@ -46,7 +78,7 @@ export const getDomainTraffic = createServerFn({ method: "POST" })
       history: [],
       source: "Tranco",
     };
-    if (!domain.includes(".")) return empty;
+    if (!domain.includes(".") || IGNORED_GENERIC_DOMAINS.has(domain)) return empty;
 
     let ranks: { date: string; rank: number }[] = [];
     try {
