@@ -8,7 +8,8 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 ### Corrigé (Mises à jour récentes)
 - **Résolution définitive des doublons de messages du Bot Telegram (@DukaioOfficialBot) :**
-  - **Verrou atomique distribué Supabase (`tryClaimTelegramEvent`) :** Persistance partagée en base de données de chaque ID d'événement (`update_id`, `message_id`, `callback_query.id`) synchronisant toutes les instances serverless Vercel. Si Telegram ou un réseau relance une requête, seule la toute première instance est exécutée, les autres sont immédiatement rejetées.
+  - **Enregistrement officiel du Webhook sur Telegram API (`setWebhook`) :** Activation définitive du Webhook HTTPS direct (`https://dukaio.com/api/public/telegram/webhook`) auprès des serveurs Telegram avec purge du backlog (`drop_pending_updates`). Telegram pousse désormais chaque message exactement une fois et a désactivé le mode polling concurrent (`getUpdates`).
+  - **Verrou atomique distribué Supabase (`tryClaimTelegramEvent`) :** Persistance partagée en base de données de chaque ID d'événement (`update_id`, `message_id`, `callback_query.id`) synchronisant toutes les instances serverless Vercel.
   - **Garde-fou anti-doublon sortant dans `sendTelegramMessage` :** Blocage automatique et immédiat de tout envoi de message texte identique vers le même chat dans un intervalle de 3,5 secondes.
   - **Élimination du conflit Worker local vs Webhook Vercel :** Arrêt définitif d'un processus daemon local (`telegram-worker.ts`) qui écoutait et répondait en parallèle du serveur de production Vercel.
   - **Cache ultra-rapide de résolution des boutiques :** Mise en cache des liaisons `chatId -> boutique` dans `src/lib/telegram.server.ts` réduisant le temps d'exécution des commandes et des statistiques à quelques millisecondes.
