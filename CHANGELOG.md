@@ -6,6 +6,16 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 ## [10/09/2026] - Menu Dashboard Intégré dans l'Éditeur, SEO Complet & Éditeur 3 Panneaux
 
+### Corrigé (Mises à jour récentes)
+- **Résolution des réponses en triple du Bot Telegram (@DukaioOfficialBot) :**
+  - **Cache de déduplication mémoire avec TTL (15 min) :** Ajout de la déduplication stricte dans `src/lib/telegram.server.ts` sur `update_id`, `message_id` et `callback_query.id` pour empêcher le re-traitement intempestif des mêmes messages ou clics de boutons.
+  - **Acquittement instantané des Callback Queries :** Exécution prioritaire de `answerCallbackQuery` dès réception du clic sur un bouton pour couper immédiatement les relances automatiques (*retries*) de Telegram.
+  - **Commit officiel d'offset :** Enregistrement immédiat de l'offset auprès de l'API Telegram pour vider définitivement la file d'attente du serveur.
+  - **Optimisation du polling Dashboard :** Suppression de la boucle de synchronisation toutes les 2 secondes dans `src/routes/_authenticated/dashboard/parametres.tsx` lorsque la boutique est déjà connectée, éliminant ainsi les conflits d'écoute concurrents.
+- **Résolution du crash en ligne de la Landing Page (`dukaio.com`) :**
+  - Correction des imports manquants `ShieldCheck` et `Sparkles` dans `src/components/landing/sections.tsx`.
+  - Sécurisation défensive par `try/catch` de `getIncomingHost` dans `src/lib/storefront.functions.ts` pour gérer sans erreur les environnements Serverless/Vercel.
+
 ### Ajouté & Amélioré
 - **Menu latéral Dashboard fluide & animé (Éditeur de thème) :**
   - **Suppression du bouton doublon :** Suppression du bouton toggle redondant dans la barre supérieure blanche ; seul le bouton officiel dans la barre latérale DUKAIO est conservé pour un en-tête épuré.
