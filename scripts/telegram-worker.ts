@@ -1,5 +1,11 @@
 import { pollTelegramUpdates } from "../src/lib/telegram.server";
 
+// Ne s'exécute QUE si explicitement activé via la variable d'environnement ENABLE_TELEGRAM_WORKER=true
+if (process.env["ENABLE_TELEGRAM_WORKER"] !== "true") {
+  console.log("ℹ️ telegram-worker inactif (le Webhook officiel Vercel traite les messages).");
+  process.exit(0);
+}
+
 console.log("==========================================");
 console.log("🤖 DUKAIO TELEGRAM BOT POLLER DAEMON ACTIF");
 console.log("==========================================");
@@ -21,6 +27,6 @@ async function loop() {
   }
 }
 
-// Polling toutes les 1.2 secondes
-setInterval(loop, 1200);
+// Polling toutes les 3 secondes si activé
+setInterval(loop, 3000);
 loop();

@@ -102,12 +102,34 @@ function sanitizeKeyboard(keyboard?: InlineKeyboardButton[][]): InlineKeyboardBu
   );
 }
 
-/** Envoie un message via l'API Telegram. */
+const outgoingMessageDedupCache = new Map<string, number>();
+
+function isOutgoingDuplicate(chatId: string | number, text: string): boolean {
+  const key = `${chatId}_${text.trim()}`;
+  const now = Date.now();
+  const lastTime = outgoingMessageDedupCache.get(key);
+  if (lastTime && now - lastTime < 3500) {
+    return true;
+  }
+  outgoingMessageDedupCache.set(key, now);
+  if (outgoingMessageDedupCache.size > 200) {
+    for (const [k, v] of outgoingMessageDedupCache.entries()) {
+      if (now - v > 30_000) outgoingMessageDedupCache.delete(k);
+    }
+  }
+  return false;
+}
+
+/** Envoie un message via l'API Telegram (avec garde anti-doublon sortant). */
 export async function sendTelegramMessage(
   chatId: string | number,
   text: string,
   options: SendMessageOptions = {},
 ): Promise<{ ok: boolean; messageId?: number; error?: string }> {
+  if (isOutgoingDuplicate(chatId, text)) {
+    return { ok: true };
+  }
+
   try {
     const token = getBotToken();
     const cleanKeyboard = sanitizeKeyboard(options.inlineKeyboard);

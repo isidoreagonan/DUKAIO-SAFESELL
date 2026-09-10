@@ -669,26 +669,15 @@ function TelegramSettingsCard({ storeId, themeConfig }: { storeId: string; theme
   const isLinked = Boolean(telegram?.chatId);
   const isEnabled = telegram?.enabled !== false;
 
-  // Synchronisation en direct des messages /start uniquement si la boutique n'est PAS encore liée
+  // Détection automatique de la liaison Telegram sans interférence de polling
   useEffect(() => {
     if (isLinked) return;
 
-    const checkUpdates = async () => {
-      try {
-        const res = await syncUpdates();
-        if (res?.count && res.count > 0) {
-          void queryClient.invalidateQueries({ queryKey: ["store"] });
-        }
-      } catch {
-        /* ignorer */
-      }
-    };
-
-    // Vérifier une première fois, puis espacer les requêtes
-    void checkUpdates();
-    const interval = setInterval(checkUpdates, 5000);
+    const interval = setInterval(() => {
+      void queryClient.invalidateQueries({ queryKey: ["store"] });
+    }, 4000);
     return () => clearInterval(interval);
-  }, [syncUpdates, queryClient, isLinked]);
+  }, [queryClient, isLinked]);
 
   const handleConnect = async () => {
     setConnecting(true);

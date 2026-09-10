@@ -8,11 +8,12 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 ### Corrigé (Mises à jour récentes)
 - **Résolution définitive des doublons de messages du Bot Telegram (@DukaioOfficialBot) :**
+  - **Élimination du conflit Worker local vs Webhook Vercel :** Arrêt définitif d'un processus daemon local (`telegram-worker.ts`) qui écoutait et répondait en parallèle du serveur de production Vercel.
+  - **Garde-fou anti-doublon sortant dans `sendTelegramMessage` :** Blocage automatique et immédiat de tout envoi de message texte identique vers le même chat dans un intervalle de 3,5 secondes.
   - **Acquittement instantané Webhook (< 20ms) :** Réponse `HTTP 200 OK` immédiate renvoyée aux serveurs de Telegram dès la réception du Webhook avec traitement asynchrone sécurisé, empêchant catégoriquement Telegram de renvoyer une seconde requête de retry suite aux délais d'attente réseau.
   - **Verrou mémoire atomique (*In-Flight Lock*) & Cache TTL (30 min) :** Ajout d'un mutex de traitement en temps réel combiné à la déduplication stricte dans `src/lib/telegram.server.ts` sur `update_id`, `message_id` et `callback_query.id` pour neutraliser tout double déclenchement.
   - **Cache ultra-rapide de résolution des boutiques :** Mise en cache des liaisons `chatId -> boutique` dans `src/lib/telegram.server.ts` réduisant le temps d'exécution des commandes et des statistiques à quelques millisecondes.
-  - **Commit officiel d'offset Telegram :** Enregistrement immédiat de l'offset auprès de l'API Telegram pour vider définitivement la file d'attente du serveur.
-  - **Optimisation du polling Dashboard :** Suppression de la boucle de synchronisation toutes les 2 secondes dans `src/routes/_authenticated/dashboard/parametres.tsx` lorsque la boutique est déjà connectée, éliminant ainsi les conflits d'écoute concurrents.
+  - **Suppression du polling dans Paramètres :** Remplacement des requêtes `syncTelegramUpdates` par une simple invalidation de cache TanStack Query, éliminant tout appel concurrent à Telegram.
 - **Résolution du crash en ligne de la Landing Page (`dukaio.com`) :**
   - Correction des imports manquants `ShieldCheck` et `Sparkles` dans `src/components/landing/sections.tsx`.
   - Sécurisation défensive par `try/catch` de `getIncomingHost` dans `src/lib/storefront.functions.ts` pour gérer sans erreur les environnements Serverless/Vercel.
