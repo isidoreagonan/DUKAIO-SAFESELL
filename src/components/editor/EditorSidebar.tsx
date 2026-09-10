@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Image as ImageIcon, Layers, Palette, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { ArrowLeft, Image as ImageIcon, Layers, Palette, Plus, RotateCcw, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -16,6 +16,7 @@ import { FontSelect } from "./FontSelect";
 import { useSelectedSection, useThemeStore } from "@/store/useThemeStore";
 import { getDefinition, sectionLibrary } from "@/theme/registry";
 import { pageLabels, type Field } from "@/theme/types";
+import { cn } from "@/lib/utils";
 
 function SectionLibraryDialog() {
   const [open, setOpen] = useState(false);
@@ -164,13 +165,15 @@ function GlobalSettingsPanel() {
   );
 }
 
-export function SectionSettingsPanel() {
+export function SectionSettingsPanel({ onClose }: { onClose?: () => void } = {}) {
   const section = useSelectedSection();
   const select = useThemeStore((s) => s.select);
   const updateSetting = useThemeStore((s) => s.updateSetting);
   const removeSection = useThemeStore((s) => s.removeSection);
   if (!section) return null;
   const def = getDefinition(section.type);
+  if (!def) return null;
+  const Icon = def.icon;
 
   const groups = def.schema.reduce<Record<string, Field[]>>((acc, field) => {
     const key = field.group ?? "Contenu";
@@ -178,29 +181,60 @@ export function SectionSettingsPanel() {
     return acc;
   }, {});
 
+  const handleClose = () => {
+    select(null);
+    onClose?.();
+  };
+
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <div className="flex items-center gap-2 border-b border-border px-4 py-3">
-        <button
-          type="button"
-          onClick={() => select(null)}
-          className="rounded-[6px] p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
-          aria-label="Retour"
-        >
-          <ArrowLeft size={16} />
-        </button>
-        <span className="min-w-0 flex-1 truncate text-sm font-semibold">{def.label}</span>
-        {!def.unique && (
+    <div className="flex h-full min-h-0 flex-col bg-card">
+      <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-3">
+        <div className="flex min-w-0 items-center gap-2.5">
+          {/* Bouton retour mobile */}
           <button
             type="button"
-            onClick={() => removeSection(section.id)}
-            className="rounded-[6px] p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-            aria-label="Supprimer la section"
+            onClick={handleClose}
+            className="rounded-[6px] p-1 text-muted-foreground hover:bg-accent hover:text-foreground md:hidden"
+            aria-label="Retour aux sections"
           >
-            <Trash2 size={15} />
+            <ArrowLeft size={16} />
           </button>
-        )}
+          <span className="hidden size-7 shrink-0 items-center justify-center rounded-[6px] bg-primary/10 text-primary md:flex">
+            <Icon size={15} />
+          </span>
+          <div className="min-w-0">
+            <span className="block truncate text-sm font-semibold">{def.label}</span>
+            <span className="hidden text-[11px] text-muted-foreground md:block">
+              Paramètres de la section
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1">
+          {!def.unique && (
+            <button
+              type="button"
+              onClick={() => removeSection(section.id)}
+              className="rounded-[6px] p-1.5 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
+              aria-label="Supprimer la section"
+              title="Supprimer la section"
+            >
+              <Trash2 size={15} />
+            </button>
+          )}
+          {/* Bouton fermer desktop */}
+          <button
+            type="button"
+            onClick={handleClose}
+            className="hidden rounded-[6px] p-1.5 text-muted-foreground transition hover:bg-accent hover:text-foreground md:flex"
+            aria-label="Fermer les paramètres"
+            title="Fermer"
+          >
+            <X size={16} />
+          </button>
+        </div>
       </div>
+
       <ScrollArea className="w-full min-h-0 flex-1 [&>div>div]:!block">
         <div className="space-y-6 p-4">
           {Object.entries(groups).map(([group, fields]) => (
@@ -236,51 +270,59 @@ export function EditorSidebar({
   const activePage = useThemeStore((s) => s.activePage);
 
   return (
-    <aside className="flex h-full min-h-0 w-full shrink-0 flex-col border-border bg-card md:w-[350px] md:border-r">
+    <aside className="flex h-full min-h-0 w-full shrink-0 flex-col border-border bg-card md:w-[320px] lg:w-[340px] md:border-r">
+      {/* Sur mobile (< md), si une section est sélectionnée, on affiche son panneau de réglages */}
       {selectedId && variant === "auto" ? (
-        <SectionSettingsPanel />
-      ) : (
-        <div className="flex h-full min-h-0 flex-col">
-          <div className="flex items-center gap-2 border-b border-border px-4 py-3">
-            <Layers size={15} className="text-muted-foreground" />
-            <span className="flex-1 text-sm font-semibold">Sections</span>
-            {onReset ? (
-              <button
-                type="button"
-                onClick={onReset}
-                className="rounded-[6px] p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
-                aria-label="Réinitialiser le thème"
-                title="Réinitialiser"
-              >
-                <RotateCcw size={14} />
-              </button>
-            ) : null}
-          </div>
-
-          <ScrollArea className="w-full min-h-0 flex-1 [&>div>div]:!block">
-            <div className="space-y-4 p-3">
-              <div className="space-y-1">
-                <p className="px-1.5 text-[11px] font-bold tracking-[0.14em] text-muted-foreground uppercase">
-                  Global (toutes les pages)
-                </p>
-                <SectionList scope="chrome" />
-              </div>
-              <div className="space-y-1">
-                <p className="px-1.5 text-[11px] font-bold tracking-[0.14em] text-muted-foreground uppercase">
-                  {pageLabels[activePage]}
-                </p>
-                <SectionList scope={activePage} />
-              </div>
-              <SectionLibraryDialog />
-              <Separator />
-              <BrandPanel />
-              <Separator />
-              <GlobalSettingsPanel />
-
-            </div>
-          </ScrollArea>
+        <div className="flex h-full min-h-0 flex-col md:hidden">
+          <SectionSettingsPanel />
         </div>
-      )}
+      ) : null}
+
+      {/* Liste des sections : toujours visible sur PC, masquée sur mobile si une section est ouverte */}
+      <div
+        className={cn(
+          "flex h-full min-h-0 flex-col",
+          selectedId && variant === "auto" ? "hidden md:flex" : "flex",
+        )}
+      >
+        <div className="flex items-center gap-2 border-b border-border px-4 py-3">
+          <Layers size={15} className="text-muted-foreground" />
+          <span className="flex-1 text-sm font-semibold">Sections</span>
+          {onReset ? (
+            <button
+              type="button"
+              onClick={onReset}
+              className="rounded-[6px] p-1 text-muted-foreground transition hover:bg-accent hover:text-foreground"
+              aria-label="Réinitialiser le thème"
+              title="Réinitialiser"
+            >
+              <RotateCcw size={14} />
+            </button>
+          ) : null}
+        </div>
+
+        <ScrollArea className="w-full min-h-0 flex-1 [&>div>div]:!block">
+          <div className="space-y-4 p-3">
+            <div className="space-y-1">
+              <p className="px-1.5 text-[11px] font-bold tracking-[0.14em] text-muted-foreground uppercase">
+                Global (toutes les pages)
+              </p>
+              <SectionList scope="chrome" />
+            </div>
+            <div className="space-y-1">
+              <p className="px-1.5 text-[11px] font-bold tracking-[0.14em] text-muted-foreground uppercase">
+                {pageLabels[activePage]}
+              </p>
+              <SectionList scope={activePage} />
+            </div>
+            <SectionLibraryDialog />
+            <Separator />
+            <BrandPanel />
+            <Separator />
+            <GlobalSettingsPanel />
+          </div>
+        </ScrollArea>
+      </div>
     </aside>
   );
 }

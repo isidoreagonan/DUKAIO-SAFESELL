@@ -4,9 +4,18 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 > **Note d'environnement :** Ce projet a été initialement généré avec Lovable, mais a été entièrement migré sur Antigravity. Il n'est plus synchronisé avec Lovable Cloud et utilise désormais exclusivement la propre instance Supabase de l'utilisateur.
 
-## [10/09/2026] - SEO Complet, Alignement COD & Image de Partage Réseaux Sociaux
+## [10/09/2026] - Menu Dashboard Intégré dans l'Éditeur, SEO Complet & Éditeur 3 Panneaux
 
 ### Ajouté & Amélioré
+- **Menu latéral Dashboard (Sidebar DUKAIO) intégré dans l'Éditeur de thème :**
+  - **Barre latérale permanente sur PC :** Le menu de navigation principal du dashboard (Accueil, Produits, Commandes, Marketing, Clients, Analyses, Découverte, Favoris, Paramètres, Déconnexion) est maintenant directement accessible sur la gauche de l'écran dans l'éditeur de thème, sans quitter la page ni devoir chercher un bouton retour.
+  - **Bouton de repli/dépliage (`[|]`) :** Un bouton dédié dans l'en-tête permet de basculer instantanément entre la barre compacte (~76px avec infobulles) et la barre complète (~260px avec libellés), avec persistance de l'état dans `localStorage` (`dukaio.sidebar`).
+  - **Navigation instantanée à 1 clic :** L'utilisateur peut passer d'une section du dashboard à l'éditeur ou quitter l'éditeur d'un simple clic sur n'importe quel élément du menu.
+- **Éditeur de thème 3 panneaux style Shopify (Affichage PC) :**
+  - **Panneau gauche (Sections) :** Reste toujours ouvert et accessible avec l'arborescence des sections (Global, Page active, Identité de la boutique, Réglages globaux). La section actuellement active est mise en valeur avec une surbrillance visuelle (`border-primary/50 bg-primary/10`).
+  - **Zone centrale (Aperçu direct) :** Rendu de la vitrine en direct avec sélecteur d'appareils (Ordinateur, Tablette, Mobile) et interactivité complète (cliquer sur une section dans l'aperçu l'ouvre directement).
+  - **Panneau droit (Paramètres de la section) :** S'ouvre sur le côté droit de l'écran lors du clic sur une section avec ses champs de réglages, icône, titre, bouton de suppression et bouton de fermeture `X` qui désélectionne la section et redonne tout l'espace à l'aperçu.
+  - **Affichage Mobile conservé :** Sur smartphone/tablette, la vue bascule de façon fluide entre la liste des sections, le formulaire de réglages et l'aperçu via les onglets dédiés.
 - **Stratégie SEO complète de toutes les pages publiques :**
   - Configuration individualisée des balises `<title>`, méta-descriptions percutantes, mots-clés stratégiques et tags Open Graph (`og:title`, `og:description`, `og:image`, `og:url`) sur l'ensemble des routes publiques :
     - `/` (Accueil) : `DUKAIO — Créez votre boutique en ligne et vendez partout`

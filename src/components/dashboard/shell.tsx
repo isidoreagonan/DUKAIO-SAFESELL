@@ -517,7 +517,7 @@ function SidebarUser({
   );
 }
 
-function NavContent({
+export function NavContent({
   onNavigate,
   collapsed,
   onToggle,

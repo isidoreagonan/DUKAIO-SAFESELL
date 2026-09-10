@@ -115,7 +115,9 @@ export function LivePreview() {
     sections
       .filter((section) => section.visible)
       .map((section) => {
-        const Component = getDefinition(section.type).component;
+        const def = getDefinition(section.type);
+        if (!def) return null;
+        const Component = def.component;
         const settings =
           applyProduct && store
             ? withProduct(section.type, section.settings, store, product)
