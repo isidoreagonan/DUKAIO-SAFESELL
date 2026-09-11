@@ -1,6 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
-import { Eye, Globe, History, Layers, Loader2, MoreHorizontal, RotateCcw, Save, Sparkles, X } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import {
+  ArrowLeft,
+  Eye,
+  Globe,
+  History,
+  Layers,
+  Loader2,
+  MoreHorizontal,
+  Palette,
+  RotateCcw,
+  Save,
+  Sparkles,
+  X,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,36 +58,38 @@ export const Route = createFileRoute("/_authenticated/dashboard/editeur")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: EditeurPage,
+  component: ThemeEditorPage,
 });
 
-function EditeurPage() {
+function ThemeEditorPage() {
   const { data: store, isLoading } = useStore();
   const { data: products } = useProducts();
+  const save = useSaveTheme();
+  const createVersion = useCreateVersion();
+  const saveProduct = useSaveProduct();
   const hydrate = useThemeStore((s) => s.hydrate);
+  const ready = useThemeStore((s) => s.ready);
+  const dirty = useThemeStore((s) => s.dirty);
   const markSaved = useThemeStore((s) => s.markSaved);
+  const selectedId = useThemeStore((s) => s.selectedId);
   const applyAiDraft = useThemeStore((s) => s.applyAiDraft);
   const commitAiDraft = useThemeStore((s) => s.commitAiDraft);
   const dropAiDraft = useThemeStore((s) => s.discardAiDraft);
-  const saveProduct = useSaveProduct();
-  const [aiDraft, setAiDraft] = useState<PendingAiDraft | null>(null);
-  const appliedRef = useRef(false);
-  /** Boutique déjà chargée dans l'éditeur : on n'écrase jamais le travail en cours. */
-  const hydratedRef = useRef<string | null>(null);
-  const selectedId = useThemeStore((s) => s.selectedId);
-  const dirty = useThemeStore((s) => s.dirty);
-  const ready = useThemeStore((s) => s.ready);
-  const save = useSaveTheme();
-  const createVersion = useCreateVersion();
-  const [pending, setPending] = useState<"save" | PublishAction | null>(null);
+
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [helpWelcomeOpen, setHelpWelcomeOpen] = useState(false);
-  const [pinnedExpanded, setPinnedExpanded] = useState(false);
+  const [pending, setPending] = useState<PublishAction | "save" | null>(null);
+  const [mobileView, setMobileView] = useState<"sections" | "branding" | "apercu">("sections");
+  const [sidebarTab, setSidebarTab] = useState<"sections" | "branding">("sections");
+  const [aiDraft, setAiDraft] = useState<PendingAiDraft | null>(null);
+
+  /* État de la barre de navigation latérale DUKAIO */
   const [isHovered, setIsHovered] = useState(false);
-  /* Repliée par défaut pour laisser un maximum d'espace à l'éditeur */
+  const [pinnedExpanded, setPinnedExpanded] = useState(false);
+  const [helpWelcomeOpen, setHelpWelcomeOpen] = useState(false);
   const isCollapsed = !pinnedExpanded && !isHovered;
-  /* Sur mobile : une seule colonne — on bascule entre sections et aperçu. */
-  const [mobileView, setMobileView] = useState<"sections" | "apercu">("sections");
+
+  const hydratedRef = useRef<string | null>(null);
+  const appliedRef = useRef(false);
 
   const toggleSidebar = () => {
     setPinnedExpanded((prev) => !prev);
@@ -105,7 +120,6 @@ function EditeurPage() {
     applyAiDraft(pending.sections, funnelGlobal(productGlobal, pending.palette));
   }, [store, products, catalogue, hydrate, applyAiDraft]);
 
-
   /* Prévient avant de quitter avec des modifications non enregistrées. */
   useEffect(() => {
     if (!dirty) return;
@@ -133,7 +147,7 @@ function EditeurPage() {
       markSaved();
       toast.success(
         action === "unpublish"
-          ? "Boutique mise hors ligne"
+          ? "Boutique dépubliée (mise hors ligne)"
           : "Modifications enregistrées et publiées en direct !",
       );
     } catch {
@@ -143,60 +157,54 @@ function EditeurPage() {
     }
   };
 
-  /* Le produit IA n'entre dans la boutique qu'ici, sur action explicite. */
   const saveAiProduct = async () => {
     if (!store || !aiDraft) return;
-    const { draft } = aiDraft;
     setPending("save");
     try {
-      /* Régénération d'un produit existant : on rattache seulement la page. */
-      if (aiDraft.productId) {
-        commitAiDraft(aiDraft.productId);
-        const existing = currentConfig();
-        await save.mutateAsync({ id: store.id, theme: existing });
-        await createVersion.mutateAsync({ storeId: store.id, config: existing, kind: "auto" });
-        markSaved();
-        clearPendingAiDraft();
-        setAiDraft(null);
-        toast.success("Page de vente mise à jour", {
-          description: "Elle est rattachée à ce produit uniquement.",
-        });
-        setPending(null);
-        return;
-      }
-      const product = await saveProduct.mutateAsync({
-        values: {
-          name: draft.name,
-          title: draft.name,
-          description: draft.description,
-          price: Number(draft.price) || 0,
-          price_regular: Number(draft.price) || 0,
-          price_compare: Number(draft.compareAt) || 0,
-          product_type: draft.category || null,
-          tags: draft.tags,
-          images: draft.images,
-          image_url: draft.images[0] ?? null,
-          seo_title: draft.seoTitle || null,
-          seo_description: draft.seoDescription || null,
-          slug: slugify(draft.name),
-          status: "active",
-          store_id: store.id,
-        },
-      });
-      /* La page générée devient la page dédiée de ce produit — le modèle
-         commun des autres produits n'est jamais touché. */
-      commitAiDraft(product.id);
       const config = currentConfig();
-      await save.mutateAsync({ id: store.id, theme: config });
-      await createVersion.mutateAsync({ storeId: store.id, config, kind: "auto" });
+      const draft = aiDraft.draft;
+      const targetId = aiDraft.productId;
+      const effectiveSlug = draft.slug || slugify(draft.name);
+
+      let productId = targetId;
+      if (!productId) {
+        const created = await saveProduct.mutateAsync({
+          store_id: store.id,
+          name: draft.name,
+          slug: effectiveSlug,
+          description: draft.description,
+          price: draft.price,
+          compare_at_price: draft.compare_at_price,
+          images: draft.images,
+          status: "active",
+        });
+        productId = created?.id;
+      }
+
+      if (productId) {
+        config.productPages = {
+          ...(config.productPages ?? {}),
+          [productId]: aiDraft.sections,
+        };
+        const productGlobal = config.productGlobals?.[productId];
+        config.productGlobals = {
+          ...(config.productGlobals ?? {}),
+          [productId]: funnelGlobal(productGlobal, aiDraft.palette),
+        };
+      }
+
+      await save.mutateAsync({ id: store.id, theme: config, action: "publish" });
+      await createVersion.mutateAsync({ storeId: store.id, config, kind: "publish" });
       markSaved();
       clearPendingAiDraft();
       setAiDraft(null);
-      toast.success("Produit enregistré", {
-        description: "Sa page de vente est rattachée au produit.",
-      });
+      toast.success(
+        targetId
+          ? `Page de vente mise à jour pour « ${draft.name} »`
+          : `Produit « ${draft.name} » créé et page de vente enregistrée !`,
+      );
     } catch {
-      toast.error("Enregistrement du produit impossible. Réessayez.");
+      toast.error("Impossible d'enregistrer le produit IA. Réessayez.");
     } finally {
       setPending(null);
     }
@@ -248,16 +256,26 @@ function EditeurPage() {
 
       {/* Zone de travail de l'éditeur */}
       <div className="flex min-w-0 flex-1 flex-col h-full overflow-hidden">
-        <header className="flex flex-col gap-2 border-b border-border bg-card px-4 py-2.5 sm:flex-row sm:flex-wrap sm:items-center md:grid md:grid-cols-[1fr_auto_1fr] shrink-0">
-          <div className="flex min-w-0 items-center gap-2.5 md:justify-self-start">
-            <div className="min-w-0 flex-1">
+        {/* En-tête épuré et compact (sur mobile & desktop) */}
+        <header className="flex h-13 items-center justify-between gap-2 border-b border-border bg-card px-3 py-2 sm:px-4 shrink-0">
+          <div className="flex min-w-0 items-center gap-2">
+            {/* Bouton retour vers la page boutique */}
+            <Link
+              to="/dashboard/boutique"
+              className="flex size-8 shrink-0 items-center justify-center rounded-[6px] border border-border bg-background text-muted-foreground transition hover:bg-accent hover:text-foreground"
+              title="Retour à la boutique"
+              aria-label="Retour à la boutique"
+            >
+              <ArrowLeft size={16} />
+            </Link>
+
+            <div className="min-w-0 hidden sm:block">
               <div className="flex items-center gap-1.5 text-xs font-semibold">
                 <span className="truncate text-sm text-foreground">{store.store_name}</span>
                 <span className="text-muted-foreground">›</span>
                 <span className="text-muted-foreground font-medium">Éditeur de thème</span>
               </div>
               <p className="truncate text-[11px] text-muted-foreground">
-                {store.custom_domain || `${store.subdomain}.dukaio.com`} ·{" "}
                 <span className={online ? "text-emerald-600 font-medium" : "text-muted-foreground"}>
                   {online ? "En ligne" : "Hors ligne"}
                 </span>
@@ -265,23 +283,26 @@ function EditeurPage() {
               </p>
             </div>
           </div>
-          {/* Le sélecteur de page vit au centre de la barre, comme dans les éditeurs pros. */}
-          <PageSelector className="hidden md:flex md:justify-self-center" />
-          <div className="flex items-center gap-2 md:justify-self-end">
+
+          {/* Le sélecteur de page vit au centre de la barre */}
+          <PageSelector className="h-8 max-w-[140px] sm:max-w-[16rem] text-xs px-2" />
+
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <button
               type="button"
               onClick={() => void persist("publish")}
               disabled={busy}
-              className="flex items-center justify-center gap-1.5 rounded-[6px] bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-60"
+              className="flex items-center justify-center gap-1.5 rounded-[6px] bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-60 shadow-none"
             >
               {pending === "publish" || pending === "save" ? (
                 <Loader2 size={13} className="animate-spin" />
               ) : (
                 <Save size={13} />
               )}
-              Enregistrer
+              <span>Enregistrer</span>
             </button>
-            {/* Les actions secondaires vivent dans ce menu : la barre reste lisible. */}
+
+            {/* Les actions secondaires vivent dans ce menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
@@ -313,12 +334,10 @@ function EditeurPage() {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-
-          <PageSelector className="w-full md:hidden" />
         </header>
 
         {aiDraft ? (
-          <div className="flex flex-wrap items-center gap-3 border-b border-border bg-primary/5 px-4 py-3">
+          <div className="flex flex-wrap items-center gap-3 border-b border-border bg-primary/5 px-4 py-3 shrink-0">
             <Sparkles size={15} className="text-primary" />
             <p className="min-w-0 flex-1 text-sm">
               <span className="font-semibold">{aiDraft.draft.name}</span> — brouillon généré par
@@ -352,38 +371,18 @@ function EditeurPage() {
         ) : null}
 
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:flex-row">
-          {/* Barre de bascule mobile : sections ↔ aperçu */}
-          <div className="grid grid-cols-2 gap-1 border-b border-border bg-card p-2 md:hidden">
-            <button
-              type="button"
-              onClick={() => setMobileView("sections")}
-              className={cn(
-                "flex items-center justify-center gap-1.5 rounded-[6px] px-3 py-2 text-sm font-medium text-muted-foreground transition",
-                mobileView === "sections" && "bg-primary text-primary-foreground",
-              )}
-            >
-              <Layers size={14} /> Sections
-            </button>
-            <button
-              type="button"
-              onClick={() => setMobileView("apercu")}
-              className={cn(
-                "flex items-center justify-center gap-1.5 rounded-[6px] px-3 py-2 text-sm font-medium text-muted-foreground transition",
-                mobileView === "apercu" && "bg-primary text-primary-foreground",
-              )}
-            >
-              <Eye size={14} /> Aperçu
-            </button>
-          </div>
-
-          {/* 1. Panneau gauche : Arborescence des sections (toujours accessible sur PC) */}
+          {/* 1. Panneau gauche : Sections ou Branding */}
           <div
             className={cn(
               "min-h-0 flex-1 md:flex md:flex-none",
-              mobileView !== "sections" && "hidden",
+              mobileView === "apercu" ? "hidden md:flex" : "flex",
             )}
           >
-            <EditorSidebar onReset={reset} />
+            <EditorSidebar
+              tab={sidebarTab}
+              onTabChange={setSidebarTab}
+              onReset={reset}
+            />
           </div>
 
           {/* 2. Zone centrale : Aperçu interactif en direct */}
@@ -405,6 +404,58 @@ function EditeurPage() {
 
           <VersionHistory store={store} open={historyOpen} onOpenChange={setHistoryOpen} />
         </div>
+
+        {/* Barre de navigation mobile fixée en bas (Style application native) */}
+        <nav
+          aria-label="Navigation mobile éditeur"
+          className="grid grid-cols-3 border-t border-border bg-card/95 backdrop-blur py-1.5 px-2 md:hidden shrink-0 z-30 shadow-lg"
+        >
+          <button
+            type="button"
+            onClick={() => {
+              setMobileView("sections");
+              setSidebarTab("sections");
+            }}
+            className={cn(
+              "flex flex-col items-center justify-center gap-1 rounded-[6px] py-1 text-[11px] font-semibold transition-all",
+              mobileView === "sections"
+                ? "bg-primary/10 text-primary font-bold"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            <Layers size={17} />
+            <span>Sections</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setMobileView("branding");
+              setSidebarTab("branding");
+            }}
+            className={cn(
+              "flex flex-col items-center justify-center gap-1 rounded-[6px] py-1 text-[11px] font-semibold transition-all",
+              mobileView === "branding"
+                ? "bg-primary/10 text-primary font-bold"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            <Palette size={17} />
+            <span>Branding</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileView("apercu")}
+            className={cn(
+              "flex flex-col items-center justify-center gap-1 rounded-[6px] py-1 text-[11px] font-semibold transition-all",
+              mobileView === "apercu"
+                ? "bg-primary/10 text-primary font-bold"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            <Eye size={17} />
+            <span>Aperçu</span>
+          </button>
+        </nav>
       </div>
     </div>
   );

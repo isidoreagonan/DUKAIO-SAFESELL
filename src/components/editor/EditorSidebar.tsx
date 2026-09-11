@@ -260,13 +260,19 @@ export function SectionSettingsPanel({ onClose }: { onClose?: () => void } = {})
 
 export function EditorSidebar({
   variant = "auto",
+  tab: controlledTab,
+  onTabChange,
   onReset,
 }: {
   variant?: "auto" | "list";
+  tab?: "sections" | "branding";
+  onTabChange?: (tab: "sections" | "branding") => void;
   /** Réinitialise le thème sur les données réelles de la boutique. */
   onReset?: () => void;
 }) {
-  const [tab, setTab] = useState<"sections" | "branding">("sections");
+  const [internalTab, setInternalTab] = useState<"sections" | "branding">("sections");
+  const tab = controlledTab ?? internalTab;
+  const setTab = onTabChange ?? setInternalTab;
   const selectedId = useThemeStore((s) => s.selectedId);
   const activePage = useThemeStore((s) => s.activePage);
 
@@ -279,14 +285,15 @@ export function EditorSidebar({
         </div>
       ) : null}
 
-      {/* Barre d'onglets : Sections ↔ Branding & Couleurs */}
+      {/* Liste des sections & réglages de branding */}
       <div
         className={cn(
           "flex h-full min-h-0 flex-col",
           selectedId && variant === "auto" ? "hidden md:flex" : "flex",
         )}
       >
-        <div className="flex items-center justify-between border-b border-border p-2.5">
+        {/* Barre d'onglets Desktop (sur mobile, c'est la barre fixe en bas qui pilote la vue) */}
+        <div className="hidden md:flex items-center justify-between border-b border-border p-2.5">
           <div className="grid w-full grid-cols-2 gap-1 rounded-[6px] bg-muted/70 p-1">
             <button
               type="button"

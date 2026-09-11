@@ -141,7 +141,7 @@ export function LivePreview() {
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-muted/40">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-card px-3 py-2.5 sm:px-4">
+      <div className="hidden md:flex flex-wrap items-center justify-between gap-3 border-b border-border bg-card px-3 py-2.5 sm:px-4 shrink-0">
         <span className="truncate text-sm font-semibold">Aperçu · {pageLabels[activePage]}</span>
         <div className="flex items-center gap-2">
           {cartCount > 0 ? (
@@ -182,7 +182,7 @@ export function LivePreview() {
       </div>
 
       {message ? (
-        <div className="flex items-center justify-between gap-2 bg-primary/10 px-4 py-2 text-xs font-semibold text-primary">
+        <div className="flex items-center justify-between gap-2 bg-primary/10 px-4 py-2 text-xs font-semibold text-primary shrink-0">
           <span className="truncate">{message}</span>
           <button type="button" onClick={() => setMessage(null)} aria-label="Fermer le message">
             <X size={12} />
@@ -190,11 +190,11 @@ export function LivePreview() {
         </div>
       ) : null}
 
-      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto p-2 sm:p-4">
+      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto p-0 md:p-4">
         <div
           className={cn(
-            "mx-auto min-h-full rounded-[8px] border border-border bg-background shadow-md transition-[width,max-width] duration-300 ease-in-out",
-            device !== "desktop" && "ring-1 ring-border/50 shadow-lg",
+            "mx-auto min-h-full rounded-none md:rounded-[8px] border-0 md:border border-border bg-background shadow-none md:shadow-md transition-[width,max-width] duration-300 ease-in-out",
+            device !== "desktop" && "md:ring-1 md:ring-border/50 md:shadow-lg",
           )}
           style={{
             width: devices[device].width,
@@ -204,7 +204,7 @@ export function LivePreview() {
         >
           <BrandProvider value={brandFrom(global)}>
             <PreviewShellProvider value={shell}>
-              <div className="min-h-full rounded-[8px] bg-background font-sans text-foreground antialiased overflow-hidden">
+              <div className="min-h-full rounded-none md:rounded-[8px] bg-background font-sans text-foreground antialiased overflow-hidden">
                 {render(chrome.filter((sec) => sec.type !== "footer"))}
                 {render(pageSections, activePage === "product")}
                 {render(chrome.filter((sec) => sec.type === "footer"))}

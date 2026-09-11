@@ -7,6 +7,11 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 ## [11/09/2026] - Simplification Éditeur de Thème & Publication Directe
 
 ### Ajouté & Amélioré
+- **Refonte ergonomique Mobile de l'Éditeur de thème (`src/routes/_authenticated/dashboard/editeur.tsx`) :**
+  - **Bouton de retour vers la boutique :** Ajout d'une flèche de retour rapide (`<ArrowLeft />`) dans l'en-tête permettant de quitter l'éditeur et de retourner au dashboard de la boutique en un clic.
+  - **En-tête ultra-compact sur une seule ligne :** Fusion du bouton retour, du nom de la boutique, du sélecteur de page compact, du bouton *Enregistrer* et du menu `...` sur une seule rangée sans encombrement vertical.
+  - **Barre de navigation mobile fixée en bas (Style App Native) :** Déplacement de la navigation en bas d'écran avec 3 onglets dédiés (`Sections`, `Branding`, `Aperçu`) libérant 100% de la hauteur de l'écran pour l'édition et le rendu visuel.
+  - **Aperçu plein écran sur mobile :** En mode *Aperçu*, l'écran mobile affiche la vitrine en immersion totale sans barre de sélection d'appareils superflue.
 - **Rendu React direct sans Iframe (`src/components/editor/LivePreview.tsx`) :**
   - **Élimination complète du flash visuel (FOUC) :** Suppression du wrapper `iframe` qui purgeait les feuilles de style CSS à chaque action utilisateur ou ouverture de menu déroulant.
   - **Fluidité native & 0 clignotement :** L'aperçu du thème s'exécute désormais directement dans l'arbre de composants React avec un conteneur adaptatif ultra-réactif (PC, Tablette 834px, Mobile 420px), offrant une transition fluide, une netteté parfaite des polices et une vitesse d'exécution instantanée à 60 fps sans aucun rechargement.
