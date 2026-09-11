@@ -5,7 +5,6 @@ import { getDefinition } from "@/theme/registry";
 import { pageLabels, type PageKey } from "@/theme/types";
 import type { SectionInstance } from "@/theme/types";
 import { cn } from "@/lib/utils";
-import { PreviewFrame } from "@/components/editor/PreviewFrame";
 import { useFontLoader } from "@/hooks/useFontLoader";
 import { PreviewShellProvider, type PreviewCartLine } from "@/components/site/PreviewShell";
 import { BrandProvider, brandFrom } from "@/components/site/Brand";
@@ -191,21 +190,27 @@ export function LivePreview() {
         </div>
       ) : null}
 
-      <div className="min-h-0 min-w-0 flex-1 p-2 sm:p-4">
+      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto p-2 sm:p-4">
         <div
-          className="mx-auto h-full overflow-hidden rounded-[6px] border border-border bg-background shadow-sm transition-[max-width] duration-300"
-          style={{ width: devices[device].width, maxWidth: "100%" }}
+          className={cn(
+            "mx-auto min-h-full rounded-[8px] border border-border bg-background shadow-md transition-[width,max-width] duration-300 ease-in-out",
+            device !== "desktop" && "ring-1 ring-border/50 shadow-lg",
+          )}
+          style={{
+            width: devices[device].width,
+            maxWidth: "100%",
+            ...themeStyle,
+          }}
         >
-          <PreviewFrame width="100%" themeStyle={themeStyle} className="h-full w-full">
-            <BrandProvider value={brandFrom(global)}>
-              <PreviewShellProvider value={shell}>
+          <BrandProvider value={brandFrom(global)}>
+            <PreviewShellProvider value={shell}>
+              <div className="min-h-full rounded-[8px] bg-background font-sans text-foreground antialiased overflow-hidden">
                 {render(chrome.filter((sec) => sec.type !== "footer"))}
                 {render(pageSections, activePage === "product")}
                 {render(chrome.filter((sec) => sec.type === "footer"))}
-              </PreviewShellProvider>
-            </BrandProvider>
-
-          </PreviewFrame>
+              </div>
+            </PreviewShellProvider>
+          </BrandProvider>
         </div>
       </div>
     </div>

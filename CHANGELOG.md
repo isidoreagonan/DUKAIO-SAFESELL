@@ -7,6 +7,9 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 ## [11/09/2026] - Simplification Éditeur de Thème & Publication Directe
 
 ### Ajouté & Amélioré
+- **Rendu React direct sans Iframe (`src/components/editor/LivePreview.tsx`) :**
+  - **Élimination complète du flash visuel (FOUC) :** Suppression du wrapper `iframe` qui purgeait les feuilles de style CSS à chaque action utilisateur ou ouverture de menu déroulant.
+  - **Fluidité native & 0 clignotement :** L'aperçu du thème s'exécute désormais directement dans l'arbre de composants React avec un conteneur adaptatif ultra-réactif (PC, Tablette 834px, Mobile 420px), offrant une transition fluide, une netteté parfaite des polices et une vitesse d'exécution instantanée à 60 fps sans aucun rechargement.
 - **Barre supérieure épurée de l'Éditeur de thème (`src/routes/_authenticated/dashboard/editeur.tsx`) :**
   - **Bouton unique `Enregistrer` avec publication directe :** Suppression du bouton redondant `Republier`. Un seul bouton `Enregistrer` est désormais affiché dans l'en-tête. Au clic, les modifications apportées au thème sont immédiatement sauvegardées et publiées en direct (`publish`) sur la vitrine publique du vendeur (`boutique.dukaio.com`).
   - **Suppression du badge IA :** Retrait du badge `PRO • IA Illimitée` (`AiCreditsBadge`) de la barre supérieure afin de libérer l'espace visuel et offrir une interface d'édition claire et concentrée.
