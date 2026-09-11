@@ -4,14 +4,26 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 > **Note d'environnement :** Ce projet a été initialement généré avec Lovable, mais a été entièrement migré sur Antigravity. Il n'est plus synchronisé avec Lovable Cloud et utilise désormais exclusivement la propre instance Supabase de l'utilisateur.
 
+## [11/09/2026] - Barre de Progression Orange Globale & Centrage du Loader Abonnement
+
+### Corrigé & Amélioré
+- **Restauration de la barre de progression orange en haut de l'écran (`GlobalRouteProgressBar`) :**
+  - Réactivation de la fine ligne de chargement animée orange DUKAIO (`#f97316` / `primary`) au sommet de l'écran (`__root.tsx`) lors de tous les changements de page et clics de menu (Accueil, Produits, IA, Commandes, etc.).
+  - Transition fluide avec lueur dynamique et compte à rebours de progression lors des chargements de route.
+- **Centrage parfait du chargement sur l'onglet Abonnement & Facturation :**
+  - Harmonisation du composant `DukaioPageLoader` (cercle orange minimal avec épaisseur nette `3.5px` et libellé *"Chargement…"*) parfaitement centré au milieu du panneau d'abonnement.
+  - Élimination des états intermédiaires asymétriques ou décentrés lors de la récupération des informations de souscription et de paiement.
+- **Navigation SPA instantanée vers l'Abonnement (`shell.tsx` & `parametres.tsx`) :**
+  - Remplacement des liens HTML natifs `<a href>` par des composants routeurs `<Link to="/dashboard/parametres" search={{ tab: "abonnement" }}>` dans la barre latérale et le menu profil utilisateur, garantissant un passage immédiat sans rechargement lourd du navigateur.
+  - Synchronisation instantanée et bidirectionnelle de l'onglet actif avec les paramètres d'URL via `useLocation()`.
+
 ## [11/09/2026] - Simplification Éditeur de Thème & Publication Directe
 
 ### Ajouté & Amélioré
-- **Système de chargement de page épuré & centré (`src/components/brand/PageLoader.tsx`) :**
-  - **Cercle rotatif orange sobre & centré (style minimaliste) :** Remplacement des animations complexes par un cercle orange rotatif épuré avec une belle épaisseur de trait (`border-[3.5px]`), parfaitement centré au milieu de l'écran, accompagné du texte sobre *"Chargement…"*.
-  - **Barre de progression globale en haut d'écran (`GlobalRouteProgressBar`) :** Barre de chargement fine orange au sommet de la page réagissant instantanément à chaque clic de navigation.
-  - **Overlay de transition sans scintillement (`GlobalPageLoadingOverlay`) :** Affichage d'un fond translucide flouté élégant lors des chargements de route.
-  - **Composant d'attente par défaut du routeur (`router.tsx`) :** Intégration du `DukaioPageLoader` sur toutes les routes de l'application.
+- **Système de chargement de page épuré, unique & centré (`src/components/brand/PageLoader.tsx`) :**
+  - **Cercle rotatif orange unique & centré (style minimaliste) :** Remplacement des animations complexes par un unique cercle orange rotatif épuré avec une belle épaisseur de trait (`border-[3.5px]`), parfaitement centré au milieu de l'écran, accompagné du texte sobre *"Chargement…"*.
+  - **Élimination du doublon de chargement :** Suppression de la superposition concurrente entre la barre/overlay racine et le routeur. Désormais, un seul et unique indicateur apparaît au centre de l'écran lors des chargements.
+  - **Composant d'attente officiel du routeur (`router.tsx`) :** Intégration du `DukaioPageLoader` centré sur l'ensemble des routes et onglets de l'application.
 - **Refonte ergonomique Mobile de l'Éditeur de thème (`src/routes/_authenticated/dashboard/editeur.tsx`) :**
   - **Bouton de retour vers la boutique :** Ajout d'une flèche de retour rapide (`<ArrowLeft />`) dans l'en-tête permettant de quitter l'éditeur et de retourner au dashboard de la boutique en un clic.
   - **En-tête ultra-compact sur une seule ligne :** Fusion du bouton retour, du nom de la boutique, du sélecteur de page compact, du bouton *Enregistrer* et du menu `...` sur une seule rangée sans encombrement vertical.

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useLocation } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -1456,16 +1456,25 @@ function SettingsCard({ item, onOpen }: { item: Entry; onOpen: () => void }) {
 }
 
 function ParametresPage() {
-  const [tab, setTab] = useState<TabKey | null>(null);
+  const [localTab, setLocalTab] = useState<TabKey | null>(null);
+  const location = useLocation();
   const entitlements = useEntitlements();
   const isPro = entitlements.data?.plan === "pro";
 
-  useEffect(() => {
-    const nextTab = new URLSearchParams(window.location.search).get("tab");
-    if (TABS.some((item) => item.key === nextTab)) {
-      setTab(nextTab as TabKey);
+  const searchParams = new URLSearchParams(location.search);
+  const urlTab = searchParams.get("tab") as TabKey | null;
+  const tab = urlTab && TABS.some((item) => item.key === urlTab) ? urlTab : localTab;
+
+  const handleSetTab = (newTab: TabKey | null) => {
+    setLocalTab(newTab);
+    const url = new URL(window.location.href);
+    if (newTab) {
+      url.searchParams.set("tab", newTab);
+    } else {
+      url.searchParams.delete("tab");
     }
-  }, []);
+    window.history.pushState({}, "", url.toString());
+  };
 
   const groups = GROUPS.map((g) => ({
     ...g,
@@ -1481,7 +1490,7 @@ function ParametresPage() {
           <div className="min-w-0">
             <button
               type="button"
-              onClick={() => setTab(null)}
+              onClick={() => handleSetTab(null)}
               className="inline-flex cursor-pointer items-center gap-1.5 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground"
             >
               <ArrowLeft className="h-4 w-4" /> Tous les paramètres
@@ -1525,7 +1534,7 @@ function ParametresPage() {
                 <h2 className="text-lg font-extrabold tracking-tight">{group.label}</h2>
                 <div className="mt-4 grid gap-4 lg:grid-cols-2">
                   {group.items.map((item) => (
-                    <SettingsCard key={item.key} item={item} onOpen={() => setTab(item.key)} />
+                    <SettingsCard key={item.key} item={item} onOpen={() => handleSetTab(item.key)} />
                   ))}
                 </div>
               </section>

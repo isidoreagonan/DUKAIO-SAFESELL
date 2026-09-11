@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 
 import { DukaioLogo } from "@/components/brand/logo";
+import { DukaioPageLoader } from "@/components/brand/PageLoader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -121,6 +122,14 @@ export function SubscriptionPanel() {
 
   function refresh() {
     void qc.invalidateQueries({ queryKey: ["subscription"] });
+  }
+
+  if (sub.isLoading) {
+    return (
+      <div className="flex min-h-[350px] w-full flex-col items-center justify-center p-8">
+        <DukaioPageLoader label="Chargement…" />
+      </div>
+    );
   }
 
   return (

@@ -55,6 +55,7 @@ type NavItem = {
   title: string;
   icon: LucideIcon;
   to?: string;
+  search?: Record<string, unknown>;
   href?: string;
   exact?: boolean;
   badge?: string;
@@ -104,10 +105,18 @@ const mainNav: NavItem[] = [
 const accountNav: NavItem[] = [
   { title: "Paramètres", icon: Settings, to: "/dashboard/parametres" },
   { title: "Équipe", icon: UsersRound, to: "/dashboard/equipe" },
-  { title: "Abonnement", icon: Crown, href: "/dashboard/parametres?tab=abonnement", badge: "PLAN" },
+  { title: "Abonnement", icon: Crown, to: "/dashboard/parametres", search: { tab: "abonnement" }, badge: "PLAN" },
 ];
 
-function isActivePath(pathname: string, to: string, exact?: boolean) {
+function isActivePath(pathname: string, to: string, exact?: boolean, search?: Record<string, unknown>, currentSearch?: string) {
+  if (to === "/dashboard/parametres") {
+    const currentTab = new URLSearchParams(currentSearch || (typeof window !== "undefined" ? window.location.search : "")).get("tab");
+    const itemTab = search?.tab as string | undefined;
+    if (itemTab) {
+      return pathname === to && currentTab === itemTab;
+    }
+    return pathname === to && !currentTab;
+  }
   if (exact) return pathname === to || pathname === `${to}/`;
   /* Découverte couvre boutiques, produits et publicités ; les favoris ont leur propre menu. */
   if (to === "/dashboard/decouverte/boutiques") {
@@ -206,9 +215,9 @@ function TopUserMenu() {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <a href="/dashboard/parametres?tab=abonnement" className="cursor-pointer">
+          <Link to="/dashboard/parametres" search={{ tab: "abonnement" }} className="cursor-pointer">
             <Crown className="mr-2 h-4 w-4" /> Abonnement
-          </a>
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link to="/dashboard/parametres" className="cursor-pointer">
@@ -281,7 +290,7 @@ function SidebarLink({
       {content}
     </a>
   ) : item.to ? (
-    <Link to={item.to} data-tour={tour} onClick={onNavigate} className={className}>
+    <Link to={item.to} search={item.search} data-tour={tour} onClick={onNavigate} className={className}>
       {content}
     </Link>
   ) : (
@@ -314,6 +323,7 @@ function SidebarLink({
 function CollapsibleNavItem({
   item,
   pathname,
+  searchString,
   isOpen,
   onToggle,
   onNavigate,
@@ -321,16 +331,17 @@ function CollapsibleNavItem({
 }: {
   item: NavItem;
   pathname: string;
+  searchString?: string;
   isOpen?: boolean;
   onToggle?: () => void;
   onNavigate?: (() => void) | undefined;
   onOpenHelpWelcome?: (() => void) | undefined;
 }) {
   const parentActive = item.to
-    ? isActivePath(pathname, item.to, item.exact)
+    ? isActivePath(pathname, item.to, item.exact, item.search, searchString)
     : item.href
       ? isActivePath(pathname, item.href.split("?")[0] ?? item.href)
-      : item.children?.some((c) => c.to && isActivePath(pathname, c.to, c.exact)) || false;
+      : item.children?.some((c) => c.to && isActivePath(pathname, c.to, c.exact, c.search, searchString)) || false;
 
   const handleToggle = () => {
     if (onToggle) onToggle();
@@ -528,7 +539,7 @@ export function NavContent({
   onToggle?: (() => void) | undefined;
   onOpenHelpWelcome?: (() => void) | undefined;
 }) {
-  const { pathname } = useLocation();
+  const { pathname, search: searchString } = useLocation();
   const groups = useMemo(
     () => [
       { label: "Vente", items: mainNav },
@@ -545,10 +556,10 @@ export function NavContent({
       for (const item of group.items) {
         if (item.children) {
           const parentActive = item.to
-            ? isActivePath(pathname, item.to, item.exact)
+            ? isActivePath(pathname, item.to, item.exact, item.search, searchString)
             : item.href
               ? isActivePath(pathname, item.href.split("?")[0] ?? item.href)
-              : item.children?.some((c) => c.to && isActivePath(pathname, c.to, c.exact)) || false;
+              : item.children?.some((c) => c.to && isActivePath(pathname, c.to, c.exact, c.search, searchString)) || false;
           
           if (parentActive) {
             setOpenAccordion(item.title);
@@ -557,7 +568,7 @@ export function NavContent({
         }
       }
     }
-  }, [pathname, groups]);
+  }, [pathname, searchString, groups]);
 
   return (
     <TooltipProvider delayDuration={100}>
@@ -612,7 +623,7 @@ export function NavContent({
                   <SidebarLink
                     item={item}
                     collapsed
-                    active={item.to ? isActivePath(pathname, item.to, item.exact) : false}
+                    active={item.to ? isActivePath(pathname, item.to, item.exact, item.search, searchString) : false}
                     onNavigate={onNavigate}
                     onOpenHelpWelcome={onOpenHelpWelcome}
                   />
@@ -631,6 +642,7 @@ export function NavContent({
                       key={item.title}
                       item={item}
                       pathname={pathname}
+                      searchString={searchString}
                       isOpen={openAccordion === item.title}
                       onToggle={() => setOpenAccordion(openAccordion === item.title ? null : item.title)}
                       onNavigate={onNavigate}
