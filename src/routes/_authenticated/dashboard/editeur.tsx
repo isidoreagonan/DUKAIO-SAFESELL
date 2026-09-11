@@ -272,7 +272,7 @@ function EditeurPage() {
               type="button"
               onClick={() => void persist("publish")}
               disabled={busy}
-              className="btn-3d flex items-center justify-center gap-1.5 px-4 py-1.5 text-xs font-semibold disabled:opacity-60 shadow-sm"
+              className="flex items-center justify-center gap-1.5 rounded-[6px] bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-60"
             >
               {pending === "publish" || pending === "save" ? (
                 <Loader2 size={13} className="animate-spin" />
@@ -339,7 +339,7 @@ function EditeurPage() {
               type="button"
               onClick={() => void saveAiProduct()}
               disabled={busy}
-              className="btn-3d col-span-2 flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-semibold disabled:opacity-60 sm:col-span-1"
+              className="col-span-2 flex items-center justify-center gap-1.5 rounded-[6px] bg-primary px-3.5 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-60 sm:col-span-1"
             >
               {pending === "save" ? (
                 <Loader2 size={14} className="animate-spin" />

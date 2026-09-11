@@ -164,7 +164,7 @@ function OfferCard({
         <Link
           to="/dashboard/marketing"
           search={{ tab: "offres", type: kind }}
-          className="btn-3d mt-5 grid place-items-center rounded-[6px] py-2.5 text-sm font-semibold"
+          className="mt-5 inline-flex items-center justify-center rounded-[6px] bg-primary py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
         >
           Utiliser ce modèle
         </Link>
