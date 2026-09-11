@@ -4,6 +4,14 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 > **Note d'environnement :** Ce projet a été initialement généré avec Lovable, mais a été entièrement migré sur Antigravity. Il n'est plus synchronisé avec Lovable Cloud et utilise désormais exclusivement la propre instance Supabase de l'utilisateur.
 
+## [11/09/2026] - Simplification Éditeur de Thème & Publication Directe
+
+### Ajouté & Amélioré
+- **Barre supérieure épurée de l'Éditeur de thème (`src/routes/_authenticated/dashboard/editeur.tsx`) :**
+  - **Bouton unique `Enregistrer` avec publication directe :** Suppression du bouton redondant `Republier`. Un seul bouton `Enregistrer` est désormais affiché dans l'en-tête. Au clic, les modifications apportées au thème sont immédiatement sauvegardées et publiées en direct (`publish`) sur la vitrine publique du vendeur (`boutique.dukaio.com`).
+  - **Suppression du badge IA :** Retrait du badge `PRO • IA Illimitée` (`AiCreditsBadge`) de la barre supérieure afin de libérer l'espace visuel et offrir une interface d'édition claire et concentrée.
+  - **Menu d'actions simplifié :** Mise à jour du menu déroulant secondaire avec une option claire *"Mettre la boutique hors ligne"*.
+
 ## [10/09/2026] - Menu Dashboard Intégré dans l'Éditeur, SEO Complet & Éditeur 3 Panneaux
 
 ### Corrigé (Mises à jour récentes)

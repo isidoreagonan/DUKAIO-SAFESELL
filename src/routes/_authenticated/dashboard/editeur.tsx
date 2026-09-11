@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { AiCreditsBadge } from "@/components/dashboard/ai-credits";
-import { Eye, Globe, History, Layers, Loader2, MoreHorizontal, RotateCcw, Save, Sparkles, Upload, X } from "lucide-react";
+import { Eye, Globe, History, Layers, Loader2, MoreHorizontal, RotateCcw, Save, Sparkles, X } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -133,11 +132,9 @@ function EditeurPage() {
         await createVersion.mutateAsync({ storeId: store.id, config, kind: "publish" });
       markSaved();
       toast.success(
-        action === "publish"
-          ? "Boutique publiée"
-          : action === "unpublish"
-            ? "Boutique dépubliée"
-            : "Thème enregistré",
+        action === "unpublish"
+          ? "Boutique mise hors ligne"
+          : "Modifications enregistrées et publiées en direct !",
       );
     } catch {
       toast.error("Enregistrement impossible. Réessayez.");
@@ -271,32 +268,18 @@ function EditeurPage() {
           {/* Le sélecteur de page vit au centre de la barre, comme dans les éditeurs pros. */}
           <PageSelector className="hidden md:flex md:justify-self-center" />
           <div className="flex items-center gap-2 md:justify-self-end">
-            <AiCreditsBadge className="hidden sm:inline-flex" />
             <button
               type="button"
-              onClick={() => void persist()}
+              onClick={() => void persist("publish")}
               disabled={busy}
-              className="btn-3d flex flex-1 items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold disabled:opacity-60"
+              className="btn-3d flex items-center justify-center gap-1.5 px-4 py-1.5 text-xs font-semibold disabled:opacity-60 shadow-sm"
             >
-              {pending === "save" ? (
+              {pending === "publish" || pending === "save" ? (
                 <Loader2 size={13} className="animate-spin" />
               ) : (
                 <Save size={13} />
               )}
               Enregistrer
-            </button>
-            <button
-              type="button"
-              onClick={() => void persist("publish")}
-              disabled={busy}
-              className="btn-3d flex flex-1 items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold disabled:opacity-60"
-            >
-              {pending === "publish" ? (
-                <Loader2 size={13} className="animate-spin" />
-              ) : (
-                <Upload size={13} />
-              )}
-              {online ? "Republier" : "Publier"}
             </button>
             {/* Les actions secondaires vivent dans ce menu : la barre reste lisible. */}
             <DropdownMenu>
@@ -321,7 +304,7 @@ function EditeurPage() {
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onSelect={() => void persist("unpublish")}>
-                      <Globe size={14} className="mr-2" /> Dépublier la boutique
+                      <Globe size={14} className="mr-2" /> Mettre la boutique hors ligne
                     </DropdownMenuItem>
                   </>
                 ) : null}
