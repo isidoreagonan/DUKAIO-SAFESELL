@@ -3,14 +3,14 @@ import { useRouterState } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 
 /**
- * Loader animé officiel DUKAIO :
- * - Cercle orange rotatif fluide avec halo lumineux
- * - Logo / Icône DUKAIO au centre avec pulsation douce
- * - Typographie soignée avec points de suspension animés
+ * Loader épuré officiel DUKAIO :
+ * - Cercle orange rotatif avec épaisseur bien nette (style capture 2)
+ * - Centré parfaitement au milieu de l'écran
+ * - Texte "Chargement…" sobre et discret
  */
 export function DukaioPageLoader({
   className,
-  label = "Chargement en cours…",
+  label = "Chargement…",
   size = "default",
 }: {
   className?: string;
@@ -23,77 +23,32 @@ export function DukaioPageLoader({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center gap-4 text-center select-none",
+        "flex flex-col items-center justify-center text-center select-none",
         className,
       )}
     >
-      {/* Conteneur avec cercle animé et logo au centre */}
+      {/* Cercle orange rotatif avec épaisseur nette */}
       <div
         className={cn(
-          "relative grid place-items-center",
-          isSm ? "size-14" : isLg ? "size-24" : "size-20",
+          "rounded-full border-transparent border-t-primary border-r-primary/80 animate-spin",
+          isSm
+            ? "size-8 border-[2.5px]"
+            : isLg
+              ? "size-14 border-[4px]"
+              : "size-11 border-[3.5px]",
         )}
-      >
-        {/* Halo lumineux d'arrière-plan */}
-        <div className="absolute inset-0 rounded-full bg-primary/15 blur-xl animate-pulse" />
+        style={{
+          borderLeftColor: "oklch(0.7 0.19 45 / 0.15)",
+          borderBottomColor: "oklch(0.7 0.19 45 / 0.15)",
+          animationDuration: "0.75s",
+        }}
+      />
 
-        {/* Cercle orange rotatif avec épaisseur et dégradé */}
-        <div
-          className={cn(
-            "absolute inset-0 rounded-full border-[3px] border-transparent border-t-primary border-r-primary/70 border-b-primary/20 animate-spin transition-all",
-          )}
-          style={{ animationDuration: "0.85s" }}
-        />
-
-        {/* Second anneau subtil tournant en sens inverse */}
-        <div
-          className="absolute -inset-1 rounded-full border border-transparent border-t-primary/30 border-l-primary/10 animate-spin"
-          style={{ animationDuration: "2s", animationDirection: "reverse" }}
-        />
-
-        {/* Logo DUKAIO centré avec respiration douce */}
-        <div
-          className={cn(
-            "relative z-10 grid place-items-center overflow-hidden rounded-xl bg-card shadow-sm border border-border/40",
-            isSm ? "size-9 p-1.5" : isLg ? "size-14 p-2.5" : "size-12 p-2",
-          )}
-        >
-          <img
-            src="/dukaio-icon.png"
-            alt="DUKAIO"
-            className="h-full w-full object-contain animate-dukaio-pulse"
-            loading="eager"
-            decoding="async"
-          />
-        </div>
-      </div>
-
-      {/* Libellé de chargement avec animation élégante */}
+      {/* Texte sobre centré */}
       {label ? (
-        <div className="flex flex-col items-center gap-1">
-          <p
-            className={cn(
-              "font-medium text-muted-foreground transition-all",
-              isSm ? "text-xs" : isLg ? "text-base" : "text-sm",
-            )}
-          >
-            {label}
-          </p>
-          <div className="flex items-center gap-1 text-primary">
-            <span
-              className="inline-block size-1.5 rounded-full bg-primary animate-bounce"
-              style={{ animationDelay: "0ms" }}
-            />
-            <span
-              className="inline-block size-1.5 rounded-full bg-primary animate-bounce"
-              style={{ animationDelay: "150ms" }}
-            />
-            <span
-              className="inline-block size-1.5 rounded-full bg-primary animate-bounce"
-              style={{ animationDelay: "300ms" }}
-            />
-          </div>
-        </div>
+        <p className="mt-3 text-xs font-medium text-muted-foreground tracking-tight">
+          {label}
+        </p>
       ) : null}
     </div>
   );
@@ -101,7 +56,6 @@ export function DukaioPageLoader({
 
 /**
  * Barre de progression ultra-fine en haut de l'écran lors de chaque navigation
- * (Style GitHub / YouTube / Linear).
  */
 export function GlobalRouteProgressBar() {
   const isLoading = useRouterState({
@@ -116,11 +70,11 @@ export function GlobalRouteProgressBar() {
 
     if (isLoading) {
       setVisible(true);
-      setProgress(15);
+      setProgress(20);
       interval = setInterval(() => {
         setProgress((prev) => {
           if (prev >= 85) return prev;
-          return prev + Math.random() * 12 + 5;
+          return prev + Math.random() * 15 + 5;
         });
       }, 100);
     } else {
@@ -128,7 +82,7 @@ export function GlobalRouteProgressBar() {
       timer = setTimeout(() => {
         setVisible(false);
         setProgress(0);
-      }, 250);
+      }, 200);
     }
 
     return () => {
@@ -145,7 +99,7 @@ export function GlobalRouteProgressBar() {
       className="pointer-events-none fixed inset-x-0 top-0 z-[9999] h-[3px] bg-transparent"
     >
       <div
-        className="h-full bg-gradient-to-r from-primary via-orange-400 to-amber-300 shadow-[0_0_12px_rgba(249,115,22,0.7)] transition-all duration-200 ease-out"
+        className="h-full bg-primary shadow-[0_0_8px_rgba(249,115,22,0.6)] transition-all duration-200 ease-out"
         style={{ width: `${progress}%` }}
       />
     </div>
@@ -153,8 +107,7 @@ export function GlobalRouteProgressBar() {
 }
 
 /**
- * Overlay de transition global avec logo animé lors des chargements de route.
- * Se déclenche avec un léger délai (80ms) pour éviter les micro-sursauts sur les pages instantanées.
+ * Overlay de transition global centré au milieu de l'écran
  */
 export function GlobalPageLoadingOverlay() {
   const isLoading = useRouterState({
@@ -165,7 +118,7 @@ export function GlobalPageLoadingOverlay() {
   useEffect(() => {
     let timeout: ReturnType<typeof setTimeout>;
     if (isLoading) {
-      timeout = setTimeout(() => setShowOverlay(true), 80);
+      timeout = setTimeout(() => setShowOverlay(true), 60);
     } else {
       setShowOverlay(false);
     }
@@ -178,9 +131,9 @@ export function GlobalPageLoadingOverlay() {
     <div
       aria-live="polite"
       aria-label="Chargement de la page"
-      className="fixed inset-0 z-[9990] flex items-center justify-center bg-background/80 backdrop-blur-sm transition-opacity duration-200 animate-in fade-in-50"
+      className="fixed inset-0 z-[9990] flex items-center justify-center bg-background/90 backdrop-blur-sm transition-opacity duration-150 animate-in fade-in-50"
     >
-      <DukaioPageLoader size="default" label="Chargement de la page…" />
+      <DukaioPageLoader size="default" label="Chargement…" />
     </div>
   );
 }
