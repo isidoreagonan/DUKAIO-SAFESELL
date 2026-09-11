@@ -2,6 +2,7 @@ import { QueryClient } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 import { routeTree } from "./routeTree.gen";
+import { DukaioPageLoader } from "./components/brand/PageLoader";
 
 export const getRouter = () => {
   const queryClient = new QueryClient({
@@ -16,6 +17,11 @@ export const getRouter = () => {
     defaultPreload: "intent",
     defaultPreloadDelay: 40,
     defaultPreloadStaleTime: 30_000,
+    defaultPendingComponent: () => (
+      <div className="flex min-h-[60vh] items-center justify-center p-6">
+        <DukaioPageLoader label="Chargement de la page…" />
+      </div>
+    ),
   });
 
   /* Les données chargées côté serveur sont réutilisées à l'hydratation :

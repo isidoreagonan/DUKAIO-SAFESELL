@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
 import { ConfirmProvider } from "@/components/ui/confirm-dialog";
 import { NoticeHost } from "@/components/ui/notice-dialog";
+import { GlobalPageLoadingOverlay, GlobalRouteProgressBar } from "@/components/brand/PageLoader";
 
 function NotFoundComponent() {
   return (
@@ -140,6 +141,8 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <GlobalRouteProgressBar />
+      <GlobalPageLoadingOverlay />
       <ConfirmProvider>
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />

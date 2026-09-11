@@ -7,6 +7,11 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 ## [11/09/2026] - Simplification Éditeur de Thème & Publication Directe
 
 ### Ajouté & Amélioré
+- **Système de chargement de page animé & fluide (`src/components/brand/PageLoader.tsx`) :**
+  - **Logo DUKAIO animé & halo lumineux :** Création d'un loader visuel impressionnant au centre de l'écran avec un double anneau orange rotatif à gradient, un halo lumineux pulsant et le logo officiel DUKAIO en respiration douce (`animate-dukaio-pulse`).
+  - **Barre de progression globale en haut d'écran (`GlobalRouteProgressBar`) :** Barre de chargement ultra-fine dégradée orange/ambre au sommet de la page réagissant instantanément à chaque clic de navigation (style GitHub / YouTube / Linear).
+  - **Overlay de transition sans friction (`GlobalPageLoadingOverlay`) :** Affichage d'un fond translucide flouté (`backdrop-blur-sm`) avec le logo animé lors des chargements de route ou requêtes réseaux asynchrones.
+  - **Composant d'attente par défaut du routeur (`router.tsx`) :** Remplacement des spinners basiques par le nouveau `DukaioPageLoader` sur toutes les routes de l'application.
 - **Refonte ergonomique Mobile de l'Éditeur de thème (`src/routes/_authenticated/dashboard/editeur.tsx`) :**
   - **Bouton de retour vers la boutique :** Ajout d'une flèche de retour rapide (`<ArrowLeft />`) dans l'en-tête permettant de quitter l'éditeur et de retourner au dashboard de la boutique en un clic.
   - **En-tête ultra-compact sur une seule ligne :** Fusion du bouton retour, du nom de la boutique, du sélecteur de page compact, du bouton *Enregistrer* et du menu `...` sur une seule rangée sans encombrement vertical.
