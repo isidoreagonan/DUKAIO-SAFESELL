@@ -7,6 +7,8 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 ## [11/09/2026] - Barre de Progression Orange Globale & Centrage du Loader Abonnement
 
 ### Corrigé & Amélioré
+- **Ajout du logo officiel DUKAIO sur la page boutique indisponible (`Storefront.tsx`) :**
+  - Affichage de l'icône officielle DUKAIO dans un médaillon épuré centré au-dessus du message *"Cette boutique est actuellement indisponible."*, renforçant l'identité de marque lorsqu'un sous-domaine inexistant ou dépublié est consulté.
 - **Restauration de la barre de progression orange en haut de l'écran (`GlobalRouteProgressBar`) :**
   - Réactivation de la fine ligne de chargement animée orange DUKAIO (`#f97316` / `primary`) au sommet de l'écran (`__root.tsx`) lors de tous les changements de page et clics de menu (Accueil, Produits, IA, Commandes, etc.).
   - Transition fluide avec lueur dynamique et compte à rebours de progression lors des chargements de route.

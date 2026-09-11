@@ -122,13 +122,22 @@ export function Storefront({ handle, page, productId }: StorefrontProps) {
         <div className="absolute top-10 sm:top-14">
           <a
             href="https://dukaio.com"
-            className="text-sm font-medium text-zinc-400 transition-colors hover:text-white"
+            className="inline-flex items-center gap-2 text-sm font-medium text-zinc-400 transition-colors hover:text-white"
           >
             ← DUKAIO
           </a>
         </div>
         <div className="w-full max-w-2xl">
-          <h1 className="mb-10 text-3xl font-normal tracking-tight text-white sm:text-[40px] sm:leading-tight">
+          <div className="mx-auto mb-6 flex justify-center">
+            <div className="grid h-16 w-16 place-items-center rounded-2xl bg-white/95 p-3 shadow-2xl ring-1 ring-white/20">
+              <img
+                src="/dukaio-icon.png"
+                alt="DUKAIO"
+                className="h-full w-full object-contain select-none"
+              />
+            </div>
+          </div>
+          <h1 className="mb-8 text-3xl font-normal tracking-tight text-white sm:text-[40px] sm:leading-tight">
             Cette boutique est actuellement indisponible.
           </h1>
           <div className="mx-auto max-w-xl rounded-2xl border border-zinc-800/80 bg-[#0a0a0a] p-8 sm:p-10">
