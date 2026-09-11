@@ -14,6 +14,10 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
   - **Bouton unique `Enregistrer` avec publication directe :** Suppression du bouton redondant `Republier`. Un seul bouton `Enregistrer` est désormais affiché dans l'en-tête. Au clic, les modifications apportées au thème sont immédiatement sauvegardées et publiées en direct (`publish`) sur la vitrine publique du vendeur (`boutique.dukaio.com`).
   - **Suppression du badge IA :** Retrait du badge `PRO • IA Illimitée` (`AiCreditsBadge`) de la barre supérieure afin de libérer l'espace visuel et offrir une interface d'édition claire et concentrée.
   - **Menu d'actions secondaire dynamique :** Ajout de l'option contextuelle dans le menu `...` qui alterne intelligemment entre *"Publier la boutique"* (si hors ligne) et *"Dépublier la boutique"* (si en ligne), permettant de contrôler la mise en ligne ou hors ligne à tout moment.
+- **Onglets segmentés dans le panneau latéral (`src/components/editor/EditorSidebar.tsx`) :**
+  - **Séparation claire `Sections` vs `Branding` :** Intégration de deux onglets professionnels en haut du panneau gauche.
+  - **Onglet `Sections` :** Dédié uniquement à l'arbre des sections de la page (Global, Page active, Ajout de nouvelles sections), offrant une vue d'ensemble aérée et sans encombrement.
+  - **Onglet `Branding` :** Regroupe tous les réglages d'identité de marque de la boutique (Logo, Favicon) ainsi que les styles globaux (Palette de 4 couleurs, Typographie des titres & textes, Rayon d'arrondi).
 - **Harmonisation des boutons (Design plat & moderne DUKAIO) :**
   - **Suppression du style 3D/bombé :** Remplacement des styles de boutons en relief avec dégradés lourds et ombres biseautées (`.btn-3d`) par le style officiel sobre et épuré DUKAIO (`bg-primary`, fond plat orange, bords arrondis 6px, survol doux).
   - **Uniformisation globale :** Application du style épuré sur le bouton *Enregistrer* de l'éditeur de thème, les fenêtres modales / pop-ups du site, les pages de création d'offres (`marketing.offres.nouveau.tsx`), et les modules d'IA.

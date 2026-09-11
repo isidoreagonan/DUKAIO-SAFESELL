@@ -266,6 +266,7 @@ export function EditorSidebar({
   /** Réinitialise le thème sur les données réelles de la boutique. */
   onReset?: () => void;
 }) {
+  const [tab, setTab] = useState<"sections" | "branding">("sections");
   const selectedId = useThemeStore((s) => s.selectedId);
   const activePage = useThemeStore((s) => s.activePage);
 
@@ -278,21 +279,47 @@ export function EditorSidebar({
         </div>
       ) : null}
 
-      {/* Liste des sections : toujours visible sur PC, masquée sur mobile si une section est ouverte */}
+      {/* Barre d'onglets : Sections ↔ Branding & Couleurs */}
       <div
         className={cn(
           "flex h-full min-h-0 flex-col",
           selectedId && variant === "auto" ? "hidden md:flex" : "flex",
         )}
       >
-        <div className="flex items-center gap-2 border-b border-border px-4 py-3">
-          <Layers size={15} className="text-muted-foreground" />
-          <span className="flex-1 text-sm font-semibold">Sections</span>
+        <div className="flex items-center justify-between border-b border-border p-2.5">
+          <div className="grid w-full grid-cols-2 gap-1 rounded-[6px] bg-muted/70 p-1">
+            <button
+              type="button"
+              onClick={() => setTab("sections")}
+              className={cn(
+                "flex items-center justify-center gap-1.5 rounded-[4px] py-1.5 text-xs font-semibold transition-all",
+                tab === "sections"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <Layers size={13} />
+              <span>Sections</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab("branding")}
+              className={cn(
+                "flex items-center justify-center gap-1.5 rounded-[4px] py-1.5 text-xs font-semibold transition-all",
+                tab === "branding"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <Palette size={13} />
+              <span>Branding</span>
+            </button>
+          </div>
           {onReset ? (
             <button
               type="button"
               onClick={onReset}
-              className="rounded-[6px] p-1 text-muted-foreground transition hover:bg-accent hover:text-foreground"
+              className="ml-1.5 rounded-[6px] p-1.5 text-muted-foreground transition hover:bg-accent hover:text-foreground"
               aria-label="Réinitialiser le thème"
               title="Réinitialiser"
             >
@@ -303,23 +330,29 @@ export function EditorSidebar({
 
         <ScrollArea className="w-full min-h-0 flex-1 [&>div>div]:!block">
           <div className="space-y-4 p-3">
-            <div className="space-y-1">
-              <p className="px-1.5 text-[11px] font-bold tracking-[0.14em] text-muted-foreground uppercase">
-                Global (toutes les pages)
-              </p>
-              <SectionList scope="chrome" />
-            </div>
-            <div className="space-y-1">
-              <p className="px-1.5 text-[11px] font-bold tracking-[0.14em] text-muted-foreground uppercase">
-                {pageLabels[activePage]}
-              </p>
-              <SectionList scope={activePage} />
-            </div>
-            <SectionLibraryDialog />
-            <Separator />
-            <BrandPanel />
-            <Separator />
-            <GlobalSettingsPanel />
+            {tab === "sections" ? (
+              <>
+                <div className="space-y-1">
+                  <p className="px-1.5 text-[11px] font-bold tracking-[0.14em] text-muted-foreground uppercase">
+                    Global (toutes les pages)
+                  </p>
+                  <SectionList scope="chrome" />
+                </div>
+                <div className="space-y-1">
+                  <p className="px-1.5 text-[11px] font-bold tracking-[0.14em] text-muted-foreground uppercase">
+                    {pageLabels[activePage]}
+                  </p>
+                  <SectionList scope={activePage} />
+                </div>
+                <SectionLibraryDialog />
+              </>
+            ) : (
+              <>
+                <BrandPanel />
+                <Separator />
+                <GlobalSettingsPanel />
+              </>
+            )}
           </div>
         </ScrollArea>
       </div>
