@@ -18,7 +18,7 @@ export const getRouter = () => {
     defaultPreloadDelay: 40,
     defaultPreloadStaleTime: 30_000,
     defaultPendingComponent: () => (
-      <div className="flex min-h-[70vh] flex-col items-center justify-center p-6">
+      <div className="fixed inset-0 z-40 flex h-dvh w-screen flex-col items-center justify-center bg-background p-6">
         <DukaioPageLoader label="Chargement…" />
       </div>
     ),

@@ -10,6 +10,9 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 - **Restauration de la barre de progression orange en haut de l'écran (`GlobalRouteProgressBar`) :**
   - Réactivation de la fine ligne de chargement animée orange DUKAIO (`#f97316` / `primary`) au sommet de l'écran (`__root.tsx`) lors de tous les changements de page et clics de menu (Accueil, Produits, IA, Commandes, etc.).
   - Transition fluide avec lueur dynamique et compte à rebours de progression lors des chargements de route.
+- **Centrage absolu au milieu de l'écran (`defaultPendingComponent` dans `router.tsx`) :**
+  - Remplacement du conteneur relatif `min-h-[70vh]` par un conteneur fixe plein écran (`fixed inset-0 z-40 flex h-dvh w-screen items-center justify-center bg-background`).
+  - Au rechargement du site ou lors de l'accès au dashboard, le spinner orange et son texte *"Chargement…"* sont désormais **parfaitement au milieu géométrique exact de l'écran** (horizontalement et verticalement).
 - **Centrage parfait du chargement sur l'onglet Abonnement & Facturation :**
   - Harmonisation du composant `DukaioPageLoader` (cercle orange minimal avec épaisseur nette `3.5px` et libellé *"Chargement…"*) parfaitement centré au milieu du panneau d'abonnement.
   - Élimination des états intermédiaires asymétriques ou décentrés lors de la récupération des informations de souscription et de paiement.
