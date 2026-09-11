@@ -10,7 +10,7 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 - **Barre supérieure épurée de l'Éditeur de thème (`src/routes/_authenticated/dashboard/editeur.tsx`) :**
   - **Bouton unique `Enregistrer` avec publication directe :** Suppression du bouton redondant `Republier`. Un seul bouton `Enregistrer` est désormais affiché dans l'en-tête. Au clic, les modifications apportées au thème sont immédiatement sauvegardées et publiées en direct (`publish`) sur la vitrine publique du vendeur (`boutique.dukaio.com`).
   - **Suppression du badge IA :** Retrait du badge `PRO • IA Illimitée` (`AiCreditsBadge`) de la barre supérieure afin de libérer l'espace visuel et offrir une interface d'édition claire et concentrée.
-  - **Menu d'actions simplifié :** Mise à jour du menu déroulant secondaire avec une option claire *"Mettre la boutique hors ligne"*.
+  - **Menu d'actions secondaire dynamique :** Ajout de l'option contextuelle dans le menu `...` qui alterne intelligemment entre *"Publier la boutique"* (si hors ligne) et *"Dépublier la boutique"* (si en ligne), permettant de contrôler la mise en ligne ou hors ligne à tout moment.
 
 ## [10/09/2026] - Menu Dashboard Intégré dans l'Éditeur, SEO Complet & Éditeur 3 Panneaux
 

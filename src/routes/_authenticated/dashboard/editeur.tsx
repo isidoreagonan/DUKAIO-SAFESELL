@@ -300,14 +300,16 @@ function EditeurPage() {
                 <DropdownMenuItem onSelect={reset}>
                   <RotateCcw size={14} className="mr-2" /> Réinitialiser le thème
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 {online ? (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onSelect={() => void persist("unpublish")}>
-                      <Globe size={14} className="mr-2" /> Mettre la boutique hors ligne
-                    </DropdownMenuItem>
-                  </>
-                ) : null}
+                  <DropdownMenuItem onSelect={() => void persist("unpublish")}>
+                    <Globe size={14} className="mr-2 text-rose-500" /> Dépublier la boutique
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem onSelect={() => void persist("publish")}>
+                    <Globe size={14} className="mr-2 text-emerald-600" /> Publier la boutique
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
