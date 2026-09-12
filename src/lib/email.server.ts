@@ -24,7 +24,7 @@ type Block = {
  * plusieurs messageries n'affichent pas (d'où le rectangle noir).
  */
 const DEFAULT_LOGO_URL =
-  process.env["DUKAIO_EMAIL_LOGO_URL"] || "https://dukaio.com/dukaio-email-logo.jpg";
+  process.env["DUKAIO_EMAIL_LOGO_URL"] || "https://dukaio.com/dukaio-logo.png";
 
 /**
  * En-tête de marque : le vrai logo DUKAIO en image, avec le logotype texte en
