@@ -6,6 +6,7 @@ import {
   ArrowRight,
   Check,
   CheckCircle2,
+  ChevronRight,
   Coins,
   ExternalLink,
   FileEdit,
@@ -41,7 +42,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useProducts, useStore } from "@/lib/store";
-import { useUploadMedia } from "@/lib/media";
+import { useUploadMedia, useMedia } from "@/lib/media";
 import { setPendingAiDraft } from "@/lib/ai-draft";
 import { useAiAccess } from "@/lib/entitlements";
 import { AiCreditsBadge, AiUpgradeDialog } from "@/components/dashboard/ai-credits";
@@ -174,46 +175,184 @@ const STEP_LABELS = ["Importer", "Personnaliser", "Finaliser"] as const;
 
 function Stepper({ step }: { step: number }) {
   return (
-    <ol className="flex items-center justify-center gap-0">
+    <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
       {STEP_LABELS.map((label, index) => {
         const done = index < step;
         const active = index === step;
+
         return (
-          <li key={label} className="flex items-center">
-            {index > 0 ? (
+          <div key={label} className="flex items-center gap-2 md:gap-3">
+            <div
+              className={cn(
+                "flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold transition-all duration-300",
+                active
+                  ? "bg-primary text-primary-foreground shadow-md scale-105"
+                  : done
+                  ? "bg-primary/10 text-primary hover:bg-primary/20"
+                  : "bg-muted text-muted-foreground"
+              )}
+            >
               <span
-                className={
-                  "block h-[2px] w-8 sm:w-16 transition-colors " +
-                  (index <= step ? "bg-primary" : "bg-border")
-                }
-              />
-            ) : null}
-            <div className="flex flex-col items-center gap-1">
-              <span
-                className={
-                  "grid h-7 w-7 place-items-center rounded-full text-xs font-bold transition-all " +
-                  (done
-                    ? "bg-primary text-primary-foreground"
-                    : active
-                      ? "bg-primary text-primary-foreground ring-4 ring-primary/20"
-                      : "border border-border bg-background text-muted-foreground")
-                }
+                className={cn(
+                  "grid h-5 w-5 place-items-center rounded-full text-[10px] transition-colors",
+                  active ? "bg-background/20" : done ? "bg-primary text-primary-foreground" : "bg-muted-foreground/20"
+                )}
               >
-                {done ? <Check className="h-3.5 w-3.5" /> : index + 1}
+                {done ? <Check className="h-3 w-3" /> : index + 1}
               </span>
-              <span
-                className={
-                  "text-[11px] font-medium whitespace-nowrap transition-colors " +
-                  (done || active ? "text-primary" : "text-muted-foreground")
-                }
-              >
+              <span className={cn("hidden sm:inline-block", active && "inline-block")}>
                 {label}
               </span>
             </div>
-          </li>
+            {index < STEP_LABELS.length - 1 && (
+              <ChevronRight className="h-4 w-4 text-muted-foreground/40" />
+            )}
+          </div>
         );
       })}
-    </ol>
+    </div>
+  );
+}
+
+function AnalyzingProductState({ isLink }: { isLink: boolean }) {
+  const [activeStep, setActiveStep] = useState(0);
+  const [progress, setProgress] = useState(18);
+
+  useEffect(() => {
+    const t1 = setTimeout(() => {
+      setActiveStep(1);
+      setProgress(55);
+    }, 1600);
+
+    const t2 = setTimeout(() => {
+      setActiveStep(2);
+      setProgress(85);
+    }, 3600);
+
+    const interval = setInterval(() => {
+      setProgress((prev) => (prev < 94 ? prev + 1 : prev));
+    }, 350);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearInterval(interval);
+    };
+  }, []);
+
+  const steps = isLink
+    ? [
+        { label: "Connexion & extraction du produit", desc: "Récupération du titre, prix et description" },
+        { label: "Analyse et sélection des visuels", desc: "Détection des photos haute définition" },
+        { label: "Préparation de l'offre optimisée", desc: "Configuration de la fiche personnalisable" },
+      ]
+    : [
+        { label: "Analyse visuelle et détection IA", desc: "Identification du produit depuis vos images" },
+        { label: "Extraction des caractéristiques", desc: "Formulation des arguments clés" },
+        { label: "Préparation de l'offre optimisée", desc: "Configuration de la fiche personnalisable" },
+      ];
+
+  return (
+    <div className="flex flex-col items-center justify-center py-4 sm:py-8 animate-in fade-in-50 zoom-in-95 duration-400">
+      <div className="w-full max-w-md rounded-[16px] border border-border/80 bg-card/95 p-5 sm:p-6 shadow-xl shadow-primary/5 backdrop-blur-xl relative overflow-hidden">
+        {/* Effets lumineux subtils */}
+        <div className="pointer-events-none absolute -top-20 -left-20 size-40 rounded-full bg-primary/15 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -right-20 size-40 rounded-full bg-primary/10 blur-3xl" />
+
+        {/* En-tête avec badge et icône IA */}
+        <div className="flex flex-col items-center text-center relative z-10">
+          <div className="relative mb-3.5">
+            <div className="absolute -inset-1.5 rounded-full bg-primary/25 blur-md animate-pulse" />
+            <div className="relative grid size-12 place-items-center rounded-xl border border-primary/30 bg-primary/10 text-primary shadow-inner">
+              <Sparkles className="size-6 animate-spin text-primary" style={{ animationDuration: "5s" }} />
+            </div>
+          </div>
+
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-0.5 text-[10px] font-bold text-primary tracking-wider uppercase">
+            DUKAIO AI ENGINE
+          </div>
+
+          <h2 className="mt-2.5 text-lg sm:text-xl font-bold tracking-tight text-foreground">
+            Analyse de votre produit
+          </h2>
+          <p className="mt-1 text-xs text-muted-foreground max-w-xs">
+            {isLink
+              ? "Extraction des caractéristiques et visuels de la page produit…"
+              : "Analyse intelligente des visuels fournis…"}
+          </p>
+        </div>
+
+        {/* Micro-étapes de progression */}
+        <div className="mt-5 space-y-2 relative z-10">
+          {steps.map((st, idx) => {
+            const isDone = idx < activeStep;
+            const isCurrent = idx === activeStep;
+            return (
+              <div
+                key={st.label}
+                className={cn(
+                  "flex items-center gap-3 rounded-[10px] border p-2.5 sm:p-3 transition-all duration-300",
+                  isCurrent
+                    ? "border-primary/40 bg-primary/[0.06] shadow-2xs ring-1 ring-primary/25"
+                    : isDone
+                      ? "border-primary/20 bg-muted/30"
+                      : "border-border/50 bg-muted/10 opacity-50"
+                )}
+              >
+                <div className="flex size-6 shrink-0 items-center justify-center">
+                  {isDone ? (
+                    <span className="grid size-5 place-items-center rounded-full bg-primary text-primary-foreground shadow-xs animate-in zoom-in-75 duration-300">
+                      <Check className="size-3 stroke-[3]" />
+                    </span>
+                  ) : isCurrent ? (
+                    <div className="relative grid size-5 place-items-center">
+                      <Loader2 className="size-4 animate-spin text-primary" />
+                    </div>
+                  ) : (
+                    <div className="size-2 rounded-full bg-muted-foreground/30" />
+                  )}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <p
+                    className={cn(
+                      "text-xs font-semibold truncate",
+                      isCurrent
+                        ? "text-primary"
+                        : isDone
+                          ? "text-foreground"
+                          : "text-muted-foreground"
+                    )}
+                  >
+                    {st.label}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground/80 truncate">
+                    {st.desc}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Barre de progression fluide */}
+        <div className="mt-5 pt-4 border-t border-border/70 relative z-10">
+          <div className="flex items-center justify-between text-xs font-semibold mb-1.5">
+            <span className="text-muted-foreground text-[11px]">Progression</span>
+            <span className="text-primary font-bold text-[11px]">{progress}%</span>
+          </div>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted/70">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-primary via-orange-500 to-amber-500 transition-all duration-500 shadow-xs"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <p className="mt-2 text-center text-[10px] text-muted-foreground/70">
+            ⚡ Prêt en quelques instants
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -246,12 +385,13 @@ function ProduitIaGate() {
 }
 
 function ProduitIaPage() {
-
+  const [creationMode, setCreationMode] = useState<"link" | "images">("link");
   const navigate = useNavigate();
   const { produit, job: jobParam } = Route.useSearch();
   const { data: store } = useStore();
   const { data: products } = useProducts();
   const uploadMedia = useUploadMedia();
+  const { data: assets } = useMedia();
   const inputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   const { aiLeft, plan, credits, unlimited } = useAiAccess();
@@ -265,6 +405,7 @@ function ProduitIaPage() {
   const [productUrl, setProductUrl] = useState("");
   const [language, setLanguage] = useState("français");
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [galleryPickerOpen, setGalleryPickerOpen] = useState(false);
   const [withVisuals, setWithVisuals] = useState(true);
   const [scrapedImages, setScrapedImages] = useState<string[]>([]);
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
@@ -313,8 +454,8 @@ function ProduitIaPage() {
   const mountedRef = useRef(true);
   const [percent, setPercent] = useState(0);
   const currency = store?.currency || "XOF";
-  const working = busy !== null || (step === 2 && phase < 4 && percent < 100);
-  const analyzing = step === 0 && busy !== null;
+  const isGenerating = step === 2 && (phase < 4 || percent < 100 || busy !== null);
+  const isAnalyzing = step === 0 && busy !== null;
 
   useEffect(() => {
     mountedRef.current = true;
@@ -557,6 +698,7 @@ function ProduitIaPage() {
         toast.error("Création interrompue", {
           description: (error as Error).message,
         });
+        setBusy(null);
       } finally {
         followRef.current = null;
       }
@@ -678,7 +820,7 @@ function ProduitIaPage() {
 
   /* Alerte avant de recharger l'onglet pendant une génération active */
   useEffect(() => {
-    if (!working) return;
+    if (!isGenerating) return;
     const warn = (event: BeforeUnloadEvent) => {
       event.preventDefault();
       event.returnValue = "Votre création IA se poursuit en arrière-plan. Vous pourrez la reprendre à tout moment via la notification.";
@@ -686,7 +828,7 @@ function ProduitIaPage() {
     };
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
-  }, [working]);
+  }, [isGenerating]);
 
   /* Import manuel d'un visuel : le vendeur choisit sa propre photo pour l'emplacement. */
   const importVisual = (target: string, file: File) => {
@@ -776,12 +918,12 @@ function ProduitIaPage() {
   const setDraftField = <K extends keyof ProductDraft>(key: K, value: ProductDraft[K]) =>
     setDraft((current) => (current ? { ...current, [key]: value } : current));
 
-  const isWideLayout = working || (step === 2 && funnel && draft);
+  const isWideLayout = (step === 0 && !isAnalyzing) || isGenerating || (step === 2 && funnel && draft);
 
   return (
     <DashboardShell>
-      <div className={cn("mx-auto w-full pb-4 transition-all duration-300", isWideLayout ? "max-w-5xl" : "max-w-2xl")}>
-        {!analyzing && !working ? (
+      <div className={cn("mx-auto w-full pb-4 transition-all duration-300", isAnalyzing ? "max-w-lg" : isWideLayout ? "max-w-5xl" : "max-w-2xl")}>
+        {!isAnalyzing && !isGenerating ? (
           <>
             <Link
               to="/dashboard/produits"
@@ -789,178 +931,245 @@ function ProduitIaPage() {
             >
               <ArrowLeft className="h-4 w-4" /> Retour aux produits
             </Link>
-            <div className="mt-4 flex items-center justify-between gap-3 rounded-[6px] border border-border bg-surface-tint px-3 py-2">
-              <span className="text-xs text-muted-foreground">
-                Votre solde DUKAIO AI se recharge chaque mois.
-              </span>
-              <AiCreditsBadge />
-            </div>
+
           </>
         ) : null}
 
-        {!analyzing && !working ? (
+        {!isAnalyzing && !isGenerating ? (
           <div className="mt-6">
             <Stepper step={step} />
           </div>
         ) : null}
 
-        {analyzing ? (
-          <div className="mt-12">
-            <div className="text-center">
-              <p className="text-xs font-semibold uppercase tracking-widest text-primary/70">DUKAIO AI</p>
-              <h1 className="mt-2 text-2xl font-extrabold tracking-tight">
-                Analyse de votre produit en cours
-              </h1>
-              <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-                Nous récupérons les données de votre page produit et préparons une boutique optimisée.
-              </p>
-            </div>
-
-            <div className="mx-auto mt-10 max-w-md space-y-3">
-              {[
-                { label: "Récupération des informations produit", done: false, active: true },
-                { label: "Analyse et préparation des visuels", done: false, active: false },
-                { label: "Génération de la fiche de vente", done: false, active: false },
-              ].map((task) => (
-                <div
-                  key={task.label}
-                  className={
-                    "flex items-center gap-3 rounded-lg border px-4 py-3 transition-all " +
-                    (task.active
-                      ? "border-primary/30 bg-primary/5 shadow-sm"
-                      : "border-border bg-background")
-                  }
-                >
-                  <span className="flex-shrink-0 flex items-center justify-center w-6 h-6">
-                    {task.done ? (
-                      <span className="grid h-6 w-6 place-items-center rounded-full bg-primary text-primary-foreground">
-                        <Check className="h-3.5 w-3.5" />
-                      </span>
-                    ) : task.active ? (
-                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                    ) : (
-                      <div className="h-3 w-3 rounded-full border-2 border-muted-foreground/25" />
-                    )}
-                  </span>
-                  <span
-                    className={
-                      "text-sm font-medium " +
-                      (task.active ? "text-foreground" : "text-muted-foreground")
-                    }
-                  >
-                    {task.label}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            <div className="mx-auto mt-8 max-w-md">
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-primary/80 to-primary transition-all duration-[2000ms]"
-                  style={{ width: "45%" }}
-                />
-              </div>
-              <p className="mt-3 text-center text-xs text-muted-foreground">
-                Cette étape prend généralement environ 1 minute.
-              </p>
-            </div>
-          </div>
+        {isAnalyzing ? (
+          <AnalyzingProductState isLink={creationMode === "link" || Boolean(productUrl.trim())} />
         ) : null}
 
-        {step === 0 && !analyzing ? (
-          <>
-            <header className="mt-4 text-center">
-              <h1 className="text-2xl font-extrabold tracking-tight">Ajoutez une image produit</h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Glissez-déposez, collez (Ctrl+V) ou cliquez pour parcourir
+        {step === 0 && !isAnalyzing ? (
+          <div className="animate-in fade-in-50 duration-500">
+            <header className="mt-2 text-center">
+              <h1 className="text-3xl font-extrabold tracking-tight">Nouvelle page produit</h1>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Choisissez votre méthode pour démarrer.
               </p>
             </header>
 
-            {images.length === 0 ? (
-              <div
-                onDragOver={(event) => {
-                  event.preventDefault();
-                  setDragging(true);
-                }}
-                onDragLeave={() => setDragging(false)}
-                onDrop={(event) => {
-                  event.preventDefault();
-                  setDragging(false);
-                  void addFiles(Array.from(event.dataTransfer.files));
-                }}
-                className={
-                  "mt-4 grid place-items-center gap-1 rounded-[10px] border border-dashed px-6 py-8 text-center transition-colors " +
-                  (dragging ? "border-primary bg-surface-tint" : "border-border bg-muted/20")
-                }
+            <div className="mt-4 flex md:hidden p-1 rounded-full bg-muted/50 border border-border mx-auto max-w-[280px]">
+              <button
+                onClick={() => setCreationMode("link")}
+                className={cn(
+                  "flex-1 py-1.5 text-[12px] font-semibold rounded-full transition-all duration-200",
+                  creationMode === "link" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                )}
               >
-                <span className="grid h-11 w-11 place-items-center">
-                  {uploading ? (
-                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                  ) : (
-                    <Upload className="h-6 w-6 text-muted-foreground" />
-                  )}
-                </span>
-                <p className="text-sm font-semibold">Glissez vos images ici</p>
-                <p className="text-sm text-muted-foreground">ou choisissez un produit à importer</p>
-                <div className="mt-3">
+                Par lien (Auto)
+              </button>
+              <button
+                onClick={() => setCreationMode("images")}
+                className={cn(
+                  "flex-1 py-1.5 text-[12px] font-semibold rounded-full transition-all duration-200",
+                  creationMode === "images" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Par images (Manuel)
+              </button>
+            </div>
+
+            <div className="mt-6 md:mt-8 grid md:grid-cols-2 gap-8 w-full mx-auto items-stretch">
+              
+              {/* Carte 1 : Lien */}
+              <div className={cn(
+                "flex-col rounded-[16px] border border-border bg-card p-6 shadow-sm relative overflow-hidden transition-all hover:shadow-md hover:border-primary/30",
+                creationMode !== "link" ? "hidden md:flex" : "flex"
+              )}>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full -z-0" />
+                <div className="relative z-10 mb-6">
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-[11px] font-bold text-primary tracking-wide">
+                    <Sparkles className="h-3.5 w-3.5" /> RECOMMANDÉ
+                  </div>
+                  <h2 className="mt-4 text-xl font-bold">À partir d'un lien</h2>
+                  <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                    Collez un lien AliExpress, Shopify, WooCommerce ou Amazon. DUKAIO AI analysera le produit et rédigera toute la page pour vous.
+                  </p>
+                </div>
+                
+                <div className="mt-auto space-y-4 relative z-10">
+                  <div className="flex flex-col gap-3">
+                    <label className="relative block">
+                      <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <input
+                        className={field + " w-full pl-9 h-11 text-sm bg-background"}
+                        placeholder="Ex: https://fr.aliexpress.com/item/..."
+                        value={productUrl}
+                        onChange={(event) => setProductUrl(event.target.value)}
+                      />
+                    </label>
+                    <Select value={language} onValueChange={setLanguage}>
+                      <SelectTrigger className="w-full h-11 bg-background hover:bg-muted/50 transition-colors">
+                        <SelectValue placeholder="Langue" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="français">
+                          <div className="flex items-center gap-2">
+                            <img src="https://flagcdn.com/w20/fr.png" alt="Français" width={20} className="rounded-none shadow-sm" />
+                            <span>Français</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="anglais">
+                          <div className="flex items-center gap-2">
+                            <img src="https://flagcdn.com/w20/gb.png" alt="Anglais" width={20} className="rounded-none shadow-sm" />
+                            <span>Anglais</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="espagnol">
+                          <div className="flex items-center gap-2">
+                            <img src="https://flagcdn.com/w20/es.png" alt="Espagnol" width={20} className="rounded-none shadow-sm" />
+                            <span>Espagnol</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="italien">
+                          <div className="flex items-center gap-2">
+                            <img src="https://flagcdn.com/w20/it.png" alt="Italien" width={20} className="rounded-none shadow-sm" />
+                            <span>Italien</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="allemand">
+                          <div className="flex items-center gap-2">
+                            <img src="https://flagcdn.com/w20/de.png" alt="Allemand" width={20} className="rounded-none shadow-sm" />
+                            <span>Allemand</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="portugais">
+                          <div className="flex items-center gap-2">
+                            <img src="https://flagcdn.com/w20/pt.png" alt="Portugais" width={20} className="rounded-none shadow-sm" />
+                            <span>Portugais</span>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
                   <button
                     type="button"
-                    onClick={() => setPickerOpen(true)}
-                    className="btn-3d inline-flex items-center gap-2 rounded-[6px] px-6 py-2.5 text-sm font-semibold"
+                    onClick={() => void analyse()}
+                    disabled={busy !== null || !productUrl.trim()}
+                    className="btn-3d w-full h-11 inline-flex justify-center items-center gap-2 rounded-[8px] text-sm font-semibold disabled:opacity-60 disabled:grayscale"
                   >
-                    <Upload className="h-4 w-4" /> Choisir un produit
+                    {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                    Générer la page
                   </button>
+                  <p className="text-center text-[11px] text-muted-foreground font-medium">
+                    Coût : 1 crédit IA
+                  </p>
                 </div>
-                <p className="mt-3 text-xs text-muted-foreground">
-                  JPG, PNG, WebP · Max 5 MB · Jusqu'à {MAX_IMAGES} images
-                </p>
               </div>
-            ) : (
-              <div className="mt-6">
-                <div className="flex flex-wrap justify-center gap-3">
-                  {images.map((url, index) => (
-                    <div
-                      key={url}
-                      className="relative h-36 w-36 overflow-hidden rounded-[10px] border border-border"
-                    >
-                      <img src={url} alt="Photo du produit" className="h-full w-full object-cover" />
-                      {index === 0 ? (
-                        <span className="absolute bottom-2 left-2 rounded-full bg-primary px-2.5 py-1 text-[11px] font-semibold text-primary-foreground">
-                          Image principale
+
+              {/* Carte 2 : Images manuelles */}
+              <div className={cn(
+                "flex-col rounded-[16px] border border-border bg-card p-6 shadow-sm transition-all hover:shadow-md",
+                creationMode !== "images" ? "hidden md:flex" : "flex"
+              )}>
+                <div className="mb-6">
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-[11px] font-bold text-muted-foreground tracking-wide">
+                    <ImagePlus className="h-3.5 w-3.5" /> ALTERNATIVE
+                  </div>
+                  <h2 className="mt-4 text-xl font-bold">À partir de vos images</h2>
+                  <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                    Importez vos propres visuels de produit. L'IA les analysera pour pré-remplir votre page.
+                  </p>
+                </div>
+                
+                <div className="mt-auto">
+                  {images.length === 0 ? (
+                    <div className="space-y-4">
+                      {/* Drag & Drop Zone */}
+                      <div
+                        onDragOver={(event) => {
+                          event.preventDefault();
+                          setDragging(true);
+                        }}
+                        onDragLeave={() => setDragging(false)}
+                        onDrop={(event) => {
+                          event.preventDefault();
+                          setDragging(false);
+                          void addFiles(Array.from(event.dataTransfer.files));
+                        }}
+                        className={cn(
+                          "grid place-items-center gap-3 rounded-[12px] border border-dashed px-4 py-6 text-center transition-colors cursor-pointer",
+                          dragging ? "border-primary bg-primary/5" : "border-border bg-muted/30 hover:bg-muted/50"
+                        )}
+                        onClick={() => inputRef.current?.click()}
+                      >
+                        <span className="grid h-10 w-10 place-items-center rounded-full bg-background shadow-sm border border-border">
+                          {uploading ? (
+                            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                          ) : (
+                            <Upload className="h-4 w-4 text-muted-foreground" />
+                          )}
                         </span>
-                      ) : null}
+                        <div>
+                          <p className="text-sm font-semibold">Depuis votre appareil</p>
+                          <p className="text-[11px] text-muted-foreground mt-1">
+                            Glissez ou cliquez (3 à 4 images)
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="relative text-center">
+                        <span className="absolute left-0 top-1/2 h-px w-full bg-border" />
+                        <span className="relative bg-card px-2 text-[10px] uppercase tracking-wider text-muted-foreground font-bold">OU</span>
+                      </div>
+
                       <button
                         type="button"
-                        aria-label="Retirer cette photo"
-                        onClick={() => setImages((list) => list.filter((item) => item !== url))}
-                        className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full border border-border bg-background/90 text-muted-foreground hover:text-destructive"
+                        onClick={() => setGalleryPickerOpen(true)}
+                        className="w-full inline-flex justify-center items-center gap-2 rounded-[8px] border border-border bg-background px-4 py-2.5 text-sm font-semibold hover:bg-muted transition-colors shadow-sm"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Images className="h-4 w-4 text-muted-foreground" />
+                        Choisir dans la galerie
                       </button>
                     </div>
-                  ))}
-                  {images.length < MAX_IMAGES ? (
-                    <button
-                      type="button"
-                      onClick={() => inputRef.current?.click()}
-                      className="grid h-36 w-36 place-items-center gap-1 rounded-[10px] border border-dashed border-border text-sm text-muted-foreground hover:border-primary hover:text-foreground"
-                    >
-                      {uploading ? (
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                      ) : (
-                        <ImagePlus className="h-5 w-5" />
-                      )}
-                      Ajouter
-                    </button>
-                  ) : null}
+                  ) : (
+                    <div className="space-y-5">
+                      <div className="flex flex-wrap gap-2">
+                        {images.map((url, index) => (
+                          <div key={url} className="relative h-20 w-20 overflow-hidden rounded-[8px] border border-border shadow-sm group">
+                            <img src={url} alt="" className="h-full w-full object-cover transition-transform group-hover:scale-105" />
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); setImages((list) => list.filter((item) => item !== url)); }}
+                              className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-background/95 text-muted-foreground hover:text-destructive shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+                        {images.length < MAX_IMAGES && (
+                          <button
+                            type="button"
+                            onClick={() => setGalleryPickerOpen(true)}
+                            title="Ajouter depuis la galerie"
+                            className="grid h-20 w-20 place-items-center rounded-[8px] border border-dashed border-border bg-muted/30 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                          >
+                            <Plus className="h-5 w-5" />
+                          </button>
+                        )}
+                      </div>
+                      
+                      <button
+                        type="button"
+                        onClick={() => void analyse()}
+                        disabled={busy !== null || uploading}
+                        className="btn-3d w-full h-11 inline-flex justify-center items-center gap-2 rounded-[8px] text-sm font-semibold bg-zinc-800 text-white hover:bg-zinc-700 disabled:opacity-60"
+                      >
+                        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+                        Continuer ({images.length} image{images.length > 1 ? "s" : ""})
+                      </button>
+                    </div>
+                  )}
                 </div>
-                <p className="mt-3 text-center text-sm text-muted-foreground">
-                  {images.length} image{images.length > 1 ? "s" : ""} sélectionnée
-                  {images.length > 1 ? "s" : ""} sur {MAX_IMAGES} maximum
-                </p>
               </div>
-            )}
+            </div>
 
             <input
               ref={inputRef}
@@ -973,115 +1182,7 @@ function ProduitIaPage() {
                 event.target.value = "";
               }}
             />
-
-            <div className="relative my-5 text-center">
-              <span className="absolute left-0 top-1/2 h-px w-full bg-border" />
-              <span className="relative inline-block rounded-full bg-[#E8FFF3] px-3 py-1 text-[11px] font-bold tracking-wide text-[#00A854]">
-                NEW
-              </span>
-            </div>
-
-            <div className="text-center">
-              <h2 className="inline-flex items-center gap-2 text-base font-bold">
-                <Sparkles className="h-4 w-4 text-primary" /> Générer avec{" "}
-                <span className="font-display not-italic text-primary">DUKAIO AI</span>
-              </h2>
-              <p className="mx-auto mt-2 max-w-lg text-sm text-muted-foreground leading-relaxed">
-                Transformez un lien produit en page qui convertit. Collez votre lien{" "}
-                <span className="text-[#FF4747] font-semibold">AliExpress</span>,{" "}
-                <span className="text-[#95BF47] font-semibold">Shopify</span>,{" "}
-                <span className="text-[#96588A] font-semibold">WooCommerce</span> ou{" "}
-                <span className="text-[#FF9900] font-semibold">Amazon</span>, on s'occupe du reste.
-              </p>
-              
-              <div className="mt-4 flex flex-col sm:flex-row max-w-xl mx-auto items-stretch sm:items-center gap-2 px-2 sm:px-0">
-                <label className="relative flex-1 block w-full">
-                  <Link2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <input
-                    className={field + " w-full pl-9 h-11"}
-                    placeholder="Entrez l'URL de votre produit AliExpress..."
-                    value={productUrl}
-                    onChange={(event) => setProductUrl(event.target.value)}
-                  />
-                </label>
-
-                <div className="flex w-full sm:w-auto items-center gap-2">
-                  {/* Sélecteur de langue avec drapeaux */}
-                  <Select value={language} onValueChange={setLanguage}>
-                    <SelectTrigger className="flex-1 sm:w-[140px] h-11 bg-background hover:bg-muted/50 transition-colors">
-                      <SelectValue placeholder="Langue" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="français">
-                        <div className="flex items-center gap-2">
-                          <img src="https://flagcdn.com/w20/fr.png" alt="Français" width={20} className="rounded-sm" />
-                          <span>Français</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="anglais">
-                        <div className="flex items-center gap-2">
-                          <img src="https://flagcdn.com/w20/gb.png" alt="Anglais" width={20} className="rounded-sm" />
-                          <span>Anglais</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="espagnol">
-                        <div className="flex items-center gap-2">
-                          <img src="https://flagcdn.com/w20/es.png" alt="Espagnol" width={20} className="rounded-sm" />
-                          <span>Espagnol</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="italien">
-                        <div className="flex items-center gap-2">
-                          <img src="https://flagcdn.com/w20/it.png" alt="Italien" width={20} className="rounded-sm" />
-                          <span>Italien</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="allemand">
-                        <div className="flex items-center gap-2">
-                          <img src="https://flagcdn.com/w20/de.png" alt="Allemand" width={20} className="rounded-sm" />
-                          <span>Allemand</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="portugais">
-                        <div className="flex items-center gap-2">
-                          <img src="https://flagcdn.com/w20/pt.png" alt="Portugais" width={20} className="rounded-sm" />
-                          <span>Portugais</span>
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <button
-                    type="button"
-                    onClick={() => void analyse()}
-                    disabled={busy !== null || uploading || !productUrl.trim()}
-                    className="btn-3d flex-1 sm:flex-none sm:w-auto h-11 inline-flex justify-center items-center gap-2 rounded-[6px] px-5 text-sm font-semibold disabled:opacity-60 disabled:grayscale"
-                  >
-                    {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                    Générer
-                  </button>
-                </div>
-              </div>
-              <p className="mt-2 text-xs text-muted-foreground flex items-center justify-center gap-1.5">
-                <Sparkles className="h-3 w-3" />
-                La création d'une boutique IA utilise 1 crédit IA.
-              </p>
-            </div>
-
-            <div className="mt-6 flex justify-center">
-              <button
-                type="button"
-                onClick={() => void analyse()}
-                disabled={busy !== null || uploading || images.length === 0}
-                className="btn-3d w-[180px] h-11 inline-flex justify-center items-center gap-2 rounded-[6px] px-5 text-sm font-semibold disabled:opacity-60 disabled:grayscale"
-              >
-                {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                Continuer <ArrowRight className="h-4 w-4" />
-              </button>
-            </div>
-
-
-          </>
+          </div>
         ) : null}
 
         {step === 1 && draft ? (
@@ -1111,13 +1212,22 @@ function ProduitIaPage() {
                       <span className="rounded-full bg-primary/10 border border-primary/20 px-2.5 py-0.5 text-xs font-bold text-primary">
                         {draft.images.length} / 5
                       </span>
+                      {scrapedImages.length > 0 ? (
+                        <button
+                          type="button"
+                          onClick={() => setImagePickerOpen(true)}
+                          className="inline-flex items-center gap-1 rounded-[6px] border border-border bg-background px-2.5 py-1 text-xs font-medium text-foreground hover:bg-accent cursor-pointer"
+                        >
+                          <RefreshCw className="size-3 text-primary" /> Rechoisir
+                        </button>
+                      ) : null}
                       {draft.images.length < 5 ? (
                         <button
                           type="button"
                           onClick={() => setPickerOpen(true)}
                           className="inline-flex items-center gap-1 rounded-[6px] border border-border bg-background px-2.5 py-1 text-xs font-medium text-foreground hover:bg-accent cursor-pointer"
                         >
-                          <Plus className="size-3 text-primary" /> Ajouter
+                          <Upload className="size-3 text-primary" /> Uploader
                         </button>
                       ) : null}
                     </div>
@@ -1289,35 +1399,7 @@ function ProduitIaPage() {
                 </div>
               </Card>
 
-              {/* Option Studio IA */}
-              <div className="relative overflow-hidden rounded-[10px] border border-primary/30 bg-gradient-to-br from-primary/[0.07] via-primary/[0.02] to-background p-4 sm:p-5 shadow-xs backdrop-blur-md">
-                <label className="flex items-start justify-between gap-4 cursor-pointer">
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5 flex size-9 items-center justify-center rounded-[8px] border border-primary/20 bg-primary/10 text-primary shrink-0">
-                      <Sparkles className="size-4.5 text-primary" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-foreground">
-                          Générer les 5 visuels studio IA
-                        </span>
-                        <span className="rounded-full bg-primary px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-primary-foreground">
-                          Recommandé
-                        </span>
-                      </div>
-                      <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-                        L'IA compose automatiquement 5 visuels haute conversion (Bénéfices, Avant / Après, Comparatif et Appel à l'action). Les photos du mode d'emploi et de la garantie s'importent depuis vos propres images.
-                      </p>
-                    </div>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={withVisuals}
-                    onChange={(event) => setWithVisuals(event.target.checked)}
-                    className="mt-1 size-5 accent-[var(--color-primary)] rounded-[4px] cursor-pointer"
-                  />
-                </label>
-              </div>
+
             </div>
 
             {/* Barre de navigation d'action */}
@@ -1348,8 +1430,8 @@ function ProduitIaPage() {
           </div>
         ) : null}
 
-        {working ? (
-          <div className="mt-8 animate-in fade-in-50 duration-500">
+        {isGenerating ? (
+          <div className="mt-6 sm:mt-8 animate-in fade-in-50 duration-500">
             <div className="text-center">
               <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3.5 py-1 text-xs font-semibold text-primary shadow-xs">
                 <Sparkles className="size-3.5 animate-spin text-primary" /> DUKAIO AI EN ACTION
@@ -1645,7 +1727,7 @@ function ProduitIaPage() {
         ) : null}
 
         {/* ÉCRAN FINAL : VOTRE PAGE EST PRÊTE (DASHBOARD 2 COLONNES HAUT DE GAMME) */}
-        {step === 2 && !working && funnel && draft ? (
+        {step === 2 && !isGenerating && funnel && draft ? (
           <div className="mt-4 space-y-6 animate-in fade-in-50 duration-500">
             
             {/* Header Félicitations & Résumé Produit */}
@@ -1989,9 +2071,19 @@ function ProduitIaPage() {
         }
       />
 
+      <MediaLibraryDialog
+        open={galleryPickerOpen}
+        onOpenChange={setGalleryPickerOpen}
+        multiple
+        maxSelected={MAX_IMAGES}
+        initialSelected={images}
+        onSelectMultiple={(selected) => setImages(selected)}
+      />
+
       <ImageSelectionDialog
         open={imagePickerOpen}
         images={scrapedImages}
+        initialSelected={draft?.images || []}
         onConfirm={onImagesSelected}
         onSkip={onImagesSkipped}
       />

@@ -6,6 +6,7 @@ import {
   adminAudit,
   adminCreatePayout,
   adminCreatePromoCode,
+  adminDeleteMedia,
   adminDeleteProduct,
   adminDeletePromoCode,
   adminList,
@@ -16,12 +17,14 @@ import {
   adminPromoCodes,
   adminRefreshPayout,
   adminRemoveAdmin,
+  adminSendPlatformCampaign,
   adminSetPromoActive,
   adminSetStoreSuspended,
   adminSetSubscription,
   adminStores,
   adminTraffic,
   adminUsers,
+  adminUserDetail,
   adminVerifyOrder,
 } from "@/lib/admin.functions";
 
@@ -56,6 +59,15 @@ export function useAdminStores() {
 export function useAdminUsers() {
   const fn = useServerFn(adminUsers);
   return useQuery({ queryKey: ["admin", "users"], queryFn: () => fn() });
+}
+
+export function useAdminUserDetail(userId: string | null) {
+  const fn = useServerFn(adminUserDetail);
+  return useQuery({
+    queryKey: ["admin", "user-detail", userId],
+    queryFn: () => (userId ? fn({ data: { userId } }) : null),
+    enabled: Boolean(userId),
+  });
 }
 
 export function useAdminOrders(filters: { search?: string; status?: string }) {
@@ -135,6 +147,35 @@ export function useRemoveAdmin() {
 export function useAdminDeleteProduct() {
   const fn = useServerFn(adminDeleteProduct);
   return useAdminMutation<{ productId: string; reason?: string }>(fn, ["stores", "overview"]);
+}
+
+export function useAdminDeleteMedia() {
+  const fn = useServerFn(adminDeleteMedia);
+  return useAdminMutation<{ userId: string; mediaUrl: string; reason: string }>(fn, [
+    "stores",
+    "overview",
+  ]);
+}
+
+export function useAdminSendPlatformCampaign() {
+  const fn = useServerFn(adminSendPlatformCampaign);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: {
+      targetType: "all" | "active" | "free" | "starter" | "pro" | "country" | "single";
+      targetCountry?: string;
+      targetUserId?: string;
+      subject: string;
+      title: string;
+      body: string;
+      ctaLabel?: string;
+      ctaUrl?: string;
+      testOnly?: boolean;
+    }) => fn({ data: input }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["admin", "audit"] });
+    },
+  });
 }
 
 export const PLANS = ["free", "starter", "pro"] as const;

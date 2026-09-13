@@ -103,7 +103,7 @@ function AdminHome() {
           icon={Store}
         />
         <StatCard
-          label="Comptes"
+          label="Utilisateurs"
           value={data ? String(data.users) : "—"}
           hint={data ? `${data.customers} clients finaux` : undefined}
           icon={Users}
@@ -125,7 +125,7 @@ function AdminHome() {
         <Panel
           title="Top boutiques"
           action={
-            <Link to="/admin/boutiques" className="text-xs font-semibold text-primary">
+            <Link to="/admin/utilisateurs" className="text-xs font-semibold text-primary">
               Tout voir
             </Link>
           }

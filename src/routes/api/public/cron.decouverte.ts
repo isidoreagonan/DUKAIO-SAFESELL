@@ -1,6 +1,6 @@
 /**
  * Robot de collecte automatique des publicités « Découverte ».
- * Appelé par la tâche planifiée tous les 3 jours à minuit (heure du Bénin).
+ * Appelé par la tâche planifiée tous les 5 jours à minuit (heure du Bénin).
  * Garde-fous : verrou d'exécution unique, plafond de 200 publicités par passage,
  * mise en pause automatique si le compte de collecte est bloqué ou hors crédit.
  */

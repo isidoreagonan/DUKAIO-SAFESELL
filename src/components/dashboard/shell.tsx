@@ -103,7 +103,6 @@ const mainNav: NavItem[] = [
 ];
 
 const accountNav: NavItem[] = [
-  { title: "Paramètres", icon: Settings, to: "/dashboard/parametres" },
   { title: "Équipe", icon: UsersRound, to: "/dashboard/equipe" },
   { title: "Abonnement", icon: Crown, to: "/dashboard/parametres", search: { tab: "abonnement" }, badge: "PLAN" },
 ];

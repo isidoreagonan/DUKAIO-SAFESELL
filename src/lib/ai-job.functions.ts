@@ -80,7 +80,7 @@ export const aiJobStart = createServerFn({ method: "POST" })
       .from("ai_jobs")
       .update({ status: "error", error: "Remplacé par une nouvelle création", acknowledged: true })
       .eq("user_id", userId)
-      .eq("status", "running");
+      .eq("acknowledged", false);
     const { data: row, error } = await supabaseAdmin
       .from("ai_jobs")
       .insert({

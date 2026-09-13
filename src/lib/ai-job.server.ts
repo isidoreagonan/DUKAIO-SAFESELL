@@ -118,9 +118,18 @@ export async function tickJob(
         prompt: byTarget.get(target)?.trim() || fallback,
       }));
       const images = { ...(job.input.reused ?? {}) };
-      const queue = job.input.withVisuals
-        ? prompts.filter((item) => !images[item.target]).map((item) => item.target)
-        : [];
+      
+      // Assigner les images sélectionnées (draft.images) aux targets requis
+      const draftImages = [...(job.input.draft.images || [])];
+      job.input.targets.forEach((t, i) => {
+        if (!images[t.target] && draftImages.length > 0) {
+          // On distribue équitablement les images fournies sur tous les emplacements
+          images[t.target] = draftImages[i % draftImages.length];
+        }
+      });
+
+      const queue: string[] = []; // On ne génère plus d'images par l'IA !
+      
       await patch(jobId, {
         funnel,
         palette: funnel.palette,
@@ -128,15 +137,15 @@ export async function tickJob(
         images,
         queue,
         next_index: 0,
-        phase: queue.length ? 2 : 4,
-        percent: queue.length ? 30 : 100,
-        status: queue.length ? "running" : "done",
-        message: queue.length ? `Génération des visuels (1/${queue.length})…` : null,
+        phase: 4, // Finalisation directe
+        percent: 100,
+        status: "done",
+        message: null,
       });
       return { row: await loadJob(jobId), skipped: false };
     }
 
-    /* Étape 2 : un visuel par passage, pour ne jamais dépasser le temps limite.
+    /* Étape 2 : (Désactivée) Génération visuelle par l'IA
        Chaque visuel est retenté jusqu'à 3 fois dans le passage (les refus
        passagers du moteur d'images sont fréquents), et un emplacement encore
        vide à la fin est remis une seule fois dans la file. Objectif : les

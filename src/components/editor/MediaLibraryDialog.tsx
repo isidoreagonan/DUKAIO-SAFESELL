@@ -35,12 +35,20 @@ export function MediaLibraryDialog({
   onOpenChange,
   onSelect,
   onSelectVideo,
+  multiple,
+  maxSelected = 5,
+  initialSelected = [],
+  onSelectMultiple,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelect: (url: string) => void;
+  onSelect?: (url: string) => void;
   /** Fourni = onglet « Lien vidéo » disponible. */
   onSelectVideo?: (url: string) => void;
+  multiple?: boolean;
+  maxSelected?: number;
+  initialSelected?: string[];
+  onSelectMultiple?: (urls: string[]) => void;
 }) {
   const { data: assets, isLoading } = useMedia();
   const upload = useUploadMedia();
@@ -55,6 +63,7 @@ export function MediaLibraryDialog({
   const [zoom, setZoom] = useState(1);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [area, setArea] = useState<Area | null>(null);
+  const [selected, setSelected] = useState<string[]>(initialSelected);
 
   useEffect(() => {
     if (!open) {
@@ -65,8 +74,11 @@ export function MediaLibraryDialog({
       setTab("images");
       setVideoInput("");
       setVideoBlocked(false);
+      if (multiple) {
+        setSelected(initialSelected);
+      }
     }
-  }, [open]);
+  }, [open, multiple, initialSelected]);
 
   const parsedVideo = parseVideoUrl(videoInput);
 
@@ -99,9 +111,16 @@ export function MediaLibraryDialog({
         ? await cropToBlob(source.url, area, type)
         : await cropToBlob(source.url, { x: 0, y: 0, width: 0, height: 0 }, type);
       const asset = await upload.mutateAsync({ blob, name: source.name });
-      onSelect(asset.url);
-      toast.success("Image ajoutée à votre bibliothèque");
-      onOpenChange(false);
+      
+      if (multiple && onSelectMultiple) {
+        setSelected((prev) => (prev.includes(asset.url) ? prev : [...prev, asset.url]).slice(0, maxSelected));
+        setSource(null);
+        toast.success("Image ajoutée et sélectionnée");
+      } else {
+        onSelect?.(asset.url);
+        toast.success("Image ajoutée à votre bibliothèque");
+        onOpenChange(false);
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Import impossible");
     }
@@ -303,40 +322,91 @@ export function MediaLibraryDialog({
                 <ImageIcon size={14} /> Aucun visuel pour le moment.
               </p>
             ) : (
-              <div className="grid max-h-[46vh] grid-cols-3 gap-2 overflow-y-auto sm:grid-cols-4">
-                {(assets ?? []).map((asset) => (
-                  <div
-                    key={asset.id}
-                    className="group relative overflow-hidden rounded-[6px] border border-border"
-                  >
-                    <img
-                      src={asset.url}
-                      alt={asset.name ?? ""}
-                      loading="lazy"
-                      className="aspect-square w-full object-cover"
-                    />
-                    <div className="absolute inset-x-0 bottom-0 flex justify-between gap-1 bg-background/85 p-1 opacity-0 transition group-hover:opacity-100">
-                      <button
-                        type="button"
+              <div className="space-y-4">
+                <div className="grid max-h-[46vh] grid-cols-3 gap-2 overflow-y-auto sm:grid-cols-4">
+                  {(assets ?? []).map((asset) => {
+                    const isSelected = multiple && selected.includes(asset.url);
+                    return (
+                      <div
+                        key={asset.id}
                         onClick={() => {
-                          onSelect(asset.url);
-                          onOpenChange(false);
+                          if (multiple) {
+                            setSelected((prev) =>
+                              prev.includes(asset.url)
+                                ? prev.filter((u) => u !== asset.url)
+                                : prev.length >= maxSelected
+                                ? prev
+                                : [...prev, asset.url]
+                            );
+                          }
                         }}
-                        className="flex flex-1 items-center justify-center gap-1 rounded-[4px] bg-primary py-1 text-[11px] font-semibold text-primary-foreground"
+                        className={cn(
+                          "group relative overflow-hidden rounded-[6px] border transition-all",
+                          multiple ? "cursor-pointer" : "",
+                          isSelected ? "border-primary ring-2 ring-primary ring-offset-1" : "border-border"
+                        )}
                       >
-                        <Check size={11} /> Utiliser
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void remove.mutateAsync(asset)}
-                        aria-label="Supprimer le visuel"
-                        className="rounded-[4px] px-1.5 text-destructive hover:bg-destructive/10"
-                      >
-                        <Trash2 size={12} />
-                      </button>
-                    </div>
+                        <img
+                          src={asset.url}
+                          alt={asset.name ?? ""}
+                          loading="lazy"
+                          className="aspect-square w-full object-cover"
+                        />
+                        
+                        {multiple && isSelected && (
+                          <div className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm">
+                            <Check size={12} strokeWidth={3} />
+                          </div>
+                        )}
+
+                        {!multiple && (
+                          <div className="absolute inset-x-0 bottom-0 flex justify-between gap-1 bg-background/85 p-1 opacity-0 transition group-hover:opacity-100">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onSelect?.(asset.url);
+                                onOpenChange(false);
+                              }}
+                              className="flex flex-1 items-center justify-center gap-1 rounded-[4px] bg-primary py-1 text-[11px] font-semibold text-primary-foreground"
+                            >
+                              <Check size={11} /> Utiliser
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                void remove.mutateAsync(asset);
+                              }}
+                              aria-label="Supprimer le visuel"
+                              className="rounded-[4px] px-1.5 text-destructive hover:bg-destructive/10"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                
+                {multiple && (
+                  <div className="flex items-center justify-between border-t border-border pt-4 mt-2">
+                    <span className="text-sm font-medium text-muted-foreground">
+                      {selected.length} / {maxSelected} sélectionnée{selected.length > 1 ? "s" : ""}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onSelectMultiple?.(selected);
+                        onOpenChange(false);
+                      }}
+                      className="btn-3d rounded-[6px] px-4 py-2 text-sm font-semibold"
+                    >
+                      Valider la sélection
+                    </button>
                   </div>
-                ))}
+                )}
               </div>
             )}
           </div>

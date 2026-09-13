@@ -404,51 +404,60 @@ export async function analyzeSource(
   source: AiSource,
   context: { storeName: string; currency: string; country: string; language?: string },
 ): Promise<ProductDraft> {
-  let scraped: ScrapedPage | null = null;
+  let scraped = null;
   if (source.productUrl) {
     try {
-      scraped = await scrapePage(source.productUrl);
+      const { scrapePageCheerio } = await import("./scraper.server");
+      scraped = await scrapePageCheerio(source.productUrl);
     } catch (error) {
-      /* Certaines boutiques bloquent la lecture : les photos suffisent alors. */
       if (source.imageUrls.length === 0) throw error;
     }
   }
-  const blocks: ContentBlock[] = [];
 
-  const brief = [
-    `Boutique : ${context.storeName}. Pays : ${context.country || "Afrique de l'Ouest"}. Devise : ${context.currency}.`,
-    scraped
-      ? `Fiche source — titre : ${scraped.title}\ndescription : ${scraped.description}\nprix affiché : ${scraped.price}\ncontenu de la page : ${scraped.text}`
-      : "Aucun lien fourni : appuie-toi uniquement sur les photos.",
-    "Analyse le produit et renvoie un objet JSON strict :",
-    `{"name":"nom commercial court","description":"description de vente en 3 à 5 phrases","price":nombre,"compareAt":nombre,"category":"catégorie","tags":["3 à 6 mots-clés"],"seoTitle":"max 60 caractères","seoDescription":"max 155 caractères","audience":"cible en une phrase","angle":"angle de vente principal en une phrase"}`,
-    `Écris en ${context.language || "français"}, ton commercial crédible, sans superlatif mensonger. price et compareAt exprimés dans la devise de la boutique (0 si inconnu).`,
-  ].join("\n\n");
-  blocks.push({ type: "text", text: brief });
+  let aiTitle = scraped?.title || "Nouveau produit";
+  let aiDescription = scraped?.description ?? "";
+  let aiPrice = Number(scraped?.price || 0);
 
-  for (const url of source.imageUrls.slice(0, 3)) {
-    const block = await inlineImage(url);
-    if (block) blocks.push(block);
+  // Si aucun lien n'a pu être scrapé mais qu'on a des images, on fait une analyse visuelle ultra-légère (bas coût)
+  if (!scraped && source.imageUrls.length > 0) {
+    try {
+      const blocks: ContentBlock[] = [
+        {
+          type: "text",
+          text: "Analyse ces images de produit. Renvoie un objet JSON : {\"name\":\"nom court du produit\",\"description\":\"courte description du produit en 1 ou 2 phrases max\"}. Sois très concis et vendeur.",
+        },
+      ];
+      // On envoie seulement 2 images max pour limiter drastiquement la consommation de tokens
+      for (const url of source.imageUrls.slice(0, 2)) {
+        blocks.push({ type: "image_url", image_url: { url } });
+      }
+
+      const result = await chatJson("Tu es un assistant e-commerce concis. Tu réponds uniquement en JSON.", blocks);
+      if (typeof result["name"] === "string" && result["name"].trim()) {
+        aiTitle = result["name"].trim();
+      }
+      if (typeof result["description"] === "string" && result["description"].trim()) {
+        aiDescription = result["description"].trim();
+      }
+    } catch (e) {
+      console.warn("Échec de l'analyse visuelle ultra-légère", e);
+    }
   }
 
-  const result = await chatJson(
-    "Tu es un expert e-commerce africain qui rédige des fiches produits qui convertissent. Tu réponds uniquement en JSON valide.",
-    blocks,
-  );
-
-  const images = [...new Set([...source.imageUrls, ...(scraped?.images ?? [])])].filter(Boolean).slice(0, 20);
+  const images = [...new Set([...source.imageUrls, ...(scraped?.images ?? [])])].filter(Boolean).slice(0, 25);
+  
   return {
-    name: str(result["name"], scraped?.title || "Nouveau produit"),
-    description: str(result["description"], scraped?.description ?? ""),
-    price: num(result["price"]) || num(scraped?.price),
-    compareAt: num(result["compareAt"]),
-    category: str(result["category"]),
-    tags: strList(result["tags"]).slice(0, 8),
+    name: aiTitle,
+    description: aiDescription,
+    price: aiPrice,
+    compareAt: 0,
+    category: "",
+    tags: [],
     images,
-    seoTitle: str(result["seoTitle"]).slice(0, 70),
-    seoDescription: str(result["seoDescription"]).slice(0, 170),
-    audience: str(result["audience"]),
-    angle: str(result["angle"]),
+    seoTitle: aiTitle.slice(0, 70),
+    seoDescription: aiDescription.slice(0, 170),
+    audience: "",
+    angle: "",
   };
 }
 

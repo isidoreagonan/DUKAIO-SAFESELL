@@ -39,11 +39,13 @@ import { Route as AuthenticatedAdminBoutiquesRouteImport } from './routes/_authe
 import { Route as AuthenticatedAdminCommandesRouteImport } from './routes/_authenticated/admin/commandes'
 import { Route as AuthenticatedAdminComptesRouteImport } from './routes/_authenticated/admin/comptes'
 import { Route as AuthenticatedAdminJournalRouteImport } from './routes/_authenticated/admin/journal'
+import { Route as AuthenticatedAdminMarketingRouteImport } from './routes/_authenticated/admin/marketing'
 import { Route as AuthenticatedAdminModelesIaRouteImport } from './routes/_authenticated/admin/modeles-ia'
 import { Route as AuthenticatedAdminPromosRouteImport } from './routes/_authenticated/admin/promos'
 import { Route as AuthenticatedAdminRetraitsRouteImport } from './routes/_authenticated/admin/retraits'
 import { Route as AuthenticatedAdminTendancesRouteImport } from './routes/_authenticated/admin/tendances'
 import { Route as AuthenticatedAdminTraficRouteImport } from './routes/_authenticated/admin/trafic'
+import { Route as AuthenticatedAdminUtilisateursRouteImport } from './routes/_authenticated/admin/utilisateurs'
 import { Route as AuthenticatedAdminVerificationRouteImport } from './routes/_authenticated/admin/verification'
 import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authenticated/dashboard/index'
 import { Route as AuthenticatedDashboardAnalysesRouteImport } from './routes/_authenticated/dashboard/analyses'
@@ -237,6 +239,12 @@ const AuthenticatedAdminJournalRoute =
     path: '/journal',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminMarketingRoute =
+  AuthenticatedAdminMarketingRouteImport.update({
+    id: '/marketing',
+    path: '/marketing',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedAdminModelesIaRoute =
   AuthenticatedAdminModelesIaRouteImport.update({
     id: '/modeles-ia',
@@ -265,6 +273,12 @@ const AuthenticatedAdminTraficRoute =
   AuthenticatedAdminTraficRouteImport.update({
     id: '/trafic',
     path: '/trafic',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminUtilisateursRoute =
+  AuthenticatedAdminUtilisateursRouteImport.update({
+    id: '/utilisateurs',
+    path: '/utilisateurs',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
 const AuthenticatedAdminVerificationRoute =
@@ -507,11 +521,13 @@ export interface FileRoutesByFullPath {
   '/admin/commandes': typeof AuthenticatedAdminCommandesRoute
   '/admin/comptes': typeof AuthenticatedAdminComptesRoute
   '/admin/journal': typeof AuthenticatedAdminJournalRoute
+  '/admin/marketing': typeof AuthenticatedAdminMarketingRoute
   '/admin/modeles-ia': typeof AuthenticatedAdminModelesIaRoute
   '/admin/promos': typeof AuthenticatedAdminPromosRoute
   '/admin/retraits': typeof AuthenticatedAdminRetraitsRoute
   '/admin/tendances': typeof AuthenticatedAdminTendancesRoute
   '/admin/trafic': typeof AuthenticatedAdminTraficRoute
+  '/admin/utilisateurs': typeof AuthenticatedAdminUtilisateursRoute
   '/admin/verification': typeof AuthenticatedAdminVerificationRoute
   '/dashboard/analyses': typeof AuthenticatedDashboardAnalysesRoute
   '/dashboard/boutique': typeof AuthenticatedDashboardBoutiqueRoute
@@ -578,11 +594,13 @@ export interface FileRoutesByTo {
   '/admin/commandes': typeof AuthenticatedAdminCommandesRoute
   '/admin/comptes': typeof AuthenticatedAdminComptesRoute
   '/admin/journal': typeof AuthenticatedAdminJournalRoute
+  '/admin/marketing': typeof AuthenticatedAdminMarketingRoute
   '/admin/modeles-ia': typeof AuthenticatedAdminModelesIaRoute
   '/admin/promos': typeof AuthenticatedAdminPromosRoute
   '/admin/retraits': typeof AuthenticatedAdminRetraitsRoute
   '/admin/tendances': typeof AuthenticatedAdminTendancesRoute
   '/admin/trafic': typeof AuthenticatedAdminTraficRoute
+  '/admin/utilisateurs': typeof AuthenticatedAdminUtilisateursRoute
   '/admin/verification': typeof AuthenticatedAdminVerificationRoute
   '/dashboard/analyses': typeof AuthenticatedDashboardAnalysesRoute
   '/dashboard/boutique': typeof AuthenticatedDashboardBoutiqueRoute
@@ -653,11 +671,13 @@ export interface FileRoutesById {
   '/_authenticated/admin/commandes': typeof AuthenticatedAdminCommandesRoute
   '/_authenticated/admin/comptes': typeof AuthenticatedAdminComptesRoute
   '/_authenticated/admin/journal': typeof AuthenticatedAdminJournalRoute
+  '/_authenticated/admin/marketing': typeof AuthenticatedAdminMarketingRoute
   '/_authenticated/admin/modeles-ia': typeof AuthenticatedAdminModelesIaRoute
   '/_authenticated/admin/promos': typeof AuthenticatedAdminPromosRoute
   '/_authenticated/admin/retraits': typeof AuthenticatedAdminRetraitsRoute
   '/_authenticated/admin/tendances': typeof AuthenticatedAdminTendancesRoute
   '/_authenticated/admin/trafic': typeof AuthenticatedAdminTraficRoute
+  '/_authenticated/admin/utilisateurs': typeof AuthenticatedAdminUtilisateursRoute
   '/_authenticated/admin/verification': typeof AuthenticatedAdminVerificationRoute
   '/_authenticated/dashboard/analyses': typeof AuthenticatedDashboardAnalysesRoute
   '/_authenticated/dashboard/boutique': typeof AuthenticatedDashboardBoutiqueRoute
@@ -728,11 +748,13 @@ export interface FileRouteTypes {
     | '/admin/commandes'
     | '/admin/comptes'
     | '/admin/journal'
+    | '/admin/marketing'
     | '/admin/modeles-ia'
     | '/admin/promos'
     | '/admin/retraits'
     | '/admin/tendances'
     | '/admin/trafic'
+    | '/admin/utilisateurs'
     | '/admin/verification'
     | '/dashboard/analyses'
     | '/dashboard/boutique'
@@ -799,11 +821,13 @@ export interface FileRouteTypes {
     | '/admin/commandes'
     | '/admin/comptes'
     | '/admin/journal'
+    | '/admin/marketing'
     | '/admin/modeles-ia'
     | '/admin/promos'
     | '/admin/retraits'
     | '/admin/tendances'
     | '/admin/trafic'
+    | '/admin/utilisateurs'
     | '/admin/verification'
     | '/dashboard/analyses'
     | '/dashboard/boutique'
@@ -873,11 +897,13 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/commandes'
     | '/_authenticated/admin/comptes'
     | '/_authenticated/admin/journal'
+    | '/_authenticated/admin/marketing'
     | '/_authenticated/admin/modeles-ia'
     | '/_authenticated/admin/promos'
     | '/_authenticated/admin/retraits'
     | '/_authenticated/admin/tendances'
     | '/_authenticated/admin/trafic'
+    | '/_authenticated/admin/utilisateurs'
     | '/_authenticated/admin/verification'
     | '/_authenticated/dashboard/analyses'
     | '/_authenticated/dashboard/boutique'
@@ -1167,6 +1193,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminJournalRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/marketing': {
+      id: '/_authenticated/admin/marketing'
+      path: '/marketing'
+      fullPath: '/admin/marketing'
+      preLoaderRoute: typeof AuthenticatedAdminMarketingRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/admin/modeles-ia': {
       id: '/_authenticated/admin/modeles-ia'
       path: '/modeles-ia'
@@ -1200,6 +1233,13 @@ declare module '@tanstack/react-router' {
       path: '/trafic'
       fullPath: '/admin/trafic'
       preLoaderRoute: typeof AuthenticatedAdminTraficRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/utilisateurs': {
+      id: '/_authenticated/admin/utilisateurs'
+      path: '/utilisateurs'
+      fullPath: '/admin/utilisateurs'
+      preLoaderRoute: typeof AuthenticatedAdminUtilisateursRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
     '/_authenticated/admin/verification': {
@@ -1471,11 +1511,13 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminCommandesRoute: typeof AuthenticatedAdminCommandesRoute
   AuthenticatedAdminComptesRoute: typeof AuthenticatedAdminComptesRoute
   AuthenticatedAdminJournalRoute: typeof AuthenticatedAdminJournalRoute
+  AuthenticatedAdminMarketingRoute: typeof AuthenticatedAdminMarketingRoute
   AuthenticatedAdminModelesIaRoute: typeof AuthenticatedAdminModelesIaRoute
   AuthenticatedAdminPromosRoute: typeof AuthenticatedAdminPromosRoute
   AuthenticatedAdminRetraitsRoute: typeof AuthenticatedAdminRetraitsRoute
   AuthenticatedAdminTendancesRoute: typeof AuthenticatedAdminTendancesRoute
   AuthenticatedAdminTraficRoute: typeof AuthenticatedAdminTraficRoute
+  AuthenticatedAdminUtilisateursRoute: typeof AuthenticatedAdminUtilisateursRoute
   AuthenticatedAdminVerificationRoute: typeof AuthenticatedAdminVerificationRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
@@ -1489,11 +1531,13 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminCommandesRoute: AuthenticatedAdminCommandesRoute,
     AuthenticatedAdminComptesRoute: AuthenticatedAdminComptesRoute,
     AuthenticatedAdminJournalRoute: AuthenticatedAdminJournalRoute,
+    AuthenticatedAdminMarketingRoute: AuthenticatedAdminMarketingRoute,
     AuthenticatedAdminModelesIaRoute: AuthenticatedAdminModelesIaRoute,
     AuthenticatedAdminPromosRoute: AuthenticatedAdminPromosRoute,
     AuthenticatedAdminRetraitsRoute: AuthenticatedAdminRetraitsRoute,
     AuthenticatedAdminTendancesRoute: AuthenticatedAdminTendancesRoute,
     AuthenticatedAdminTraficRoute: AuthenticatedAdminTraficRoute,
+    AuthenticatedAdminUtilisateursRoute: AuthenticatedAdminUtilisateursRoute,
     AuthenticatedAdminVerificationRoute: AuthenticatedAdminVerificationRoute,
     AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   }

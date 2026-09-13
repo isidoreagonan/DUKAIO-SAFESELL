@@ -4,7 +4,7 @@
  * Après l'analyse IA d'un lien produit, ce dialog affiche toutes les images
  * récupérées et permet au vendeur d'en sélectionner jusqu'à 5 pour sa page.
  */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Check, Images, X } from "lucide-react";
 
 const MAX_SELECTION = 5;
@@ -12,13 +12,22 @@ const MAX_SELECTION = 5;
 type Props = {
   open: boolean;
   images: string[];
+  initialSelected?: string[];
+  title?: string;
+  description?: React.ReactNode;
   onConfirm: (selected: string[]) => void;
   onSkip: () => void;
 };
 
-export function ImageSelectionDialog({ open, images, onConfirm, onSkip }: Props) {
-  const [selected, setSelected] = useState<string[]>([]);
+export function ImageSelectionDialog({ open, images, initialSelected = [], title = "Choisissez les images de votre produit", description, onConfirm, onSkip }: Props) {
+  const [selected, setSelected] = useState<string[]>(initialSelected);
   const [loadErrors, setLoadErrors] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (open) {
+      setSelected(initialSelected);
+    }
+  }, [open, initialSelected]);
 
   if (!open) return null;
 
@@ -41,11 +50,15 @@ export function ImageSelectionDialog({ open, images, onConfirm, onSkip }: Props)
             <div>
               <h2 className="flex items-center gap-2 text-lg font-bold">
                 <Images className="h-5 w-5 text-primary" />
-                Choisissez les images de votre produit
+                {title}
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Nous avons récupéré {visibleImages.length} image{visibleImages.length > 1 ? "s" : ""}.
-                Sélectionnez jusqu'à {MAX_SELECTION} images pour votre page.
+                {description || (
+                  <>
+                    Nous avons récupéré {visibleImages.length} image{visibleImages.length > 1 ? "s" : ""}.
+                    Sélectionnez jusqu'à {MAX_SELECTION} images pour votre page.
+                  </>
+                )}
               </p>
             </div>
             <button

@@ -66,6 +66,7 @@ type Block = {
   body?: string;
   footNote?: string;
   cta?: { label: string; url: string };
+  includeFounderSignature?: boolean;
 };
 
 async function send(to: string, subject: string, block: Block) {
@@ -79,13 +80,14 @@ export async function sendWelcomeEmail(userId: string) {
   const user = await emailOf(userId);
   if (!user) return false;
 
-  await send(user.email, "Bienvenue sur DUKAIO 🎉", {
-    title: user.name ? `Bienvenue ${user.name} !` : "Bienvenue sur DUKAIO !",
+  await send(user.email, "Bienvenue sur DUKAIO 🎉 — Message du Fondateur", {
+    title: user.name ? `Bienvenue sur DUKAIO, ${user.name} !` : "Bienvenue sur DUKAIO !",
     intro:
-      "Votre compte est actif. Vous pouvez créer votre boutique, ajouter vos produits et recevoir vos premières commandes dès aujourd'hui.",
-    body: `Votre formule Découverte est gratuite pour toujours. Pour aller beaucoup plus vite, passez en formule payante : ${sellingPoints()}`,
-    cta: { label: "Voir les formules", url: PLANS_URL },
-    footNote: "Besoin d'aide pour démarrer ? Répondez simplement à cet e-mail.",
+      "Votre compte est désormais actif. Vous pouvez créer votre boutique, générer vos fiches produits avec l'IA et commencer à encaisser vos premières ventes dès aujourd'hui.",
+    body: `Toute l'équipe DUKAIO et moi-même sommes ravis de vous compter parmi nos marchands.\n\nVotre formule Gratuite est active à vie. Dès que vous souhaitez accélérer vos ventes et profiter de toute la puissance de nos outils IA, découvrez nos formules Starter et Pro : ${sellingPoints()}`,
+    cta: { label: "Accéder à mon tableau de bord", url: `${SITE_URL}/dashboard` },
+    includeFounderSignature: true,
+    footNote: "Une question ou besoin d'accompagnement pour lancer votre boutique ? Répondez directement à cet e-mail.",
   });
   await logSent(userId, "welcome");
   return true;

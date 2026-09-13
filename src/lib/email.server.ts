@@ -9,22 +9,29 @@ const ORANGE = "#f97316";
 const INK = "#1c1917";
 const MUTED = "#78716c";
 
+export const FOUNDER_NAME = "AGONAN ISIDORE";
+export const FOUNDER_TITLE = "Fondateur & CEO — DUKAIO";
+export const FOUNDER_PHOTO_URL =
+  process.env["DUKAIO_FOUNDER_PHOTO_URL"] ||
+  "https://plttjjyclxgegjlghsmf.supabase.co/storage/v1/object/public/store-media/platform/founder-agonan-isidore.png";
+
 type Block = {
   title: string;
   intro: string;
   code?: string;
   body?: string;
+  htmlBody?: string;
   footNote?: string;
   cta?: { label: string; url: string };
+  includeFounderSignature?: boolean;
 };
 
 /**
  * URL publique et stable du logo DUKAIO (surchargable via DUKAIO_EMAIL_LOGO_URL).
- * JPEG sur fond blanc : le PNG transparent était servi en WebP, format que
- * plusieurs messageries n'affichent pas (d'où le rectangle noir).
  */
 const DEFAULT_LOGO_URL =
-  process.env["DUKAIO_EMAIL_LOGO_URL"] || "https://dukaio.com/dukaio-logo.png";
+  process.env["DUKAIO_EMAIL_LOGO_URL"] ||
+  "https://plttjjyclxgegjlghsmf.supabase.co/storage/v1/object/public/store-media/platform/dukaio-logo.png";
 
 /**
  * En-tête de marque : le vrai logo DUKAIO en image, avec le logotype texte en
@@ -38,8 +45,35 @@ function logoMarkup() {
   return `<img src="${escapeHtml(url)}" alt="DUKAIO" width="140" style="display:block;width:140px;max-width:140px;height:auto;margin:0 auto;border:0;outline:none;text-decoration:none;font-size:24px;font-weight:800;color:${ORANGE};" />`;
 }
 
+/** Signature officielle du fondateur (avec photo ronde, nom et fonction). */
+export function founderSignatureMarkup() {
+  const photoUrl = process.env["DUKAIO_FOUNDER_PHOTO_URL"] || FOUNDER_PHOTO_URL;
+  return `
+  <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:24px;border-top:1px solid #f5e6d8;padding-top:18px;width:100%;">
+    <tr>
+      <td style="width:56px;vertical-align:middle;padding-right:12px;">
+        <img src="${escapeHtml(photoUrl)}" alt="${escapeHtml(FOUNDER_NAME)}" width="48" height="48" style="display:block;width:48px;height:48px;border-radius:24px;-webkit-border-radius:24px;object-fit:cover;border:2px solid ${ORANGE};box-shadow:0 2px 5px rgba(0,0,0,0.08);" />
+      </td>
+      <td style="vertical-align:middle;">
+        <p style="margin:0;font-size:14px;font-weight:800;color:${INK};line-height:1.2;">${escapeHtml(FOUNDER_NAME)}</p>
+        <p style="margin:2px 0 0 0;font-size:12px;font-weight:700;color:${ORANGE};line-height:1.2;">${escapeHtml(FOUNDER_TITLE)}</p>
+      </td>
+    </tr>
+  </table>
+  `;
+}
+
 /** Gabarit d'e-mail de marque (tables + styles inline : compatible Gmail/Outlook). */
-export function renderBrandEmail({ title, intro, code, body, footNote, cta }: Block) {
+export function renderBrandEmail({
+  title,
+  intro,
+  code,
+  body,
+  htmlBody,
+  footNote,
+  cta,
+  includeFounderSignature,
+}: Block) {
   const year = new Date().getFullYear();
   return `<!doctype html>
 <html lang="fr"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width" />
@@ -66,17 +100,28 @@ export function renderBrandEmail({ title, intro, code, body, footNote, cta }: Bl
             : ""
         }
         ${
-          body
-            ? `<tr><td style="padding:22px 32px 0 32px;">
-          <p style="margin:0;font-size:15px;line-height:1.6;color:${INK};">${escapeHtml(body)}</p>
+          htmlBody
+            ? `<tr><td style="padding:22px 32px 0 32px;font-size:15px;line-height:1.6;color:${INK};">
+          ${htmlBody}
         </td></tr>`
-            : ""
+            : body
+              ? `<tr><td style="padding:22px 32px 0 32px;">
+          <p style="margin:0;font-size:15px;line-height:1.6;color:${INK};white-space:pre-line;">${escapeHtml(body)}</p>
+        </td></tr>`
+              : ""
         }
         ${
           cta
             ? `<tr><td style="padding:24px 32px 0 32px;" align="center">
           <a href="${escapeHtml(cta.url)}" style="display:inline-block;padding:14px 28px;background:${ORANGE};color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;border-radius:6px;">${escapeHtml(cta.label)}</a>
           <p style="margin:14px 0 0 0;font-size:12px;line-height:1.6;color:${MUTED};word-break:break-all;">${escapeHtml(cta.url)}</p>
+        </td></tr>`
+            : ""
+        }
+        ${
+          includeFounderSignature
+            ? `<tr><td style="padding:10px 32px 0 32px;">
+          ${founderSignatureMarkup()}
         </td></tr>`
             : ""
         }
@@ -99,7 +144,7 @@ export function renderBrandEmail({ title, intro, code, body, footNote, cta }: Bl
 
 /**
  * Reçu d'abonnement : gros pictogramme validé en vert, tableau détaillé des
- * lignes, total en évidence. Compatible Gmail / Outlook (tables + styles inline).
+ * lignes, total en évidence et signature du fondateur.
  */
 export function renderReceiptEmail(input: {
   title: string;
@@ -109,6 +154,7 @@ export function renderReceiptEmail(input: {
   totalValue: string;
   footNote?: string;
   cta?: { label: string; url: string };
+  includeFounderSignature?: boolean;
 }) {
   const year = new Date().getFullYear();
   const rows = input.rows
@@ -158,6 +204,9 @@ export function renderReceiptEmail(input: {
         </td></tr>`
             : ""
         }
+        <tr><td style="padding:10px 32px 0 32px;">
+          ${founderSignatureMarkup()}
+        </td></tr>
         <tr><td style="padding:22px 32px 0 32px;">
           <p style="margin:0;font-size:13px;line-height:1.6;color:${MUTED};">${escapeHtml(input.footNote ?? "Conservez ce reçu : il fait office de justificatif de paiement.")}</p>
         </td></tr>
@@ -171,6 +220,50 @@ export function renderReceiptEmail(input: {
     </td></tr>
   </table>
 </body></html>`;
+}
+
+/** Envoie un e-mail officiel de notification de modération (suspension de boutique, suppression de produit / média). */
+export async function sendModerationNoticeEmail(input: {
+  to: string;
+  userName?: string | null;
+  actionType: "store_suspend" | "store_restore" | "product_delete" | "media_delete";
+  targetName: string;
+  reason: string;
+}) {
+  const titles = {
+    store_suspend: "Suspension temporaire de votre boutique",
+    store_restore: "Réactivation de votre boutique DUKAIO",
+    product_delete: "Notification de modération sur un produit",
+    media_delete: "Suppression d'un média non conforme",
+  };
+  const title = titles[input.actionType];
+  const greeting = input.userName ? `Bonjour ${input.userName},` : "Bonjour,";
+  const htmlBody = `
+    <p style="margin:0 0 12px 0;font-size:15px;color:${INK};">${greeting}</p>
+    <p style="margin:0 0 14px 0;font-size:15px;line-height:1.6;color:${INK};">
+      Nous vous informons qu'une action administrative a été effectuée sur votre compte concernant : <strong>${escapeHtml(input.targetName)}</strong>.
+    </p>
+    <div style="background:#fff7ed;border-left:4px solid ${ORANGE};padding:14px 16px;margin:18px 0;border-radius:4px;">
+      <p style="margin:0;font-size:13px;font-weight:800;color:${ORANGE};text-transform:uppercase;letter-spacing:0.5px;">Motif & Explication de la décision :</p>
+      <p style="margin:8px 0 0 0;font-size:14px;color:${INK};line-height:1.6;white-space:pre-line;">${escapeHtml(input.reason)}</p>
+    </div>
+    <p style="margin:16px 0 0 0;font-size:13px;line-height:1.6;color:${MUTED};">
+      Si vous avez des questions ou souhaitez mettre vos éléments en conformité, vous pouvez répondre directement à cet e-mail.
+    </p>
+  `;
+
+  await sendEmail(
+    input.to,
+    `${title} — DUKAIO`,
+    renderBrandEmail({
+      title,
+      intro: `Notification importante concernant ${input.targetName}`,
+      htmlBody,
+      includeFounderSignature: true,
+      cta: { label: "Accéder à mon tableau de bord", url: "https://dukaio.com/dashboard" },
+      footNote: "Cet e-mail automatique fait suite à une vérification administrative de sécurité et de conformité.",
+    }),
+  );
 }
 
 function escapeHtml(value: string) {

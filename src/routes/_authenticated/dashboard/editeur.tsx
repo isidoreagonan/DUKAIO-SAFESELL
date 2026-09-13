@@ -164,19 +164,23 @@ function ThemeEditorPage() {
       const config = currentConfig();
       const draft = aiDraft.draft;
       const targetId = aiDraft.productId;
-      const effectiveSlug = draft.slug || slugify(draft.name);
+      const effectiveSlug = (draft as any).slug || slugify(draft.name);
 
       let productId = targetId;
       if (!productId) {
         const created = await saveProduct.mutateAsync({
-          store_id: store.id,
-          name: draft.name,
-          slug: effectiveSlug,
-          description: draft.description,
-          price: draft.price,
-          compare_at_price: draft.compare_at_price,
-          images: draft.images,
-          status: "active",
+          values: {
+            store_id: store.id,
+            name: draft.name,
+            title: draft.name,
+            slug: effectiveSlug,
+            description: draft.description,
+            price: draft.price,
+            price_regular: draft.price,
+            price_compare: draft.compareAt || 0,
+            images: draft.images,
+            status: "active",
+          },
         });
         productId = created?.id;
       }
@@ -203,8 +207,8 @@ function ThemeEditorPage() {
           ? `Page de vente mise à jour pour « ${draft.name} »`
           : `Produit « ${draft.name} » créé et page de vente enregistrée !`,
       );
-    } catch {
-      toast.error("Impossible d'enregistrer le produit IA. Réessayez.");
+    } catch (e: any) {
+      toast.error("Impossible d'enregistrer le produit IA", { description: e.message || "Réessayez." });
     } finally {
       setPending(null);
     }
@@ -291,7 +295,7 @@ function ThemeEditorPage() {
             <button
               type="button"
               onClick={() => void persist("publish")}
-              disabled={busy}
+              disabled={busy || !dirty}
               className="flex items-center justify-center gap-1.5 rounded-[6px] bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-60 shadow-none"
             >
               {pending === "publish" || pending === "save" ? (

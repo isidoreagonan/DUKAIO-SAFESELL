@@ -213,6 +213,37 @@ export const adminSetStoreSuspended = createServerFn({ method: "POST" })
       id: data.storeId,
       details: { reason: data.reason ?? null },
     });
+
+    // Envoi de l'e-mail de notification au propriétaire de la boutique
+    try {
+      const { data: storeRow } = await db
+        .from("store_settings")
+        .select("store_name, user_id, contact_email")
+        .eq("id", data.storeId)
+        .maybeSingle();
+      if (storeRow) {
+        const { data: userAuth } = await db.auth.admin.getUserById(storeRow.user_id);
+        const { data: profile } = await db
+          .from("profiles")
+          .select("full_name")
+          .eq("id", storeRow.user_id)
+          .maybeSingle();
+        const recipientEmail = userAuth?.user?.email || storeRow.contact_email;
+        if (recipientEmail && data.reason) {
+          const { sendModerationNoticeEmail } = await import("@/lib/email.server");
+          await sendModerationNoticeEmail({
+            to: recipientEmail,
+            userName: profile?.full_name || null,
+            actionType: data.suspended ? "store_suspend" : "store_restore",
+            targetName: `la boutique « ${storeRow.store_name} »`,
+            reason: data.reason,
+          });
+        }
+      }
+    } catch (e) {
+      console.error("[moderation email] error sending store notice", e);
+    }
+
     return { ok: true };
   });
 
@@ -348,34 +379,240 @@ export const adminVerifyOrder = createServerFn({ method: "POST" })
     };
   });
 
-/** Comptes de la plateforme (vendeurs, rôles, boutiques). */
+/** Comptes de la plateforme (vendeurs, rôles, boutiques, statistiques). */
 export const adminUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
     const db = await admin();
-    const [{ data: authUsers }, profilesRes, rolesRes, storesRes] = await Promise.all([
+    const [
+      { data: authUsers },
+      profilesRes,
+      rolesRes,
+      storesRes,
+      productsRes,
+      ordersRes,
+      subsRes,
+    ] = await Promise.all([
       db.auth.admin.listUsers({ page: 1, perPage: 1000 }),
       db.from("profiles").select("*"),
       db.from("user_roles").select("user_id, role"),
-      db.from("store_settings").select("id, user_id, store_name, is_published, is_suspended"),
+      db.from("store_settings").select("*"),
+      db.from("products").select("id, store_id, user_id"),
+      db.from("orders").select("id, store_id, amount, status"),
+      db.from("store_subscriptions").select("*"),
     ]);
+
     const profiles = new Map((profilesRes.data ?? []).map((p) => [p.id, p]));
     const roles = rolesRes.data ?? [];
     const stores = storesRes.data ?? [];
-    return (authUsers?.users ?? []).map((u) => ({
-      id: u.id,
-      email: u.email ?? null,
-      created_at: u.created_at,
-      last_sign_in_at: u.last_sign_in_at ?? null,
-      email_confirmed: Boolean(u.email_confirmed_at),
-      full_name: profiles.get(u.id)?.full_name ?? null,
-      phone: profiles.get(u.id)?.phone ?? null,
-      onboarding_completed: profiles.get(u.id)?.onboarding_completed ?? false,
-      roles: roles.filter((r) => r.user_id === u.id).map((r) => r.role),
-      stores: stores.filter((s) => s.user_id === u.id),
-    }));
+    const products = productsRes.data ?? [];
+    const orders = ordersRes.data ?? [];
+    const subs = subsRes.data ?? [];
+    const subsByStore = new Map(subs.map((s) => [s.store_id, s]));
+
+    return (authUsers?.users ?? []).map((u) => {
+      const userStores = stores.filter((s) => s.user_id === u.id);
+      const userStoreIds = new Set(userStores.map((s) => s.id));
+      const userOrders = orders.filter((o) => o.store_id && userStoreIds.has(o.store_id));
+      const kept = userOrders.filter((o) => !LOST.includes(o.status));
+      const revenue = kept.reduce((acc, o) => acc + Number(o.amount || 0), 0);
+      const userProducts = products.filter((p) => (p.user_id === u.id) || (p.store_id && userStoreIds.has(p.store_id)));
+      
+      const primaryStore = userStores[0] ?? null;
+      const primaryCountry = primaryStore?.country ?? null;
+      const primaryCurrency = primaryStore?.currency ?? "XOF";
+
+      const storeSubs = userStores.map((s) => subsByStore.get(s.id)).filter(Boolean);
+      const activePlan = (storeSubs.find((s) => s?.plan === "pro")?.plan 
+        || storeSubs.find((s) => s?.plan === "starter")?.plan 
+        || "free") as "free" | "starter" | "pro";
+
+      return {
+        id: u.id,
+        email: u.email ?? null,
+        created_at: u.created_at,
+        last_sign_in_at: u.last_sign_in_at ?? null,
+        email_confirmed: Boolean(u.email_confirmed_at),
+        full_name: profiles.get(u.id)?.full_name ?? null,
+        phone: profiles.get(u.id)?.phone ?? null,
+        avatar_url: profiles.get(u.id)?.avatar_url ?? null,
+        onboarding_completed: profiles.get(u.id)?.onboarding_completed ?? false,
+        roles: roles.filter((r) => r.user_id === u.id).map((r) => r.role),
+        stores: userStores.map((s) => ({
+          ...s,
+          subscription: subsByStore.get(s.id) ?? null,
+        })),
+        stores_count: userStores.length,
+        products_count: userProducts.length,
+        orders_count: userOrders.length,
+        revenue,
+        country: primaryCountry,
+        currency: primaryCurrency,
+        plan: activePlan,
+      };
+    });
   });
+
+/** Détail ultra-complet d'un utilisateur / marchand. */
+export const adminUserDetail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { userId: string }) => input)
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const db = await admin();
+    const userId = data.userId;
+
+    const [
+      { data: authUserRes },
+      profileRes,
+      rolesRes,
+      storesRes,
+      productsRes,
+      auditRes,
+    ] = await Promise.all([
+      db.auth.admin.getUserById(userId),
+      db.from("profiles").select("*").eq("id", userId).maybeSingle(),
+      db.from("user_roles").select("role").eq("user_id", userId),
+      db.from("store_settings").select("*").eq("user_id", userId).order("created_at", { ascending: false }),
+      db.from("products").select("*").eq("user_id", userId).order("created_at", { ascending: false }),
+      db.from("admin_audit_log").select("*").or(`target_id.eq.${userId},details->>userId.eq.${userId}`).order("created_at", { ascending: false }).limit(50),
+    ]);
+
+    const authUser = authUserRes?.user ?? null;
+    const profile = profileRes.data ?? null;
+    const roles = (rolesRes.data ?? []).map((r) => r.role);
+    const stores = storesRes.data ?? [];
+    const storeIds = stores.map((s) => s.id);
+
+    let orders: Array<{
+      id: string;
+      store_id: string;
+      order_number: string;
+      amount: number;
+      currency?: string;
+      status: string;
+      customer_name?: string;
+      customer_phone?: string;
+      customer_email?: string;
+      created_at: string;
+      store_name?: string;
+    }> = [];
+    let subscriptions: any[] = [];
+    let orderItems: Array<{
+      order_id: string;
+      product_id: string | null;
+      product_name: string | null;
+      price: number;
+      quantity: number;
+    }> = [];
+    let coupons: any[] = [];
+    let offers: any[] = [];
+    let emailCampaigns: any[] = [];
+
+    if (storeIds.length > 0) {
+      const [ordersRes, subsRes, couponsRes, offersRes, campaignsRes] = await Promise.all([
+        db.from("orders").select("*").in("store_id", storeIds).order("created_at", { ascending: false }).limit(300),
+        db.from("store_subscriptions").select("*").in("store_id", storeIds),
+        db.from("coupons").select("*").in("store_id", storeIds).order("created_at", { ascending: false }),
+        db.from("offers").select("*").in("store_id", storeIds).order("created_at", { ascending: false }),
+        db.from("email_campaigns").select("*").in("store_id", storeIds).order("created_at", { ascending: false }),
+      ]);
+      const storesMap = new Map(stores.map((s) => [s.id, s.store_name]));
+      orders = (ordersRes.data ?? []).map((o) => ({
+        ...o,
+        store_name: storesMap.get(o.store_id) ?? "Boutique",
+      }));
+      subscriptions = subsRes.data ?? [];
+      coupons = couponsRes.data ?? [];
+      offers = offersRes.data ?? [];
+      emailCampaigns = campaignsRes.data ?? [];
+
+      const orderIds = orders.map((o) => o.id);
+      if (orderIds.length > 0) {
+        const { data: itemsRes } = await db
+          .from("order_items")
+          .select("order_id, product_id, product_name, price, quantity")
+          .in("order_id", orderIds.slice(0, 300));
+        orderItems = (itemsRes ?? []) as any[];
+      }
+    }
+
+    // Calcul des ventes et statistiques par produit
+    const salesByProduct = new Map<string, { count: number; revenue: number }>();
+    for (const it of orderItems) {
+      if (!it.product_id) continue;
+      const cur = salesByProduct.get(it.product_id) ?? { count: 0, revenue: 0 };
+      cur.count += Number(it.quantity || 1);
+      cur.revenue += Number(it.price || 0) * Number(it.quantity || 1);
+      salesByProduct.set(it.product_id, cur);
+    }
+
+    const storesMap = new Map(stores.map((s) => [s.id, s.store_name]));
+    const storesSubdomainMap = new Map(stores.map((s) => [s.id, s.subdomain]));
+
+    const enrichedProducts = (productsRes.data ?? []).map((p: any) => {
+      const stats = salesByProduct.get(p.id) ?? { count: 0, revenue: 0 };
+      return {
+        ...p,
+        store_name: storesMap.get(p.store_id) ?? null,
+        store_subdomain: storesSubdomainMap.get(p.store_id) ?? null,
+        sales_count: stats.count,
+        sales_revenue: stats.revenue,
+      };
+    });
+
+    const subsMap = new Map(subscriptions.map((s) => [s.store_id, s]));
+    const storesWithStats = stores.map((s) => {
+      const storeOrders = orders.filter((o) => o.store_id === s.id);
+      const kept = storeOrders.filter((o) => !LOST.includes(o.status));
+      const revenue = kept.reduce((acc, o) => acc + Number(o.amount || 0), 0);
+      const storeProducts = enrichedProducts.filter((p) => p.store_id === s.id);
+      return {
+        ...s,
+        orders_count: storeOrders.length,
+        revenue,
+        products_count: storeProducts.length,
+        subscription: subsMap.get(s.id) ?? null,
+      };
+    });
+
+    // Bibliothèque de tous les visuels / médias
+    const mediaSet = new Set<string>();
+    stores.forEach((s) => {
+      if (s.logo_url && typeof s.logo_url === "string") mediaSet.add(s.logo_url);
+    });
+    (productsRes.data ?? []).forEach((p: any) => {
+      if (p.image_url && typeof p.image_url === "string") mediaSet.add(p.image_url);
+      if (Array.isArray(p.images)) {
+        p.images.forEach((img: any) => {
+          if (typeof img === "string" && img.startsWith("http")) mediaSet.add(img);
+        });
+      }
+    });
+
+    return {
+      id: userId,
+      email: authUser?.email ?? null,
+      created_at: authUser?.created_at ?? profile?.created_at ?? new Date().toISOString(),
+      last_sign_in_at: authUser?.last_sign_in_at ?? null,
+      email_confirmed: Boolean(authUser?.email_confirmed_at),
+      full_name: profile?.full_name ?? null,
+      phone: profile?.phone ?? null,
+      avatar_url: profile?.avatar_url ?? null,
+      onboarding_completed: profile?.onboarding_completed ?? false,
+      roles,
+      stores: storesWithStats,
+      products: enrichedProducts,
+      orders,
+      coupons,
+      offers,
+      emailCampaigns,
+      media: Array.from(mediaSet),
+      audit: auditRes.data ?? [],
+    };
+  });
+
 
 /** Administrateurs de la plateforme. */
 export const adminList = createServerFn({ method: "GET" })
@@ -484,21 +721,235 @@ export const adminTraffic = createServerFn({ method: "GET" })
     };
   });
 
-/** Modération : suppression d'un produit abusif. */
+/** Modération : suppression d'un produit abusif avec notification e-mail. */
 export const adminDeleteProduct = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { productId: string; reason?: string }) => input)
   .handler(async ({ data, context }) => {
     const actor = await assertAdmin(context);
     const db = await admin();
+
+    const { data: prodRow } = await db
+      .from("products")
+      .select("name, user_id, store_id")
+      .eq("id", data.productId)
+      .maybeSingle();
+
     const { error } = await db.from("products").delete().eq("id", data.productId);
     if (error) throw new Error(error.message);
+
     await log(actor, "product.delete", {
       type: "product",
       id: data.productId,
-      details: { reason: data.reason ?? null },
+      details: { reason: data.reason ?? null, productName: prodRow?.name ?? null },
     });
+
+    if (prodRow) {
+      try {
+        const { data: userAuth } = await db.auth.admin.getUserById(prodRow.user_id);
+        const { data: profile } = await db
+          .from("profiles")
+          .select("full_name")
+          .eq("id", prodRow.user_id)
+          .maybeSingle();
+        const recipientEmail = userAuth?.user?.email;
+        if (recipientEmail && data.reason) {
+          const { sendModerationNoticeEmail } = await import("@/lib/email.server");
+          await sendModerationNoticeEmail({
+            to: recipientEmail,
+            userName: profile?.full_name || null,
+            actionType: "product_delete",
+            targetName: `le produit « ${prodRow.name} »`,
+            reason: data.reason,
+          });
+        }
+      } catch (e) {
+        console.error("[moderation email] error sending product notice", e);
+      }
+    }
+
     return { ok: true };
+  });
+
+/** Modération : suppression d'un visuel / média avec notification e-mail. */
+export const adminDeleteMedia = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (input: {
+      userId: string;
+      mediaUrl: string;
+      reason: string;
+    }) => input,
+  )
+  .handler(async ({ data, context }) => {
+    const actor = await assertAdmin(context);
+    const db = await admin();
+
+    // Retirer du logo de boutique si correspondant
+    await db
+      .from("store_settings")
+      .update({ logo_url: null })
+      .eq("user_id", data.userId)
+      .eq("logo_url", data.mediaUrl);
+
+    // Retirer de l'image de produit si correspondant
+    await db
+      .from("products")
+      .update({ image_url: null })
+      .eq("user_id", data.userId)
+      .eq("image_url", data.mediaUrl);
+
+    await log(actor, "media.delete", {
+      type: "media",
+      id: data.mediaUrl,
+      details: { userId: data.userId, reason: data.reason },
+    });
+
+    try {
+      const { data: userAuth } = await db.auth.admin.getUserById(data.userId);
+      const { data: profile } = await db
+        .from("profiles")
+        .select("full_name")
+        .eq("id", data.userId)
+        .maybeSingle();
+      const recipientEmail = userAuth?.user?.email;
+      if (recipientEmail && data.reason) {
+        const { sendModerationNoticeEmail } = await import("@/lib/email.server");
+        await sendModerationNoticeEmail({
+          to: recipientEmail,
+          userName: profile?.full_name || null,
+          actionType: "media_delete",
+          targetName: "un visuel hébergé sur votre compte",
+          reason: data.reason,
+        });
+      }
+    } catch (e) {
+      console.error("[moderation email] error sending media notice", e);
+    }
+
+    return { ok: true };
+  });
+
+/** Envoi d'une campagne e-mail marketing officielle de la plateforme à tous/partie des vendeurs. */
+export const adminSendPlatformCampaign = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (input: {
+      targetType: "all" | "active" | "free" | "starter" | "pro" | "country" | "single";
+      targetCountry?: string;
+      targetUserId?: string;
+      subject: string;
+      title: string;
+      body: string;
+      ctaLabel?: string;
+      ctaUrl?: string;
+      testOnly?: boolean;
+    }) => input,
+  )
+  .handler(async ({ data, context }) => {
+    const actor = await assertAdmin(context);
+    const db = await admin();
+    const { sendEmail, renderBrandEmail } = await import("@/lib/email.server");
+
+    // Si test uniquement, envoyer uniquement à l'administrateur
+    if (data.testOnly) {
+      if (!actor.email) throw new Error("Adresse e-mail administrateur introuvable.");
+      const html = renderBrandEmail({
+        title: data.title,
+        intro: data.subject,
+        body: data.body,
+        includeFounderSignature: true,
+        cta:
+          data.ctaUrl && data.ctaLabel ? { label: data.ctaLabel, url: data.ctaUrl } : undefined,
+        footNote: "[TEST ADMINISTRATEUR] Cet e-mail est un test de prévisualisation.",
+      });
+      await sendEmail(actor.email, `[TEST] ${data.subject}`, html);
+      return { ok: true, sent: 1, isTest: true };
+    }
+
+    // Récupération des destinataires ciblés
+    const [{ data: authUsers }, storesRes, subsRes] = await Promise.all([
+      db.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+      db.from("store_settings").select("user_id, country, is_published"),
+      db.from("store_subscriptions").select("user_id, plan"),
+    ]);
+
+    const users = (authUsers?.users ?? []).filter((u) => Boolean(u.email));
+    const storesByUser = new Map<string, any[]>();
+    (storesRes.data ?? []).forEach((s) => {
+      const list = storesByUser.get(s.user_id) ?? [];
+      list.push(s);
+      storesByUser.set(s.user_id, list);
+    });
+
+    const subsByUser = new Map<string, string>();
+    (subsRes.data ?? []).forEach((sub) => {
+      subsByUser.set(sub.user_id, sub.plan);
+    });
+
+    let targetUsers = users;
+
+    if (data.targetType === "single" && data.targetUserId) {
+      targetUsers = users.filter((u) => u.id === data.targetUserId);
+    } else if (data.targetType === "active") {
+      targetUsers = users.filter((u) => {
+        const userStores = storesByUser.get(u.id) || [];
+        return userStores.some((s) => s.is_published);
+      });
+    } else if (
+      data.targetType === "free" ||
+      data.targetType === "starter" ||
+      data.targetType === "pro"
+    ) {
+      targetUsers = users.filter((u) => {
+        const plan = subsByUser.get(u.id) || "free";
+        return plan === data.targetType;
+      });
+    } else if (data.targetType === "country" && data.targetCountry) {
+      const targetC = data.targetCountry.trim().toLowerCase();
+      targetUsers = users.filter((u) => {
+        const userStores = storesByUser.get(u.id) || [];
+        return userStores.some((s) => (s.country || "").toLowerCase() === targetC);
+      });
+    }
+
+    if (targetUsers.length === 0) {
+      throw new Error("Aucun destinataire correspondant au ciblage sélectionné.");
+    }
+
+    const html = renderBrandEmail({
+      title: data.title,
+      intro: data.subject,
+      body: data.body,
+      includeFounderSignature: true,
+      cta:
+        data.ctaUrl && data.ctaLabel ? { label: data.ctaLabel, url: data.ctaUrl } : undefined,
+      footNote: "Vous recevez ce message car vous êtes inscrit sur la plateforme DUKAIO.",
+    });
+
+    let sentCount = 0;
+    for (const u of targetUsers) {
+      if (!u.email) continue;
+      try {
+        await sendEmail(u.email, data.subject, html);
+        sentCount += 1;
+      } catch (err) {
+        console.error(`[campaign broadcast] failed for ${u.email}`, err);
+      }
+    }
+
+    await log(actor, "platform_campaign.send", {
+      type: "campaign",
+      details: {
+        subject: data.subject,
+        targetType: data.targetType,
+        targetCountry: data.targetCountry ?? null,
+        targetUserId: data.targetUserId ?? null,
+        recipientsCount: sentCount,
+      },
+    });
+
+    return { ok: true, sent: sentCount, isTest: false };
   });
 
 /** Réglage des moteurs IA : lecture (avec état des clés configurées). */
