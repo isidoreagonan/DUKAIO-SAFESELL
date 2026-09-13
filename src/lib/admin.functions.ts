@@ -839,10 +839,14 @@ export const adminSendPlatformCampaign = createServerFn({ method: "POST" })
       targetCountry?: string;
       targetUserId?: string;
       subject: string;
-      title: string;
-      body: string;
+      title?: string;
+      greeting?: string;
+      body?: string;
+      htmlBody?: string;
+      founderNote?: string;
       ctaLabel?: string;
       ctaUrl?: string;
+      ctaVariant?: "dark" | "orange";
       testOnly?: boolean;
     }) => input,
   )
@@ -851,28 +855,63 @@ export const adminSendPlatformCampaign = createServerFn({ method: "POST" })
     const db = await admin();
     const { sendEmail, renderBrandEmail } = await import("@/lib/email.server");
 
+    const [{ data: authUsers }, profilesRes, storesRes, subsRes] = await Promise.all([
+      db.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+      db.from("profiles").select("id, full_name"),
+      db.from("store_settings").select("user_id, country, is_published, store_name"),
+      db.from("store_subscriptions").select("user_id, plan"),
+    ]);
+
+    const profiles = new Map((profilesRes.data ?? []).map((p) => [p.id, p]));
+
+    function personalize(str?: string, profName?: string | null, em?: string | null, storeName?: string | null) {
+      if (!str) return str;
+      let raw = (profName || "").trim();
+      let first = "";
+      if (raw) {
+        // If raw is "AGONAN ISIDORE", take the first name part, or ISIDORE
+        const parts = raw.split(/\s+/);
+        first = parts.length > 1 ? parts[parts.length - 1] : parts[0];
+      } else if (em) {
+        const local = em.split("@")[0].replace(/[._-]/g, " ");
+        first = local.charAt(0).toUpperCase() + local.slice(1);
+      } else {
+        first = "Marchand";
+      }
+
+      const store = (storeName || "").trim() || "votre boutique";
+
+      return str
+        .replace(/\{\{\s*prenom\s*\}\}/gi, first)
+        .replace(/\{\{\s*nom\s*\}\}/gi, raw || first)
+        .replace(/\{\{\s*email\s*\}\}/gi, em || "")
+        .replace(/\{\{\s*boutique\s*\}\}/gi, store)
+        .replace(/Salut\s*,\s*/g, `Salut ${first}, `)
+        .replace(/Bonjour\s*,\s*/g, `Bonjour ${first}, `);
+    }
+
     // Si test uniquement, envoyer uniquement à l'administrateur
     if (data.testOnly) {
       if (!actor.email) throw new Error("Adresse e-mail administrateur introuvable.");
+      const adminFirst = "ISIDORE";
+      const adminFull = "AGONAN ISIDORE";
       const html = renderBrandEmail({
-        title: data.title,
-        intro: data.subject,
-        body: data.body,
+        title: data.title ? personalize(data.title, adminFull, actor.email, "DUKAIO Demo") : undefined,
+        intro: data.subject ? personalize(data.subject, adminFull, actor.email, "DUKAIO Demo") : undefined,
+        greeting: data.greeting ? personalize(data.greeting, adminFull, actor.email, "DUKAIO Demo") : `Salut ${adminFirst},`,
+        body: data.body ? personalize(data.body, adminFull, actor.email, "DUKAIO Demo") : undefined,
+        htmlBody: data.htmlBody ? personalize(data.htmlBody, adminFull, actor.email, "DUKAIO Demo") : undefined,
+        founderNote: data.founderNote,
         includeFounderSignature: true,
         cta:
-          data.ctaUrl && data.ctaLabel ? { label: data.ctaLabel, url: data.ctaUrl } : undefined,
+          data.ctaUrl && data.ctaLabel
+            ? { label: data.ctaLabel, url: data.ctaUrl, variant: data.ctaVariant ?? "dark" }
+            : undefined,
         footNote: "[TEST ADMINISTRATEUR] Cet e-mail est un test de prévisualisation.",
       });
-      await sendEmail(actor.email, `[TEST] ${data.subject}`, html);
+      await sendEmail(actor.email, `[TEST] ${personalize(data.subject, adminFull, actor.email, "DUKAIO Demo") || data.subject}`, html);
       return { ok: true, sent: 1, isTest: true };
     }
-
-    // Récupération des destinataires ciblés
-    const [{ data: authUsers }, storesRes, subsRes] = await Promise.all([
-      db.auth.admin.listUsers({ page: 1, perPage: 1000 }),
-      db.from("store_settings").select("user_id, country, is_published"),
-      db.from("store_subscriptions").select("user_id, plan"),
-    ]);
 
     const users = (authUsers?.users ?? []).filter((u) => Boolean(u.email));
     const storesByUser = new Map<string, any[]>();
@@ -917,21 +956,28 @@ export const adminSendPlatformCampaign = createServerFn({ method: "POST" })
       throw new Error("Aucun destinataire correspondant au ciblage sélectionné.");
     }
 
-    const html = renderBrandEmail({
-      title: data.title,
-      intro: data.subject,
-      body: data.body,
-      includeFounderSignature: true,
-      cta:
-        data.ctaUrl && data.ctaLabel ? { label: data.ctaLabel, url: data.ctaUrl } : undefined,
-      footNote: "Vous recevez ce message car vous êtes inscrit sur la plateforme DUKAIO.",
-    });
-
     let sentCount = 0;
     for (const u of targetUsers) {
       if (!u.email) continue;
+      const uName = profiles.get(u.id)?.full_name || null;
+      const uStore = (storesByUser.get(u.id) || [])[0]?.store_name || null;
+      const userHtml = renderBrandEmail({
+        title: data.title ? personalize(data.title, uName, u.email, uStore) : undefined,
+        intro: data.subject ? personalize(data.subject, uName, u.email, uStore) : undefined,
+        greeting: data.greeting ? personalize(data.greeting, uName, u.email, uStore) : "Salut,",
+        body: data.body ? personalize(data.body, uName, u.email, uStore) : undefined,
+        htmlBody: data.htmlBody ? personalize(data.htmlBody, uName, u.email, uStore) : undefined,
+        founderNote: data.founderNote,
+        includeFounderSignature: true,
+        cta:
+          data.ctaUrl && data.ctaLabel
+            ? { label: data.ctaLabel, url: data.ctaUrl, variant: data.ctaVariant ?? "dark" }
+            : undefined,
+        footNote: "Vous recevez ce message car vous êtes marchand sur la plateforme DUKAIO.",
+      });
+
       try {
-        await sendEmail(u.email, data.subject, html);
+        await sendEmail(u.email, personalize(data.subject, uName, u.email, uStore) || data.subject, userHtml);
         sentCount += 1;
       } catch (err) {
         console.error(`[campaign broadcast] failed for ${u.email}`, err);

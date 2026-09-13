@@ -166,10 +166,14 @@ export function useAdminSendPlatformCampaign() {
       targetCountry?: string;
       targetUserId?: string;
       subject: string;
-      title: string;
-      body: string;
+      title?: string;
+      greeting?: string;
+      body?: string;
+      htmlBody?: string;
+      founderNote?: string;
       ctaLabel?: string;
       ctaUrl?: string;
+      ctaVariant?: "dark" | "orange";
       testOnly?: boolean;
     }) => fn({ data: input }),
     onSuccess: () => {
