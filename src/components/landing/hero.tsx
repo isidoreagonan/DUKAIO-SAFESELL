@@ -1,5 +1,5 @@
 import { ArrowRight, Sparkles, ShieldCheck, Zap } from "lucide-react";
-import dashboard from "@/assets/dashboard.jpg";
+import { HeroVideoShowcase } from "@/components/landing/motion-showcase";
 
 export function Hero() {
   return (
@@ -31,46 +31,27 @@ export function Hero() {
           DUKAIO réunit votre vitrine, votre catalogue, vos commandes et vos livraisons avec paiement à la réception (COD) dans un seul espace vendeur. Sans code, sans frais cachés.
         </p>
 
-        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+        <div className="mt-8 flex flex-row items-center justify-center gap-2.5 sm:gap-3">
           <a
             href="#cta"
-            className="btn-pill group inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-sm font-semibold"
+            className="btn-pill group inline-flex items-center gap-1.5 sm:gap-2 rounded-full px-5 py-3 sm:px-7 sm:py-3.5 text-xs sm:text-sm font-semibold whitespace-nowrap shadow-sm"
           >
             Créer ma boutique
-            <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+            <ArrowRight className="size-3.5 sm:size-4 transition-transform group-hover:translate-x-1" />
           </a>
           <a
             href="#fonctionnalites"
-            className="btn-white-3d inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-sm font-semibold"
+            className="btn-white-3d inline-flex items-center gap-1.5 sm:gap-2 rounded-full px-4 py-3 sm:px-7 sm:py-3.5 text-xs sm:text-sm font-semibold whitespace-nowrap shadow-sm"
           >
-            Découvrir DUKAIO
+            <span>Découvrir</span>
+            <span className="hidden sm:inline">DUKAIO</span>
           </a>
         </div>
-
-        <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-medium text-muted-foreground">
-          <li className="inline-flex items-center gap-1.5">
-            <ShieldCheck className="size-3.5 text-primary" />
-            Paiement à la livraison
-          </li>
-          <li className="inline-flex items-center gap-1.5">
-            <Zap className="size-3.5 text-primary" />
-            Boutique en ligne en 5 min
-          </li>
-        </ul>
       </div>
 
 
-      <div className="relative mx-auto mt-14 max-w-6xl px-5">
-        <div className="overflow-hidden rounded-t-[28px] border border-border bg-card p-2 shadow-float">
-          <img
-            src={dashboard}
-            alt="Tableau de bord vendeur DUKAIO avec ventes, produits et commandes"
-            width={1600}
-            height={1088}
-            className="w-full rounded-[20px]"
-          />
-        </div>
-      </div>
+      {/* Showcase Motion Design interactif DUKAIO */}
+      <HeroVideoShowcase />
     </section>
   );
 }

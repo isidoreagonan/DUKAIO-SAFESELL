@@ -4,6 +4,23 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 > **Note d'environnement :** Ce projet a été initialement généré avec Lovable, mais a été entièrement migré sur Antigravity. Il n'est plus synchronisé avec Lovable Cloud et utilise désormais exclusivement la propre instance Supabase de l'utilisateur.
 
+## [14/09/2026] - Intégration Motion Design DUKAIO (Hero) & Sécurisation .env
+
+### Ajouté & Amélioré
+- **Théâtre Vidéo Motion Design dans le Hero (`src/components/landing/motion-showcase.tsx`) :**
+  - Remplacement de l'image statique de faux tableau de bord par un cadre navigateur macOS haut de gamme inspiré de Farata et Petit Hero.
+  - **Sélecteur d'onglets dynamique :** Permet de basculer instantanément entre la vidéo 1 (*DUKAIO en 40s - Présentation générale & COD*) et la vidéo 2 (*Création IA en 1 clic - 60s*).
+  - **Contrôles vidéo épurés & discrets :** Bouton lecture/pause circulaire en bas à gauche et bouton son discret en bas à droite. Conformément à la demande, **aucune barre de défilement de durée** n'est présente pour une immersion visuelle totale.
+  - **Lueur d'ambiance (Ambient Glow) DUKAIO :** Halo lumineux doux d'arrière-plan en dégradé orange et bleu.
+  - **Piliers de réassurance :** 3 badges sous le lecteur (Paiement à la livraison, Boutique prête en 5 min, Sans carte bancaire).
+- **Optimisation Web HD des vidéos (`public/videos/`) :**
+  - Réencodage de `DUKAIO Motion Design Original.mp4` et `DUKAIO Motion 2.mp4` en **MP4 H.264 (AVC) + AAC avec `-movflags +faststart`** en 1080p, réduisant le poids de 75% à 84% (7.4 Mo et 19.1 Mo) pour un chargement instantané sans écran noir sur mobile et PC.
+  - Génération des affiches WebP (`posters`) pour un démarrage fluide sans latence.
+- **Sécurisation des variables d'environnement & Suppression des doublons :**
+  - Création du fichier local `.env` sécurisé (ignoré par Git).
+  - Nettoyage et remise à blanc du modèle public `.env.example` sans aucune clé secrète.
+  - Configuration de Vite (`vite.config.ts`) et du client Supabase (`client.ts`) pour éliminer tous les doublons de variables (`VITE_SUPABASE_*`).
+
 ## [11/09/2026] - Barre de Progression Orange Globale & Centrage du Loader Abonnement
 
 ### Corrigé & Amélioré
