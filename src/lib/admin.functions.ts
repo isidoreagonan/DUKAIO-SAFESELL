@@ -830,14 +830,16 @@ export const adminDeleteMedia = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** Envoi d'une campagne e-mail marketing officielle de la plateforme à tous/partie des vendeurs. */
+/** Envoi d'une campagne e-mail marketing officielle de la plateforme à tous/partie des vendeurs ou liste CSV importée. */
 export const adminSendPlatformCampaign = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
     (input: {
-      targetType: "all" | "active" | "free" | "starter" | "pro" | "country" | "single";
+      targetType: "all" | "active" | "free" | "starter" | "pro" | "country" | "single" | "csv";
       targetCountry?: string;
       targetUserId?: string;
+      targetEmails?: string[];
+      targetContacts?: Array<{ email: string; name?: string; storeName?: string }>;
       subject: string;
       title?: string;
       greeting?: string;
@@ -873,8 +875,8 @@ export const adminSendPlatformCampaign = createServerFn({ method: "POST" })
         const parts = raw.split(/\s+/);
         first = parts.length > 1 ? parts[parts.length - 1] : parts[0];
       } else if (em) {
-        const local = em.split("@")[0].replace(/[._-]/g, " ");
-        first = local.charAt(0).toUpperCase() + local.slice(1);
+        const local = em.split("@")[0].replace(/\d+$/g, "").replace(/[._-]/g, " ").trim();
+        first = local ? local.charAt(0).toUpperCase() + local.slice(1) : "Marchand";
       } else {
         first = "Marchand";
       }
@@ -911,6 +913,94 @@ export const adminSendPlatformCampaign = createServerFn({ method: "POST" })
       });
       await sendEmail(actor.email, `[TEST] ${personalize(data.subject, adminFull, actor.email, "DUKAIO Demo") || data.subject}`, html);
       return { ok: true, sent: 1, isTest: true };
+    }
+
+    // Si ciblage sur une liste externe CSV importée
+    if (data.targetType === "csv") {
+      const rawList =
+        data.targetContacts && data.targetContacts.length > 0
+          ? data.targetContacts
+          : (data.targetEmails || []).map((em) => ({ email: em }));
+
+      const sanitizedList: Array<{ email: string; name?: string; storeName?: string }> = [];
+      const seen = new Set<string>();
+
+      for (const item of rawList) {
+        let em = (item.email || "").trim().toLowerCase();
+        if (!em) continue;
+
+        // Auto-correction des fautes de frappe de domaines fréquentes
+        em = em
+          .replace(/@gmai\.com$/i, "@gmail.com")
+          .replace(/@gmail\.col$/i, "@gmail.com")
+          .replace(/@gamil\.com$/i, "@gmail.com")
+          .replace(/@yaho\.com$/i, "@yahoo.com")
+          .replace(/@icoud\.com$/i, "@icloud.com")
+          .replace(/@outlok\.com$/i, "@outlook.com");
+
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        if (!emailRegex.test(em)) continue;
+
+        if (seen.has(em)) continue;
+        seen.add(em);
+
+        sanitizedList.push({
+          email: em,
+          name: item.name?.trim() || undefined,
+          storeName: item.storeName?.trim() || undefined,
+        });
+      }
+
+      if (sanitizedList.length === 0) {
+        throw new Error("Aucune adresse e-mail valide fournie dans la liste CSV.");
+      }
+
+      let sentCount = 0;
+      for (const contact of sanitizedList) {
+        const uName = contact.name || null;
+        const uStore = contact.storeName || null;
+
+        const userHtml = renderBrandEmail({
+          title: data.title ? personalize(data.title, uName, contact.email, uStore) : undefined,
+          intro: data.subject ? personalize(data.subject, uName, contact.email, uStore) : undefined,
+          greeting: data.greeting ? personalize(data.greeting, uName, contact.email, uStore) : "Salut,",
+          body: data.body ? personalize(data.body, uName, contact.email, uStore) : undefined,
+          htmlBody: data.htmlBody ? personalize(data.htmlBody, uName, contact.email, uStore) : undefined,
+          founderNote: data.founderNote,
+          includeFounderSignature: true,
+          cta:
+            data.ctaUrl && data.ctaLabel
+              ? { label: data.ctaLabel, url: data.ctaUrl, variant: data.ctaVariant ?? "orange" }
+              : undefined,
+          footNote:
+            "Vous recevez ce message suite à votre inscription sur notre service précédent. Si vous ne souhaitez plus recevoir d'invitation, vous pouvez simplement ignorer ce courriel.",
+        });
+
+        try {
+          await sendEmail(
+            contact.email,
+            personalize(data.subject, uName, contact.email, uStore) || data.subject,
+            userHtml,
+          );
+          sentCount += 1;
+        } catch (err) {
+          console.error(`[campaign csv broadcast] failed for ${contact.email}`, err);
+        }
+
+        // Pacing sécurisé pour respecter les seuils de réputation Resend
+        await new Promise((r) => setTimeout(r, 80));
+      }
+
+      await log(actor, "platform_campaign.send", {
+        type: "campaign",
+        details: {
+          subject: data.subject,
+          targetType: "csv",
+          recipientsCount: sentCount,
+        },
+      });
+
+      return { ok: true, sent: sentCount, isTest: false };
     }
 
     const users = (authUsers?.users ?? []).filter((u) => Boolean(u.email));

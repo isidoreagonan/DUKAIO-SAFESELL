@@ -65,11 +65,6 @@ function AdminOrders() {
     <AdminShell
       title="Commandes"
       subtitle="Toutes boutiques confondues"
-      actions={
-        <Button size="sm" variant="outline" onClick={exportCsv} disabled={rows.length === 0}>
-          <Download className="mr-1 size-4" /> CSV
-        </Button>
-      }
     >
       <div className="grid gap-3 sm:grid-cols-3">
         <StatCard label="Commandes affichées" value={String(rows.length)} />
@@ -80,7 +75,20 @@ function AdminOrders() {
         />
       </div>
 
-      <Panel title="Journal des commandes">
+      <Panel
+        title="Journal des commandes"
+        action={
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={exportCsv}
+            disabled={rows.length === 0}
+            className="h-8 gap-1.5 text-xs font-semibold"
+          >
+            <Download className="size-3.5" /> Exporter CSV
+          </Button>
+        }
+      >
         <div className="mb-4 flex flex-wrap items-center gap-2">
           <div className="relative min-w-[220px] flex-1">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />

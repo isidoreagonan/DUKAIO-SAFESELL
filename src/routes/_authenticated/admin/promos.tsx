@@ -89,11 +89,6 @@ function AdminPromos() {
     <AdminShell
       title="Codes promo"
       subtitle="Remises appliquées automatiquement au paiement de l'abonnement."
-      actions={
-        <Button onClick={() => setOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" /> Nouveau code
-        </Button>
-      }
     >
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard label="Codes actifs" value={String(active)} />
@@ -101,7 +96,14 @@ function AdminPromos() {
         <StatCard label="Utilisations" value={String(uses)} />
       </div>
 
-      <Panel title="Tous les codes">
+      <Panel
+        title="Tous les codes"
+        action={
+          <Button size="sm" onClick={() => setOpen(true)} className="gap-1.5 text-xs font-bold shadow-xs">
+            <Plus className="size-3.5" /> Nouveau code
+          </Button>
+        }
+      >
         {list.isLoading ? (
           <p className="p-4 text-sm text-muted-foreground">Chargement…</p>
         ) : rows.length === 0 ? (

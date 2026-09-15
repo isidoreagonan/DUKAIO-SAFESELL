@@ -1057,3 +1057,146 @@ export const searchDiscoveryBrandFn = createServerFn({ method: "POST" })
     };
 
   });
+
+export type DiscoveryAdminStats = {
+  totalAds: number;
+  activeAds: number;
+  videoAds: number;
+  imageAds: number;
+  totalStores: number;
+  totalProducts: number;
+  uniqueOffers: number;
+  catalogProducts: number;
+  hasApifyKey: boolean;
+  lastScan: {
+    createdAt: string;
+    found: number;
+    inserted: number;
+    updated: number;
+    country: string | null;
+    keyword: string | null;
+    error: string | null;
+  } | null;
+};
+
+/** Statistiques globales du Radar Publicitaire (administrateurs). */
+export const adminGetDiscoveryStats = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const [
+      { count: totalAds },
+      { count: activeAds },
+      { count: videoAds },
+      { count: imageAds },
+      { count: totalStores },
+      { data: storesCatalog },
+      { data: adsList },
+      { data: latestScans },
+    ] = await Promise.all([
+      supabaseAdmin.from("discovery_ads").select("*", { count: "exact", head: true }),
+      supabaseAdmin.from("discovery_ads").select("*", { count: "exact", head: true }).eq("is_active", true),
+      supabaseAdmin.from("discovery_ads").select("*", { count: "exact", head: true }).eq("media_type", "video"),
+      supabaseAdmin.from("discovery_ads").select("*", { count: "exact", head: true }).eq("media_type", "image"),
+      supabaseAdmin.from("discovery_stores").select("*", { count: "exact", head: true }),
+      supabaseAdmin.from("discovery_stores").select("products_count"),
+      supabaseAdmin.from("discovery_ads").select("headline, page_name"),
+      supabaseAdmin.from("discovery_scans").select("*").order("created_at", { ascending: false }).limit(1),
+    ]);
+
+    const storeProductsSum = (storesCatalog ?? []).reduce(
+      (acc, s) => acc + (Number(s.products_count) || 0),
+      0,
+    );
+    const uniquePromotedOffers = new Set(
+      (adsList ?? [])
+        .map((a) => (a.headline || a.page_name || "").trim().toLowerCase())
+        .filter(Boolean),
+    ).size;
+    const totalProducts = storeProductsSum > 0 ? storeProductsSum : uniquePromotedOffers;
+
+    const last = latestScans?.[0] ?? null;
+    const hasApifyKey = Boolean(process.env["APIFY_API_KEY"]?.trim());
+
+    return {
+      totalAds: totalAds ?? 0,
+      activeAds: activeAds ?? 0,
+      videoAds: videoAds ?? 0,
+      imageAds: imageAds ?? 0,
+      totalStores: totalStores ?? 0,
+      totalProducts,
+      uniqueOffers: uniquePromotedOffers,
+      catalogProducts: storeProductsSum,
+      hasApifyKey,
+      lastScan: last
+        ? {
+            createdAt: last.created_at,
+            found: last.found,
+            inserted: last.inserted,
+            updated: last.updated,
+            country: last.country,
+            keyword: last.keyword,
+            error: last.error,
+          }
+        : null,
+    } satisfies DiscoveryAdminStats;
+  });
+
+/** Suppression définitive d'une publicité par un administrateur. */
+export const adminDeleteDiscoveryAd = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const ctx = await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { error } = await supabaseAdmin.from("discovery_ads").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+
+    try {
+      await supabaseAdmin.from("admin_audit_log").insert({
+        actor_id: ctx.userId,
+        actor_email: typeof ctx.claims["email"] === "string" ? (ctx.claims["email"] as string) : null,
+        action: "discovery.ad.delete",
+        target_type: "discovery_ad",
+        target_id: data.id,
+        details: { ad_id: data.id } as never,
+      });
+    } catch {
+      /* journalisation optionnelle */
+    }
+
+    return { ok: true };
+  });
+
+/** Basculement de l'état actif/inactif d'une publicité par un administrateur. */
+export const adminToggleDiscoveryAdStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => z.object({ id: z.string().uuid(), isActive: z.boolean() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const ctx = await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { error } = await supabaseAdmin
+      .from("discovery_ads")
+      .update({ is_active: data.isActive })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+
+    try {
+      await supabaseAdmin.from("admin_audit_log").insert({
+        actor_id: ctx.userId,
+        actor_email: typeof ctx.claims["email"] === "string" ? (ctx.claims["email"] as string) : null,
+        action: data.isActive ? "discovery.ad.activate" : "discovery.ad.deactivate",
+        target_type: "discovery_ad",
+        target_id: data.id,
+        details: { is_active: data.isActive } as never,
+      });
+    } catch {
+      /* journalisation optionnelle */
+    }
+
+    return { ok: true, isActive: data.isActive };
+  });

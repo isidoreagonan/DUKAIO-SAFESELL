@@ -12,6 +12,7 @@ import {
   ExternalLink,
   Eye,
   FileCode,
+  FileSpreadsheet,
   FileText,
   Filter,
   Gift,
@@ -133,12 +134,257 @@ function getCountryInfo(raw?: string | null) {
 }
 
 /* -------------------------------------------------------------------------- */
-/*                               12 Ready-to-Use Templates                    */
+/*             140 Contacts Pré-chargés (Base Historique Ancien SaaS)         */
+/* -------------------------------------------------------------------------- */
+
+export const PRESET_PREVIOUS_SAAS_EMAILS: string[] = [
+  "abbasyassine23@gmail.com",
+  "abdulked@gmail.com",
+  "abrahamtraore2020@gmail.com",
+  "achouodilonseka87@gmail.com",
+  "afrigagne99@gmail.com",
+  "afrigagneeditions@gmail.com",
+  "agbalefrancis90@gmail.com",
+  "ahissoumedard66@gmail.com",
+  "akobacliff4@gmail.com",
+  "alijr458@gmail.com",
+  "annjolias@gmail.com",
+  "apersonne23@gmail.com",
+  "apeteisrael93@gmail.com",
+  "arlettakarl35@gmail.com",
+  "assiatoub718@gmail.com",
+  "assoumanoufarida6@gmail.com",
+  "aurelejouvenciohongbete@gmail.com",
+  "awowofally@gmail.com",
+  "benedicteadjai58@gmail.com",
+  "bkasangati0@gmail.com",
+  "caetanomidiamp@gmail.com",
+  "cecilialawson65@gmail.com",
+  "chivarolewasca@gmail.com",
+  "cowm942@gmail.com",
+  "creatorirungjr@gmail.com",
+  "delcredit86@gmail.com",
+  "diallotiktokviral@gmail.com",
+  "diatagayonli@gmail.com",
+  "djakouwahabou@mail.com",
+  "dolapoagonan@gmail.com",
+  "dolapoecom1@gmail.com",
+  "donbenilufungulo@gmail.com",
+  "dorianegbehha@gmail.com",
+  "duoskingeelysee130@gmail.com",
+  "educationethique.1@gmail.com",
+  "emilembelangani471@gmail.com",
+  "emmamsbusinesses@gmail.com",
+  "emmamsmillards018@gmail.com",
+  "empirerichnel@gmail.com",
+  "espoirh05@gmail.com",
+  "fcdragon040@gmail.com",
+  "fideldossou14@gmail.com",
+  "florancemuzinga74@gmail.com",
+  "ghislainbetel5@gmail.com",
+  "gkook1865@gmail.com",
+  "gkwilliam668@gmail.com",
+  "gnamsoupierre@gmail.com",
+  "guindonani4@gmail.com",
+  "hamedouedraogo796@gmail.com",
+  "herojacob72@gmail.com",
+  "idabonkoungou186@gmail.com",
+  "idabonkoungou319@gmail.com",
+  "idelekebi242@gmail.com",
+  "ienoverse@gmail.com",
+  "ilungacabral6@gmail.com",
+  "inoussabikienga42@gmail.com",
+  "isidoreagonan@gmail.com",
+  "isidoreagonan58@gmail.com",
+  "ismaellouteu@icloud.com",
+  "jokerlarosa76@gmail.com",
+  "joyemeka2010@gmail.com",
+  "ka1692455@gmail.com",
+  "kalombo696@gmail.com",
+  "karelleesther6@gmail.com",
+  "kasangatibelo3@gmail.com",
+  "kebyrvmza@gmail.com",
+  "kkrf100@yahoo.com",
+  "kolengueelysee130@gmail.com",
+  "koroshikitodomi@gmail.com",
+  "laboratoireddrofficiel@gmail.com",
+  "landrypixel237@gmail.com",
+  "lesmeilleurslivres3@gmail.com",
+  "loulounoe88@gmail.com",
+  "lucardoraberiniaina@gmail.com",
+  "lucascaetanorosa@gmail.com",
+  "madarauchi838@gmail.com",
+  "majestibamigbowu231@gmail.com",
+  "mamadoubagayogo640@gmail.com",
+  "mapena617@gmail.com",
+  "mapsaid442@gmail.com",
+  "marabaroisrael210@gmail.com",
+  "matabaroisrael210@gmail.com",
+  "mauricesong696@gmail.com",
+  "mbangjustin3@gmail.com",
+  "mchladjai@gmail.com",
+  "miranirinamarius@gmail.com",
+  "moustaphadiop3387@gmail.com",
+  "nelsonsarive26@gmail.com",
+  "ngouloungouloustone@icloud.com",
+  "ngoziprincessizuwa@gmail.com",
+  "nkoueraphael@gmail.com",
+  "nourilunga58@gmail.com",
+  "nourilunga60@gmail.com",
+  "nsanadivin@gmail.com",
+  "officiel.damaris@gmail.com",
+  "othnielmbiako3@gmail.com",
+  "papemordiagne6@gmail.com",
+  "pethuelsiomibin@gmail.com",
+  "pitofarida@gmail.com",
+  "portailsup@gmail.com",
+  "raksjoshuayoan@gmail.com",
+  "ramajohnne@gmail.com",
+  "ramajohnny@gmail.com",
+  "rolfo100@gmail.com",
+  "rubenmulewa@gmail.com",
+  "rubenmulewa05@gmail.com",
+  "ryomanjack@gmail.com",
+  "saadtuhh@gmail.com",
+  "saidaboghe@gmail.com",
+  "sainahkeva4@gmail.com",
+  "saintjacob2009@gmail.com",
+  "sandradora682@gmail.com",
+  "scheilkhchristy@gmail.com",
+  "sekaprince2009@gmail.com",
+  "seniserge05@gmail.com",
+  "shimunadieudonne44@gmail.com",
+  "silencieuxlefantome@gmail.com",
+  "silvantro15@gmail.com",
+  "simolviematondele04@gmail.com",
+  "soumailakouda55@gmail.com",
+  "tobisomakpo@gmail.com",
+  "tonoualiou27@gmail.com",
+  "tontonbruno500@gmail.com",
+  "toudonouhulk@gmail.com",
+  "tresorgosse3@gmail.com",
+  "tshibandavia35@gmail.com",
+  "tv222307@gmail.com",
+  "urielyvangad@gmail.com",
+  "viatshibanda@icloud.com",
+  "wildcatsystem14@gmail.com",
+  "williamsanato16@gmail.com",
+  "worasamseny@gmail.com",
+  "xmenedit625@gmail.com",
+  "yoanipasco@gmail.com",
+  "yohansamuelkouassi12@gmail.com",
+  "yorisdanon@gmail.com",
+  "yuno7.collab@gmail.com",
+  "yveskakou68@gmail.com",
+  "zidouemba930@gmail.com",
+  "zoleguecoulibaly0@gmail.com",
+];
+
+export type ParsedCsvContact = {
+  email: string;
+  name?: string;
+  firstName: string;
+  raw: string;
+  typoFixed?: boolean;
+};
+
+export function parseAndSanitizeCsv(text: string): {
+  contacts: ParsedCsvContact[];
+  totalRaw: number;
+  validCount: number;
+  duplicatesCount: number;
+  typosFixedCount: number;
+} {
+  const lines = text.split(/[\r\n,;]+/);
+  const seen = new Set<string>();
+  const contacts: ParsedCsvContact[] = [];
+  let totalRaw = 0;
+  let typosFixedCount = 0;
+  let duplicatesCount = 0;
+
+  for (const rawLine of lines) {
+    const trimmed = rawLine.trim();
+    if (!trimmed) continue;
+    totalRaw++;
+
+    const lower = trimmed.toLowerCase();
+    if (["email", "emails", "mail", "e-mail", "adresse", "nom", "name", "contact"].includes(lower)) {
+      continue;
+    }
+
+    let extractedEmail = "";
+    let extractedName = "";
+
+    const bracketMatch = trimmed.match(/<([^>]+)>/);
+    if (bracketMatch) {
+      extractedEmail = bracketMatch[1].trim();
+      extractedName = trimmed.replace(/<[^>]+>/, "").trim();
+    } else {
+      extractedEmail = trimmed;
+    }
+
+    let cleanEmail = extractedEmail.toLowerCase().trim();
+    const originalDomain = cleanEmail.split("@")[1] || "";
+
+    cleanEmail = cleanEmail
+      .replace(/@gmai\.com$/i, "@gmail.com")
+      .replace(/@gmail\.col$/i, "@gmail.com")
+      .replace(/@gamil\.com$/i, "@gmail.com")
+      .replace(/@yaho\.com$/i, "@yahoo.com")
+      .replace(/@icoud\.com$/i, "@icloud.com")
+      .replace(/@outlok\.com$/i, "@outlook.com");
+
+    const newDomain = cleanEmail.split("@")[1] || "";
+    const hadTypo = Boolean(originalDomain && originalDomain !== newDomain);
+    if (hadTypo) {
+      typosFixedCount++;
+    }
+
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(cleanEmail)) {
+      continue;
+    }
+
+    if (seen.has(cleanEmail)) {
+      duplicatesCount++;
+      continue;
+    }
+    seen.add(cleanEmail);
+
+    let firstName = "";
+    if (extractedName) {
+      const parts = extractedName.split(/\s+/);
+      firstName = parts[parts.length - 1];
+    } else {
+      const local = cleanEmail.split("@")[0].replace(/\d+$/g, "").replace(/[._-]/g, " ").trim();
+      firstName = local ? local.charAt(0).toUpperCase() + local.slice(1) : "Marchand";
+    }
+
+    contacts.push({
+      email: cleanEmail,
+      name: extractedName || undefined,
+      firstName,
+      raw: trimmed,
+      typoFixed: hadTypo,
+    });
+  }
+
+  return {
+    contacts,
+    totalRaw,
+    validCount: contacts.length,
+    duplicatesCount,
+    typosFixedCount,
+  };
+}
+
+/* -------------------------------------------------------------------------- */
+/*                               13 Ready-to-Use Templates                    */
 /* -------------------------------------------------------------------------- */
 
 type CampaignTemplate = {
   id: string;
-  category: "feature" | "growth" | "promo" | "founder" | "video";
+  category: "feature" | "growth" | "promo" | "founder" | "video" | "announcement";
   badge: string;
   name: string;
   subject: string;
@@ -152,6 +398,46 @@ type CampaignTemplate = {
 };
 
 const TEMPLATES: CampaignTemplate[] = [
+  {
+    id: "migration-ancien-saas",
+    category: "announcement",
+    badge: "💎 Réactivation Membre",
+    name: "Invitation Privilégiée : Découvrez le nouveau DUKAIO (Ancien SaaS)",
+    subject: "{{prenom}}, nous avons réinventé votre boutique en ligne avec DUKAIO",
+    greeting: "Salut {{prenom}},",
+    title: "",
+    content: `Tu avais créé un compte sur notre précédente plateforme e-commerce, et je tenais personnellement à te remercier pour ta confiance depuis le premier jour.
+
+Ces derniers mois, nous avons tout reconstruit à zéro pour répondre aux vrais défis de la vente en ligne et du Cash On Delivery (paiement à la livraison) en Afrique francophone.
+
+Le résultat, c'est **DUKAIO** — la plateforme e-commerce tout-en-un la plus rapide et la plus rentable du continent.
+
+---
+
+### Ce qui change radicalement pour tes ventes :
+
+⚡ **1. Ta boutique prête à vendre en 5 minutes**
+Fini les configurations interminables et les hébergements complexes. En 5 minutes chrono, ton catalogue et ton formulaire de commande express sont en ligne.
+
+💰 **2. Conçu à 100% pour le Cash on Delivery (COD)**
+Un formulaire d'achat ultra-rapide en 1 étape, sans carte bancaire obligatoire pour tes clients. Zéro friction, taux de conversion multiplié par 2 à 3 par rapport aux boutiques classiques.
+
+🤖 **3. L'IA DUKAIO qui rédige tes fiches produits en 10 secondes**
+Colle une simple photo ou un lien produit : l'intelligence artificielle génère instantanément le titre vendeur, la description persuasive, les puces d'avantages et le packaging d'offre irrésistible.
+
+📱 **4. Paiements Mobile Money & Payouts fluides**
+Retraits rapides via MTN, Moov, Orange Money et Wave, gestion simplifiée des livreurs et statut en temps réel de chaque colis.
+
+---
+
+[callout:green:🎁 Cadeau de bienvenue pour nos anciens membres:Pour te remercier de ton soutien historique, ton accès à DUKAIO est ouvert avec TOUTES les fonctionnalités débloquées. Zéro carte bancaire requise pour démarrer.]
+
+Clique ci-dessous pour activer ta nouvelle boutique DUKAIO dès aujourd'hui :`,
+    ctaLabel: "Créer ma boutique sur DUKAIO (Gratuit)",
+    ctaUrl: "https://dukaio.com/signup",
+    ctaVariant: "orange",
+    founderNote: "Besoin d'aide pour transférer tes produits ou tes données ? Réponds directement à ce mail, je m'en occupe personnellement.",
+  },
   {
     id: "sellio-style-model-change",
     category: "feature",
@@ -616,15 +902,109 @@ function AdminPlatformMarketing() {
   const sendCampaign = useAdminSendPlatformCampaign();
 
   // Selected Template
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("sellio-style-model-change");
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("migration-ancien-saas");
 
   // Audience State
   const [targetType, setTargetType] = useState<
-    "all" | "active" | "free" | "starter" | "pro" | "country" | "single"
-  >("all");
+    "all" | "active" | "free" | "starter" | "pro" | "country" | "single" | "csv"
+  >("csv");
   const [targetCountry, setTargetCountry] = useState<string>("bj");
   const [targetUserId, setTargetUserId] = useState<string>("");
   const [userSearchQuery, setUserSearchQuery] = useState("");
+
+  // CSV Audience State (Audience externe / Ancien SaaS)
+  const [csvRawText, setCsvRawText] = useState<string>(() => PRESET_PREVIOUS_SAAS_EMAILS.join("\n"));
+  const [csvContacts, setCsvContacts] = useState<ParsedCsvContact[]>(() => {
+    return parseAndSanitizeCsv(PRESET_PREVIOUS_SAAS_EMAILS.join("\n")).contacts;
+  });
+  const [csvStats, setCsvStats] = useState<{
+    totalRaw: number;
+    validCount: number;
+    duplicatesCount: number;
+    typosFixedCount: number;
+  }>(() => {
+    const p = parseAndSanitizeCsv(PRESET_PREVIOUS_SAAS_EMAILS.join("\n"));
+    return {
+      totalRaw: p.totalRaw,
+      validCount: p.validCount,
+      duplicatesCount: p.duplicatesCount,
+      typosFixedCount: p.typosFixedCount,
+    };
+  });
+  const [csvFilterQuery, setCsvFilterQuery] = useState("");
+  const [csvListModalOpen, setCsvListModalOpen] = useState(false);
+
+  // Quick preset loader
+  function handleLoadPresetPreviousSaas() {
+    const raw = PRESET_PREVIOUS_SAAS_EMAILS.join("\n");
+    setCsvRawText(raw);
+    const parsed = parseAndSanitizeCsv(raw);
+    setCsvContacts(parsed.contacts);
+    setCsvStats({
+      totalRaw: parsed.totalRaw,
+      validCount: parsed.validCount,
+      duplicatesCount: parsed.duplicatesCount,
+      typosFixedCount: parsed.typosFixedCount,
+    });
+    setTargetType("csv");
+    toast.success(`${parsed.validCount} contacts de l'ancien SaaS chargés et validés !`);
+  }
+
+  function handleCsvTextChange(val: string) {
+    setCsvRawText(val);
+    const parsed = parseAndSanitizeCsv(val);
+    setCsvContacts(parsed.contacts);
+    setCsvStats({
+      totalRaw: parsed.totalRaw,
+      validCount: parsed.validCount,
+      duplicatesCount: parsed.duplicatesCount,
+      typosFixedCount: parsed.typosFixedCount,
+    });
+  }
+
+  function handleCsvFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = String(event.target?.result || "");
+      setCsvRawText(text);
+      const parsed = parseAndSanitizeCsv(text);
+      setCsvContacts(parsed.contacts);
+      setCsvStats({
+        totalRaw: parsed.totalRaw,
+        validCount: parsed.validCount,
+        duplicatesCount: parsed.duplicatesCount,
+        typosFixedCount: parsed.typosFixedCount,
+      });
+      setTargetType("csv");
+      toast.success(`${parsed.validCount} contact(s) détecté(s) dans le fichier CSV !`);
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  }
+
+  function handleClearCsv() {
+    setCsvRawText("");
+    setCsvContacts([]);
+    setCsvStats({ totalRaw: 0, validCount: 0, duplicatesCount: 0, typosFixedCount: 0 });
+    toast.info("Liste de contacts réinitialisée.");
+  }
+
+  function handleRemoveSingleCsvContact(emailToRemove: string) {
+    const updated = csvContacts.filter((c) => c.email !== emailToRemove);
+    setCsvContacts(updated);
+    setCsvRawText(updated.map((c) => c.email).join("\n"));
+    toast.info(`Contact ${emailToRemove} retiré.`);
+  }
+
+  const filteredCsvContacts = useMemo(() => {
+    if (!csvFilterQuery.trim()) return csvContacts;
+    const q = csvFilterQuery.trim().toLowerCase();
+    return csvContacts.filter(
+      (c) => c.email.toLowerCase().includes(q) || c.firstName.toLowerCase().includes(q),
+    );
+  }, [csvContacts, csvFilterQuery]);
 
   // Email Content States
   const currentTpl = TEMPLATES.find((t) => t.id === selectedTemplateId) || TEMPLATES[0];
@@ -850,6 +1230,12 @@ function AdminPlatformMarketing() {
     setCtaUrl(tpl.ctaUrl || "");
     setCtaVariant(tpl.ctaVariant || "dark");
     setFounderNote(tpl.founderNote || "");
+    if (tpl.id === "migration-ancien-saas" && targetType !== "csv") {
+      setTargetType("csv");
+      if (csvContacts.length === 0) {
+        handleLoadPresetPreviousSaas();
+      }
+    }
     toast.info(`Modèle « ${tpl.name} » chargé.`);
   }
 
@@ -861,6 +1247,7 @@ function AdminPlatformMarketing() {
 
   // Estimated recipient count
   const estimatedRecipients = useMemo(() => {
+    if (targetType === "csv") return csvContacts.length;
     if (targetType === "all") return allUsers.length;
     if (targetType === "active") return activeUsersCount;
     if (targetType === "pro") return proCount;
@@ -873,7 +1260,7 @@ function AdminPlatformMarketing() {
     }
     if (targetType === "single") return targetUserId ? 1 : 0;
     return allUsers.length;
-  }, [allUsers, targetType, targetCountry, targetUserId, activeUsersCount, proCount, starterCount, freeCount]);
+  }, [allUsers, targetType, targetCountry, targetUserId, activeUsersCount, proCount, starterCount, freeCount, csvContacts.length]);
 
   const searchedUsers = useMemo(() => {
     if (!userSearchQuery.trim()) return [];
@@ -932,6 +1319,11 @@ function AdminPlatformMarketing() {
         targetType,
         targetCountry: targetType === "country" ? targetCountry : undefined,
         targetUserId: targetType === "single" ? targetUserId : undefined,
+        targetEmails: targetType === "csv" ? csvContacts.map((c) => c.email) : undefined,
+        targetContacts:
+          targetType === "csv"
+            ? csvContacts.map((c) => ({ email: c.email, name: c.name || c.firstName }))
+            : undefined,
         subject,
         greeting,
         htmlBody: rawHtml,
@@ -944,7 +1336,9 @@ function AdminPlatformMarketing() {
         payload.ctaVariant = ctaVariant;
       }
       const res = await sendCampaign.mutateAsync(payload);
-      toast.success(`Campagne diffusée avec succès à ${(res as any)?.sent || estimatedRecipients} marchand(s) !`);
+      toast.success(
+        `Campagne diffusée avec succès à ${(res as any)?.sent ?? estimatedRecipients} destinataire(s) !`,
+      );
       setConfirmDialogOpen(false);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Erreur lors de la diffusion de la campagne.");
@@ -964,14 +1358,33 @@ function AdminPlatformMarketing() {
     <AdminShell
       title="Marketing & Campagnes Marchands"
       subtitle="Envoyez des e-mails officiels ultra-professionnels, épurés et percutants avec votre signature."
-      actions={
-        <div className="flex items-center gap-2">
+    >
+      {/* Barre d'action et diffusion */}
+      <section className="flex flex-col gap-3 rounded-xl border border-border bg-card p-3.5 shadow-xs sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10 text-primary shrink-0">
+            <Mail className="size-4" />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-bold text-foreground">Studio de Diffusion E-mail</h2>
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                Expéditeur : agonan@dukaio.com
+              </span>
+            </div>
+            <p className="text-[11px] text-muted-foreground truncate">
+              Préparez, testez et diffusez vos annonces et actualités auprès des marchands DUKAIO.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
           <Button
             size="sm"
             variant="outline"
             onClick={() => void handleSendTest()}
             disabled={sendCampaign.isPending || !subject.trim() || !content.trim()}
-            className="gap-1.5 text-xs font-semibold h-8"
+            className="gap-1.5 text-xs font-semibold h-9"
           >
             <Mail className="size-3.5" /> M'envoyer un test
           </Button>
@@ -980,13 +1393,12 @@ function AdminPlatformMarketing() {
             size="sm"
             onClick={() => setConfirmDialogOpen(true)}
             disabled={sendCampaign.isPending || estimatedRecipients === 0 || !subject.trim() || !content.trim()}
-            className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 h-8"
+            className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 h-9 shadow-sm"
           >
             <Send className="size-3.5" /> Diffuser ({estimatedRecipients})
           </Button>
         </div>
-      }
-    >
+      </section>
       {/* Top Quick Status KPIs */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard
@@ -1021,7 +1433,7 @@ function AdminPlatformMarketing() {
         <div className="space-y-4 lg:col-span-6 xl:col-span-7">
           {/* 1. Template Library Card */}
           <Panel
-            title="1. Modèles d'e-mails prêts à l'emploi (12)"
+            title="1. Modèles d'e-mails prêts à l'emploi (13)"
             action={
               <span className="text-[11px] font-semibold text-muted-foreground">
                 Inspirés des meilleurs SaaS
@@ -1062,7 +1474,7 @@ function AdminPlatformMarketing() {
           {/* 2. Audience Targeting Panel */}
           <Panel title="2. Ciblage des destinataires">
             <div className="space-y-3 text-xs">
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
                 <button
                   type="button"
                   onClick={() => setTargetType("all")}
@@ -1108,9 +1520,162 @@ function AdminPlatformMarketing() {
                   )}
                 >
                   <p className="font-semibold text-foreground">Formule Gratuite</p>
-                  <p className="text-[10px] text-muted-foreground">{freeCount} comptes (Upsell)</p>
+                  <p className="text-[10px] text-muted-foreground">{freeCount} comptes</p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTargetType("csv");
+                    if (csvContacts.length === 0) {
+                      handleLoadPresetPreviousSaas();
+                    }
+                  }}
+                  className={cn(
+                    "rounded-[6px] border p-2 text-left transition-colors relative overflow-hidden",
+                    targetType === "csv"
+                      ? "border-primary bg-primary/10 font-bold ring-1 ring-primary"
+                      : "border-border bg-background hover:bg-muted",
+                  )}
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="font-semibold text-foreground flex items-center gap-1">
+                      <FileSpreadsheet className="size-3.5 text-primary shrink-0" />
+                      <span>Liste CSV</span>
+                    </p>
+                    <span className="rounded bg-primary/20 text-primary text-[9px] font-black px-1 py-0.2">
+                      EXTERNE
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    {csvContacts.length > 0 ? `${csvContacts.length} contacts` : "140 pré-chargés"}
+                  </p>
                 </button>
               </div>
+
+              {/* Dedicated CSV / External Audience Management Card */}
+              {targetType === "csv" && (
+                <div className="rounded-[8px] border border-primary/30 bg-primary/5 p-3.5 space-y-3 mt-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <FileSpreadsheet className="size-4 text-primary shrink-0" />
+                      <span className="font-bold text-xs text-foreground">
+                        Audience Externe — Destinataires CSV importés
+                      </span>
+                      <span className="rounded-full bg-primary/20 text-primary font-extrabold text-[10px] px-2 py-0.5">
+                        {csvContacts.length} e-mail(s) validé(s)
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={handleLoadPresetPreviousSaas}
+                        className="h-7 text-[11px] font-bold gap-1 border-primary/40 bg-background text-primary hover:bg-primary hover:text-primary-foreground shadow-sm"
+                      >
+                        <Zap className="size-3" /> Recharger les 140 contacts
+                      </Button>
+
+                      <label className="cursor-pointer inline-flex items-center gap-1 h-7 px-2.5 rounded-[6px] border border-border bg-background hover:bg-muted text-[11px] font-semibold text-foreground shadow-sm">
+                        <Upload className="size-3" />
+                        <span>Fichier CSV</span>
+                        <input
+                          type="file"
+                          accept=".csv,.txt"
+                          onChange={handleCsvFileUpload}
+                          className="hidden"
+                        />
+                      </label>
+
+                      {csvContacts.length > 0 && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setCsvListModalOpen(true)}
+                          className="h-7 text-[11px] font-semibold gap-1 text-muted-foreground hover:text-foreground"
+                        >
+                          <Eye className="size-3" /> Voir la liste ({csvContacts.length})
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Realtime Stats Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+                    <div className="rounded-[4px] bg-background border border-border/80 px-2 py-1.5">
+                      <span className="text-muted-foreground block text-[10px]">Lignes analysées :</span>
+                      <strong className="text-foreground">{csvStats.totalRaw}</strong>
+                    </div>
+                    <div className="rounded-[4px] bg-emerald-500/10 border border-emerald-500/20 px-2 py-1.5">
+                      <span className="text-emerald-600 block text-[10px]">Adresses valides :</span>
+                      <strong className="text-emerald-700 dark:text-emerald-300 font-bold">{csvContacts.length}</strong>
+                    </div>
+                    <div className="rounded-[4px] bg-sky-500/10 border border-sky-500/20 px-2 py-1.5">
+                      <span className="text-sky-600 block text-[10px]">Fautes corrigées :</span>
+                      <strong className="text-sky-700 dark:text-sky-300 font-bold">{csvStats.typosFixedCount}</strong>
+                    </div>
+                    <div className="rounded-[4px] bg-amber-500/10 border border-amber-500/20 px-2 py-1.5">
+                      <span className="text-amber-600 block text-[10px]">Doublons filtrés :</span>
+                      <strong className="text-amber-700 dark:text-amber-300">{csvStats.duplicatesCount}</strong>
+                    </div>
+                  </div>
+
+                  {/* Paste / Direct Text Editor */}
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <label className="font-semibold text-muted-foreground">
+                        Éditer ou coller directement des e-mails (séparateur: saut de ligne, virgule, point-virgule) :
+                      </label>
+                      {csvRawText && (
+                        <button
+                          type="button"
+                          onClick={handleClearCsv}
+                          className="text-[10px] text-red-500 hover:underline font-medium flex items-center gap-0.5"
+                        >
+                          <Trash2 className="size-2.5" /> Vider
+                        </button>
+                      )}
+                    </div>
+                    <Textarea
+                      value={csvRawText}
+                      onChange={(e) => handleCsvTextChange(e.target.value)}
+                      placeholder="email&#10;utilisateur1@gmail.com&#10;utilisateur2@yahoo.fr&#10;..."
+                      rows={3}
+                      className="font-mono text-xs bg-background"
+                    />
+                  </div>
+
+                  {/* Quick Preview Chips */}
+                  {csvContacts.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                        Aperçu de la personnalisation (6 premiers contacts) :
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
+                        {csvContacts.slice(0, 6).map((c, idx) => (
+                          <div
+                            key={idx}
+                            className="flex items-center justify-between gap-1.5 rounded-[4px] border border-border/80 bg-background p-1.5 text-[11px]"
+                          >
+                            <div className="truncate">
+                              <p className="font-bold text-foreground truncate">{c.email}</p>
+                              <p className="text-[10px] text-muted-foreground truncate">
+                                Salutation : <span className="text-primary font-semibold">Salut {c.firstName},</span>
+                              </p>
+                            </div>
+                            <span className="text-[9px] font-bold text-emerald-600 bg-emerald-500/15 rounded px-1 shrink-0">
+                              ✓ Prêt
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Segment Country / Single User */}
               <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-border/80">
@@ -1874,15 +2439,40 @@ function AdminPlatformMarketing() {
               <Megaphone className="size-5" /> Confirmer la diffusion de la campagne
             </DialogTitle>
             <DialogDescription>
-              Vous allez envoyer cet e-mail officiel à <b>{estimatedRecipients} marchand(s)</b>.
+              {targetType === "csv" ? (
+                <>
+                  Vous allez envoyer cet e-mail officiel à{" "}
+                  <b>{csvContacts.length} contact(s) externe(s)</b> importé(s) via CSV.
+                </>
+              ) : (
+                <>
+                  Vous allez envoyer cet e-mail officiel à <b>{estimatedRecipients} marchand(s)</b>.
+                </>
+              )}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-2.5 rounded-[6px] border border-border bg-muted/30 p-3 text-xs">
-            <p><b>Expéditeur :</b> AGONAN ISIDORE &lt;agonan@dukaio.com&gt;</p>
-            <p><b>Objet :</b> {subject}</p>
-            <p><b>Audience ciblée :</b> {estimatedRecipients} compte(s) ({targetType})</p>
-            <p><b>Signature :</b> AGONAN ISIDORE (Fondateur & CEO — DUKAIO)</p>
+            <p>
+              <b>Expéditeur :</b> AGONAN ISIDORE &lt;agonan@dukaio.com&gt;
+            </p>
+            <p>
+              <b>Objet :</b> {subject}
+            </p>
+            <p>
+              <b>Audience ciblée :</b>{" "}
+              {targetType === "csv"
+                ? `${csvContacts.length} contacts importés (Ancien SaaS / Prospects)`
+                : `${estimatedRecipients} compte(s) (${targetType})`}
+            </p>
+            <p>
+              <b>Signature :</b> AGONAN ISIDORE (Fondateur & CEO — DUKAIO)
+            </p>
+            {targetType === "csv" && (
+              <div className="mt-2 rounded border border-emerald-500/30 bg-emerald-500/10 p-2 text-[11px] text-emerald-800 dark:text-emerald-200">
+                💎 <b>Campagne de réactivation :</b> Chaque courriel comportera le bouton d'action officiel vers <b>dukaio.com/signup</b> ainsi qu'une mention claire permettant d'ignorer le message.
+              </div>
+            )}
           </div>
 
           <DialogFooter>
@@ -1895,6 +2485,90 @@ function AdminPlatformMarketing() {
               className="bg-primary text-primary-foreground font-bold"
             >
               Diffuser immédiatement
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* -------------------------------------------------------------------- */}
+      {/*                       MODAL 6: INSPECT CSV CONTACTS                  */}
+      {/* -------------------------------------------------------------------- */}
+      <Dialog open={csvListModalOpen} onOpenChange={setCsvListModalOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileSpreadsheet className="size-5 text-primary" />
+              <span>Audience Externe — {csvContacts.length} contacts</span>
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Vérifiez la liste des destinataires, l'auto-correction des fautes de domaine et la salutation personnalisée.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-2 space-y-3 flex-1 overflow-hidden flex flex-col">
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="size-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={csvFilterQuery}
+                  onChange={(e) => setCsvFilterQuery(e.target.value)}
+                  placeholder="Filtrer par e-mail ou prénom..."
+                  className="pl-8 h-8 text-xs"
+                />
+              </div>
+              <span className="text-xs text-muted-foreground whitespace-nowrap font-semibold">
+                {filteredCsvContacts.length} affiché(s)
+              </span>
+            </div>
+
+            <div className="flex-1 overflow-y-auto border border-border rounded-[6px] divide-y divide-border text-xs max-h-[50vh]">
+              {filteredCsvContacts.map((c, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center justify-between p-2.5 hover:bg-muted/40 transition-colors"
+                >
+                  <div className="flex items-center gap-2.5 truncate">
+                    <span className="text-[10px] font-mono text-muted-foreground w-6 text-right shrink-0">
+                      #{idx + 1}
+                    </span>
+                    <div className="truncate">
+                      <div className="flex items-center gap-1.5">
+                        <p className="font-semibold text-foreground truncate">{c.email}</p>
+                        {c.typoFixed && (
+                          <span className="text-[9px] font-bold text-sky-600 bg-sky-500/15 rounded px-1 shrink-0">
+                            Auto-corrigé
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-muted-foreground">
+                        Salutation : <span className="text-primary font-bold">Salut {c.firstName},</span>
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveSingleCsvContact(c.email)}
+                    className="text-muted-foreground hover:text-red-500 p-1 transition-colors"
+                    title="Retirer ce contact"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                </div>
+              ))}
+              {filteredCsvContacts.length === 0 && (
+                <p className="p-6 text-center text-xs text-muted-foreground">
+                  Aucun contact ne correspond à votre recherche.
+                </p>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter className="flex items-center justify-between sm:justify-between border-t pt-3">
+            <span className="text-xs text-muted-foreground">
+              Total prêt à être contacté : <strong className="text-foreground">{csvContacts.length} e-mails</strong>
+            </span>
+            <Button size="sm" onClick={() => setCsvListModalOpen(false)}>
+              Fermer
             </Button>
           </DialogFooter>
         </DialogContent>

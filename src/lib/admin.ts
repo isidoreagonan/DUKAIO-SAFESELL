@@ -162,9 +162,11 @@ export function useAdminSendPlatformCampaign() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: {
-      targetType: "all" | "active" | "free" | "starter" | "pro" | "country" | "single";
+      targetType: "all" | "active" | "free" | "starter" | "pro" | "country" | "single" | "csv";
       targetCountry?: string;
       targetUserId?: string;
+      targetEmails?: string[];
+      targetContacts?: Array<{ email: string; name?: string; storeName?: string }>;
       subject: string;
       title?: string;
       greeting?: string;

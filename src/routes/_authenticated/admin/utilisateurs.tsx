@@ -361,16 +361,6 @@ function AdminUsersPage() {
     <AdminShell
       title="Utilisateurs & Marchands"
       subtitle={`${totalUsers} compte(s) inscrits • ${totalStores} boutique(s) • ${formatFcfa(totalGmv)} F générés`}
-      actions={
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => void refetch()}
-          className="gap-1.5"
-        >
-          <RefreshCw className="size-3.5" /> Actualiser
-        </Button>
-      }
     >
       {/* Overview Stat Cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-5">
@@ -411,6 +401,15 @@ function AdminUsersPage() {
         title={`Annuaire des marchands (${filteredUsers.length})`}
         action={
           <div className="flex flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => void refetch()}
+              className="h-8 gap-1.5 text-xs font-semibold"
+            >
+              <RefreshCw className="size-3.5" /> Actualiser
+            </Button>
+
             <div className="relative w-full max-w-[260px] sm:w-[260px]">
               <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input

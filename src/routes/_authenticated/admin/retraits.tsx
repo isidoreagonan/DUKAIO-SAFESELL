@@ -133,12 +133,6 @@ function AdminPayouts() {
     <AdminShell
       title="Retraits"
       subtitle="Sortez l'argent des abonnements vers votre mobile money"
-      actions={
-        <Button onClick={() => setOpen(true)} disabled={available < 500}>
-          <Banknote className="mr-2 h-4 w-4" />
-          Nouveau retrait
-        </Button>
-      }
     >
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
@@ -181,10 +175,21 @@ function AdminPayouts() {
       <Panel
         title="Historique des retraits"
         action={
-          <Button variant="outline" size="sm" onClick={() => void list.refetch()}>
-            <RefreshCw className="mr-2 h-3.5 w-3.5" />
-            Actualiser
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => void list.refetch()} className="h-8 gap-1.5 text-xs font-semibold">
+              <RefreshCw className="size-3.5" />
+              Actualiser
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => setOpen(true)}
+              disabled={available < 500}
+              className="h-8 gap-1.5 text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs"
+            >
+              <Banknote className="size-3.5" />
+              Nouveau retrait
+            </Button>
+          </div>
         }
       >
         {list.isLoading ? (

@@ -4,7 +4,66 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 > **Note d'environnement :** Ce projet a été initialement généré avec Lovable, mais a été entièrement migré sur Antigravity. Il n'est plus synchronisé avec Lovable Cloud et utilise désormais exclusivement la propre instance Supabase de l'utilisateur.
 
-## [14/09/2026] - Intégration Motion Design DUKAIO (Hero) & Sécurisation .env
+## [15/09/2026] - Import CSV & Campagne de Réactivation des Anciens Membres
+
+### Ajouté & Amélioré
+- **Support des Audiences Externes & Import CSV dans le Studio Marketing (`/admin/marketing`) :**
+  - Ajout d'un 5ème segment d'audience officiel : **« Liste CSV (EXTERNE) »**.
+  - **Gestionnaire d'import & assainissement automatique :**
+    - Intégration en 1 clic des **140 contacts de l'ancien SaaS** via un bouton dédié (*« ⚡ Recharger les 140 contacts »*).
+    - Support du téléversement de fichiers `.csv` / `.txt` ou collage direct d'e-mails.
+    - Détection et correction automatique des fautes de frappe de domaines fréquentes (`@gmai.com` -> `@gmail.com`, `@gmail.col` -> `@gmail.com`).
+    - Dédoublonnage et validation syntaxique rigoureuse avec indicateurs en temps réel (lignes analysées, valides, fautes corrigées, doublons).
+  - **Modal d'inspection & de recherche des contacts (« Voir la liste ») :**
+    - Visualisation détaillée de chaque adresse e-mail avec extraction dynamique du prénom pour la personnalisation (`Salut {{prenom}},`).
+    - Filtre de recherche instantané et possibilité de retirer un contact individuel.
+- **Nouveau Modèle d'E-mail Officiel : « Invitation Privilégiée : Découvrez le nouveau DUKAIO (Ancien SaaS) » :**
+  - Modèle n°13 spécialement calibré pour réengager les utilisateurs de la précédente plateforme.
+  - Mise en avant des 4 atouts majeurs : Boutique prête en 5 min, Formulaire Cash on Delivery (COD) sans friction, Génération produit par IA en 10 secondes, Retraits Mobile Money (MTN, Orange, Moov, Wave).
+  - Bouton d'action principal CTA : `Créer ma boutique sur DUKAIO (Gratuit)` (`https://dukaio.com/signup`).
+  - Signature chaleureuse et personnelle du fondateur Isidore Agonan avec note de réactivation.
+- **Moteur d'envoi Serveur Sécurisé (`src/lib/admin.functions.ts`) :**
+  - Extension de `adminSendPlatformCampaign` pour accepter `targetType: "csv"`, `targetEmails` et `targetContacts`.
+  - Pacing sécurisé (temporisation de 80ms) pour préserver la réputation d'envoi de la clé Resend et éviter tout blocage de débit.
+  - Note de bas de page adaptée précisant l'origine du message et option d'ignorance.
+  - Journalisation de la diffusion dans l'historique d'audit administrateur (`admin_audit_log`).
+
+## [15/09/2026] - Refonte Radar Publicitaire & Épuration Globale de l'En-tête Admin
+
+### Ajouté & Amélioré
+- **Épuration Globale de la Barre Supérieure de l'Administration :**
+  - Suppression définitive de l'encombrement de la barre de navigation du haut (`AdminShell`) sur l'ensemble des pages du dashboard d'administration (`marketing.tsx`, `promos.tsx`, `retraits.tsx`, `commandes.tsx`, `utilisateurs.tsx`, `tendances.tsx`).
+  - Déplacement ergonomique de tous les boutons d'actions vers le corps même des pages (bandeaux de commande et en-têtes de panneaux dédiés) :
+    - **Marketing & Campagnes :** Bandeau dédié avec *« M'envoyer un test »* et *« Diffuser (X) »*.
+    - **Codes promo :** Bouton *« Nouveau code »* intégré dans l'en-tête du panneau des codes.
+    - **Retraits :** Boutons *« Actualiser »* et *« Nouveau retrait »* intégrés dans l'en-tête du panneau des retraits.
+    - **Commandes :** Bouton *« Exporter CSV »* intégré dans l'en-tête du journal des commandes.
+    - **Utilisateurs :** Bouton *« Actualiser »* intégré dans le bandeau de recherche des marchands.
+- **Activation du Robot de collecte Apify dans l'Administration (`src/routes/_authenticated/admin/tendances.tsx`) :**
+  - Remplacement de l'ancien script obsolète (`ad-scout.server.ts`) par le véritable moteur de scraping publicitaire Apify (`discovery.server.ts` & `runDiscoveryScanFn`).
+  - **Console de collecte ciblée en direct (« Collecter les publicités ») :**
+    - Choix des pays cibles (Côte d'Ivoire, Sénégal, Burkina Faso, Mali, Cameroun, Bénin, Togo, ou scan global).
+    - Sélection des niches/catégories et saisie de mots-clés avec suggestions rapides en 1 clic.
+    - Choix du réseau (Meta Facebook/Instagram, Google Ads, ou les deux) et de la limite d'annonces.
+    - Notification toast détaillée en direct avec rapport complet (`X trouvées, Y ajoutées, Z actualisées`).
+- **4 Indicateurs Clés (KPIs en direct) :**
+  - **Publicités dans le Radar :** Total des publicités analysées, ratio vidéos vs images, et nombre d'annonces actives.
+  - **Boutiques & Marques identifiées :** Totalité des boutiques récupérées par le scraping.
+  - **Produits & Catalogues :** Nombre de produits catalogués avec prix et variantes.
+  - **Robot Apify :** Badge de connexion dynamique (`Connecté` avec puce pulsante) et date/résultats du dernier scan.
+- **Journal d'Historique des Scans :**
+  - Tableau rétractable des 10 dernières opérations de scan (`discovery_scans`) avec date, source, pays, mots-clés, résultats et statuts d'erreur détaillés.
+- **Barre de Recherche & Filtres Dukaio :**
+  - Recherche instantanée par nom d'annonceur, produit, mot-clé ou domaine de boutique.
+  - Filtres sélectifs par pays (avec drapeaux officiels), catégories, formats médias (Vidéos 🎥 / Images 🖼️), statuts (Actives / Masquées) et tris (Score de traction, récents, durée de diffusion).
+- **Explorateur & Modération des Publicités :**
+  - Cartes publicitaires au design moderne avec lecteurs/visuels sécurisés (`SafeImage`).
+  - Badges superposés : plateforme, pays, score de traction DUKAIO (`/100`), durée active.
+  - Bouton **« Analyser »** ouvrant le modal officiel `AdAnalysisDialog` (analyse de l'offre, créations similaires, estimation C.A.).
+  - Lien direct vers la bibliothèque publicitaire Meta officielle (`ad_library_url`).
+  - Actions d'administration : activation/masquage immédiat et **suppression définitive** (avec dialogue de confirmation et journalisation dans `admin_audit_log`).
+- **Fonctions Serveur d'Administration (`src/lib/discovery.functions.ts` & `src/lib/discovery.ts`) :**
+  - Création de `adminGetDiscoveryStats`, `adminDeleteDiscoveryAd` et `adminToggleDiscoveryAdStatus`.
 
 ### Ajouté & Amélioré
 - **Théâtre Vidéo Motion Design dans le Hero (`src/components/landing/motion-showcase.tsx`) :**

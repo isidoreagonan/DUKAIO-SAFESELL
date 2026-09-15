@@ -259,8 +259,8 @@ function SidebarLink({
 }) {
   const className = cn(
     "w-full cursor-pointer items-center text-left font-semibold transition-colors",
-    isChild ? "h-[26px] text-[11px]" : "h-7 text-xs",
-    collapsed ? "grid place-items-center rounded-[10px] px-0 h-10" : "grid grid-cols-[16px_minmax(0,1fr)_auto] gap-2 rounded-[4px] px-2",
+    isChild ? "h-7 text-xs" : "h-8 text-[13.5px]",
+    collapsed ? "grid place-items-center rounded-[10px] px-0 h-10" : "grid grid-cols-[18px_minmax(0,1fr)_auto] gap-2.5 rounded-[5px] px-2",
     active
       ? collapsed
         ? "bg-primary/20 text-primary"
@@ -269,7 +269,7 @@ function SidebarLink({
   );
   const content = (
     <>
-      <item.icon className={cn("shrink-0", isChild ? "h-3 w-3" : "h-3.5 w-3.5")} />
+      <item.icon className={cn("shrink-0", isChild ? "h-3.5 w-3.5" : "h-4 w-4")} />
       {!collapsed ? <span className="min-w-0 flex-1 truncate">{item.title}</span> : null}
       {!collapsed && item.badge ? (
         item.badge === "PLAN" ? (

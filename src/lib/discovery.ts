@@ -1,6 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
+  adminDeleteDiscoveryAd,
+  adminGetDiscoveryStats,
+  adminToggleDiscoveryAdStatus,
   getDiscoveryAdDetail,
   ensureDiscoveryStoreFn,
   getDiscoveryFacets,
@@ -13,6 +16,7 @@ import {
   runDiscoveryScanFn,
   searchDiscoveryBrandFn,
   type DiscoveryAd,
+  type DiscoveryAdminStats,
   type DiscoveryProduct,
   type DiscoveryStore,
 } from "@/lib/discovery.functions";
@@ -22,6 +26,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { useDiscoveryAccess } from "@/lib/entitlements";
 
 export { estimateRevenue, toFcfa, type Estimate } from "@/lib/discovery-estimate";
+
+export type { DiscoveryAdminStats };
 
 export type { DiscoveryAd, DiscoveryProduct, DiscoveryStore };
 
@@ -275,17 +281,17 @@ export function useRunDiscoveryScan() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: {
-      countries?: string[];
-      keywords?: string[];
-      category?: string;
-      limit?: number;
-      network?: "meta" | "google_ads" | "both";
-      media?: "video" | "image";
-      status?: "active" | "inactive";
-      minDays?: number;
-      minVariations?: number;
-      domain?: string;
-    }) => fn({ data: input }),
+      countries?: string[] | undefined;
+      keywords?: string[] | undefined;
+      category?: string | undefined;
+      limit?: number | undefined;
+      network?: "meta" | "google_ads" | "both" | undefined;
+      media?: "video" | "image" | undefined;
+      status?: "active" | "inactive" | undefined;
+      minDays?: number | undefined;
+      minVariations?: number | undefined;
+      domain?: string | undefined;
+    }) => fn({ data: input as any }),
     onSuccess: () => invalidateDiscovery(qc),
   });
 }
@@ -412,6 +418,43 @@ export function useBrandSearchHistory() {
         seen.add(key);
         return true;
       }).slice(0, 8);
+    },
+  });
+}
+
+/** Statistiques globales d'administration du Radar Publicitaire. */
+export function useAdminDiscoveryStats() {
+  const fn = useServerFn(adminGetDiscoveryStats);
+  return useQuery({
+    queryKey: ["admin-discovery-stats"],
+    queryFn: () => fn(),
+    staleTime: 15_000,
+  });
+}
+
+/** Suppression d'une publicité depuis le Radar (admin). */
+export function useAdminDeleteDiscoveryAd() {
+  const fn = useServerFn(adminDeleteDiscoveryAd);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => fn({ data: { id } }),
+    onSuccess: () => {
+      invalidateDiscovery(qc);
+      void qc.invalidateQueries({ queryKey: ["admin-discovery-stats"] });
+    },
+  });
+}
+
+/** Bascule active/inactive d'une publicité (admin). */
+export function useAdminToggleDiscoveryAdStatus() {
+  const fn = useServerFn(adminToggleDiscoveryAdStatus);
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
+      fn({ data: { id, isActive } }),
+    onSuccess: () => {
+      invalidateDiscovery(qc);
+      void qc.invalidateQueries({ queryKey: ["admin-discovery-stats"] });
     },
   });
 }
