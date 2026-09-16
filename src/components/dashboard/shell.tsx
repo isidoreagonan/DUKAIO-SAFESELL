@@ -353,12 +353,12 @@ function CollapsibleNavItem({
           type="button"
           onClick={handleToggle}
           className={cn(
-            "w-full cursor-pointer items-center text-left font-semibold transition-colors flex justify-between rounded-[4px] px-2 h-7 text-xs",
+            "w-full cursor-pointer items-center text-left font-semibold transition-colors flex justify-between rounded-[5px] px-2 h-8 text-[13.5px]",
             parentActive ? "bg-chrome-panel text-chrome-foreground" : "text-chrome-muted hover:bg-chrome-accent hover:text-chrome-accent-foreground"
           )}
         >
-          <span className="flex items-center gap-2 min-w-0">
-            <item.icon className="h-3.5 w-3.5 shrink-0" />
+          <span className="flex items-center gap-2.5 min-w-0">
+            <item.icon className="h-4 w-4 shrink-0" />
             <span className="truncate">{item.title}</span>
             {item.badge ? (
               <span className="rounded-[4px] bg-chrome-warning px-1.5 py-[1px] text-[8px] font-black uppercase text-chrome-warning-foreground">
@@ -366,7 +366,7 @@ function CollapsibleNavItem({
               </span>
             ) : null}
           </span>
-          <ChevronDown className={cn("h-3 w-3 shrink-0 transition-transform text-chrome-muted", isOpen ? "" : "-rotate-90")} />
+          <ChevronDown className={cn("h-3.5 w-3.5 shrink-0 transition-transform text-chrome-muted", isOpen ? "" : "-rotate-90")} />
         </button>
       ) : (
         <SidebarLink
@@ -378,7 +378,7 @@ function CollapsibleNavItem({
         />
       )}
       {item.children && isOpen ? (
-        <ul className="mt-0.5 border-l border-chrome-border/50 pl-1.5 ml-2.5 mb-1 space-y-0">
+        <ul className="mt-0.5 border-l border-chrome-border/60 pl-2 ml-3 mb-1 space-y-0.5">
           {item.children.map((child) => (
             <li key={child.title}>
               <SidebarLink
@@ -509,18 +509,18 @@ function SidebarUser({
       <button
         type="button"
         onClick={signOut}
-        className="flex h-7 w-full cursor-pointer items-center gap-2.5 rounded-[4px] px-2 text-xs font-semibold text-chrome-muted transition-colors hover:bg-chrome-accent hover:text-chrome-accent-foreground"
+        className="flex h-8 w-full cursor-pointer items-center gap-2.5 rounded-[5px] px-2 text-[13px] font-semibold text-chrome-muted transition-colors hover:bg-chrome-accent hover:text-chrome-accent-foreground"
       >
-        <LogOut className="h-3.5 w-3.5" />
+        <LogOut className="h-4 w-4" />
         <span>Déconnexion</span>
       </button>
       <button
         type="button"
         aria-label="Centre d'aide"
         onClick={onOpenHelpWelcome}
-        className="flex h-7 w-full cursor-pointer items-center gap-2.5 rounded-[4px] px-2 text-xs font-semibold text-chrome-muted transition-colors hover:bg-chrome-accent hover:text-chrome-accent-foreground"
+        className="flex h-8 w-full cursor-pointer items-center gap-2.5 rounded-[5px] px-2 text-[13px] font-semibold text-chrome-muted transition-colors hover:bg-chrome-accent hover:text-chrome-accent-foreground"
       >
-        <LifeBuoy className="h-3.5 w-3.5" />
+        <LifeBuoy className="h-4 w-4" />
         <span>Centre d'aide</span>
       </button>
     </div>
@@ -574,7 +574,7 @@ export function NavContent({
       <div className="flex h-full flex-col bg-chrome text-chrome-muted">
         <div
           className={cn(
-            "flex items-center py-4",
+            "flex items-center py-3",
             collapsed ? "justify-center px-3" : "justify-between gap-2 border-b border-chrome-border px-4",
           )}
         >
@@ -632,7 +632,7 @@ export function NavContent({
           ) : (
             groups.map((group) => (
               <section key={group.label}>
-                <p className="px-2 pb-1.5 text-[9px] font-black uppercase tracking-normal text-chrome-muted">
+                <p className="px-2 pb-1 pt-1.5 text-[9.5px] font-bold uppercase tracking-wider text-chrome-muted">
                   {group.label}
                 </p>
                 <ul className="space-y-0">

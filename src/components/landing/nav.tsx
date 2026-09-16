@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { LayoutDashboard, Menu, X } from "lucide-react";
 import { DukaioLogo } from "@/components/brand/logo";
 import { useAuth } from "@/hooks/use-auth";
+import { cn } from "@/lib/utils";
 
 const links = [
   { label: "Fonctionnalités", href: "/#fonctionnalites" },
@@ -13,21 +14,72 @@ const links = [
 
 export function Nav() {
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const { user } = useAuth();
 
+  useEffect(() => {
+    const handleScroll = () => {
+      // Seuil de défilement > 25px
+      const isScrolled = window.scrollY > 25;
+      setScrolled((prev) => (prev !== isScrolled ? isScrolled : prev));
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Transition douce 600ms en cubic-bezier ease-out fluide sans à-coup, avec respect de prefers-reduced-motion
+  const smoothCurve =
+    "transition-all duration-[600ms] [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none motion-reduce:duration-0";
+
   return (
-    <header className="fixed inset-x-0 top-0 z-50 px-4 pt-5">
-      <nav className="mx-auto flex max-w-6xl items-center justify-between rounded-[2rem] border border-white/40 bg-background/45 px-5 py-4 shadow-card backdrop-blur-2xl backdrop-saturate-150">
-        <Link to="/" className="flex items-center gap-2.5 pl-1">
-          <DukaioLogo className="h-9" />
+    <header
+      className={cn(
+        "fixed inset-x-0 top-0 z-50 flex flex-col items-center pointer-events-none px-3.5 sm:px-5",
+        scrolled ? "pt-2 sm:pt-2.5" : "pt-4 sm:pt-5",
+        smoothCurve,
+      )}
+    >
+      {/* Floating Pill Navbar centrée */}
+      <nav
+        aria-label="Navigation principale"
+        className={cn(
+          "pointer-events-auto flex w-full items-center justify-between rounded-full border shadow-card",
+          "backdrop-blur-2xl backdrop-saturate-150 will-change-[max-width,padding,background-color,border-color,box-shadow]",
+          scrolled
+            ? "max-w-5xl py-2.5 px-5 sm:py-3 sm:px-6 bg-background/85 dark:bg-background/90 border-border/80 dark:border-white/15 shadow-[0_12px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_16px_48px_rgba(0,0,0,0.5)]"
+            : "max-w-6xl py-3.5 px-6 sm:py-4 sm:px-7 bg-background/55 dark:bg-background/45 border-white/40 dark:border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.05)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.3)]",
+          smoothCurve,
+        )}
+      >
+        {/* Gauche : Logo DUKAIO */}
+        <Link
+          to="/"
+          className={cn("flex items-center shrink-0 pl-1 sm:pl-1.5", smoothCurve)}
+        >
+          <DukaioLogo
+            className={cn(
+              "w-auto select-none object-contain",
+              scrolled ? "h-7.5 sm:h-8" : "h-8.5 sm:h-9",
+              smoothCurve,
+            )}
+          />
         </Link>
 
-        <ul className="hidden items-center gap-8 md:flex">
+        {/* Centre / Droite : Liens de navigation */}
+        <ul
+          className={cn(
+            "hidden items-center md:flex whitespace-nowrap text-sm font-semibold",
+            scrolled ? "gap-6 lg:gap-8" : "gap-7 lg:gap-9",
+            smoothCurve,
+          )}
+        >
           {links.map((l) => (
             <li key={l.href}>
               <a
                 href={l.href}
-                className="text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground"
+                className="text-muted-foreground transition-colors hover:text-foreground"
               >
                 {l.label}
               </a>
@@ -35,11 +87,21 @@ export function Nav() {
           ))}
         </ul>
 
-        <div className="hidden items-center gap-2 md:flex">
+        {/* Droite : Boutons d'appel à l'action CTA */}
+        <div
+          className={cn(
+            "hidden items-center gap-2.5 md:flex shrink-0",
+            smoothCurve,
+          )}
+        >
           {user ? (
             <Link
               to="/dashboard"
-              className="btn-pill inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold"
+              className={cn(
+                "btn-pill inline-flex items-center gap-2 rounded-full font-semibold",
+                scrolled ? "px-4.5 py-2.5 text-sm" : "px-5 py-2.5 text-sm",
+                smoothCurve,
+              )}
             >
               <LayoutDashboard className="size-4" />
               Dashboard
@@ -48,29 +110,53 @@ export function Nav() {
             <>
               <Link
                 to="/login"
-                className="rounded-full px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-secondary/70"
+                className={cn(
+                  "rounded-full font-semibold text-foreground transition-colors hover:bg-secondary/70",
+                  scrolled ? "px-4 py-2 text-sm" : "px-4.5 py-2.5 text-sm",
+                  smoothCurve,
+                )}
               >
                 Se connecter
               </Link>
-              <Link to="/signup" className="btn-pill rounded-full px-5 py-2.5 text-sm font-semibold">
+              <Link
+                to="/signup"
+                className={cn(
+                  "btn-pill rounded-full font-semibold whitespace-nowrap",
+                  scrolled ? "px-4.5 py-2.5 text-sm" : "px-5 py-2.5 text-sm",
+                  smoothCurve,
+                )}
+              >
                 Ouvrir ma boutique
               </Link>
             </>
           )}
         </div>
 
+        {/* Bouton Mobile Toggle */}
         <button
           type="button"
-          aria-label="Menu"
+          aria-label={open ? "Fermer le menu" : "Ouvrir le menu"}
+          aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
-          className="flex size-10 items-center justify-center rounded-full border border-border/70 bg-background/60 md:hidden"
+          className={cn(
+            "pointer-events-auto flex items-center justify-center rounded-full border border-border/70 bg-background/60 md:hidden text-foreground hover:bg-secondary/80",
+            scrolled ? "size-9.5 sm:size-10" : "size-10",
+            smoothCurve,
+          )}
         >
           {open ? <X className="size-4" /> : <Menu className="size-4" />}
         </button>
       </nav>
 
+      {/* Menu déroulant Mobile */}
       {open && (
-        <div className="mx-auto mt-2 max-w-6xl rounded-3xl border border-white/40 bg-background/85 p-4 shadow-card backdrop-blur-2xl md:hidden">
+        <div
+          className={cn(
+            "pointer-events-auto mx-auto mt-2 w-full rounded-3xl border border-white/40 bg-background/90 p-4 shadow-card backdrop-blur-2xl md:hidden",
+            scrolled ? "max-w-5xl" : "max-w-6xl",
+            smoothCurve,
+          )}
+        >
           <ul className="flex flex-col gap-1">
             {links.map((l) => (
               <li key={l.href}>
@@ -94,25 +180,26 @@ export function Nav() {
               Dashboard
             </Link>
           ) : (
-            <>
+            <div className="mt-2 flex flex-col gap-2">
               <Link
                 to="/login"
                 onClick={() => setOpen(false)}
-                className="btn-white-3d mt-2 block rounded-full px-5 py-3 text-center text-sm font-semibold"
+                className="btn-white-3d block rounded-full px-5 py-3 text-center text-sm font-semibold"
               >
                 Se connecter
               </Link>
               <Link
                 to="/signup"
                 onClick={() => setOpen(false)}
-                className="btn-pill mt-2 block rounded-full px-5 py-3 text-center text-sm font-semibold"
+                className="btn-pill block rounded-full px-5 py-3 text-center text-sm font-semibold"
               >
                 Ouvrir ma boutique
               </Link>
-            </>
+            </div>
           )}
         </div>
       )}
     </header>
   );
 }
+
