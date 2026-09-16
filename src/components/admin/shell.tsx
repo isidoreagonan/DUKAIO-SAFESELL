@@ -126,6 +126,44 @@ function SidebarLink({
   );
 }
 
+function AdminAvatar({
+  name,
+  email,
+  className,
+}: {
+  name: string;
+  email?: string | null;
+  className?: string;
+}) {
+  const [error, setError] = useState(false);
+  const isFounder =
+    email?.toLowerCase().includes("agonan") ||
+    name.toLowerCase().includes("agonan") ||
+    email?.toLowerCase().includes("isidore");
+
+  if (isFounder && !error) {
+    return (
+      <img
+        src="/founder.png"
+        alt={name}
+        onError={() => setError(true)}
+        className={cn("shrink-0 rounded-[4px] object-cover border border-border shadow-xs", className)}
+      />
+    );
+  }
+
+  return (
+    <span
+      className={cn(
+        "grid shrink-0 place-items-center rounded-[4px] bg-foreground text-xs font-bold text-background",
+        className,
+      )}
+    >
+      {initials(name) || "A"}
+    </span>
+  );
+}
+
 function SidebarUser({
   collapsed,
   onNavigate,
@@ -149,8 +187,8 @@ function SidebarUser({
       <div className="space-y-3 px-3 pb-5">
         <Tooltip delayDuration={100}>
           <TooltipTrigger asChild>
-            <div className="grid h-10 w-full place-items-center rounded-[4px] bg-primary text-xs font-black text-primary-foreground">
-              {initials(name) || "A"}
+            <div className="flex justify-center w-full">
+              <AdminAvatar name={name} email={user?.email} className="h-10 w-10" />
             </div>
           </TooltipTrigger>
           <TooltipContent side="right" className="text-xs">
@@ -196,9 +234,7 @@ function SidebarUser({
   return (
     <div className="space-y-1 border-t border-chrome-border p-2">
       <div className="flex min-w-0 items-center justify-between gap-2 rounded-[4px] bg-chrome-panel p-2">
-        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[4px] bg-primary text-xs font-black uppercase text-primary-foreground">
-          {initials(name) || "A"}
-        </span>
+        <AdminAvatar name={name} email={user?.email} className="h-8 w-8" />
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-1.5">
             <span className="truncate text-xs font-semibold leading-tight text-chrome-foreground">{name}</span>
@@ -362,9 +398,7 @@ function AdminUserMenu() {
           type="button"
           className="flex cursor-pointer items-center gap-2 rounded-[6px] border border-border bg-background p-1 pr-2.5 text-left transition-colors hover:bg-muted"
         >
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[4px] bg-foreground text-xs font-bold text-background">
-            {initials(name) || "A"}
-          </span>
+          <AdminAvatar name={name} email={user?.email} className="h-8 w-8" />
           <span className="hidden min-w-0 max-w-[150px] sm:block">
             <span className="block truncate text-xs font-semibold leading-tight">{name}</span>
             <span className="block truncate text-[10px] text-muted-foreground">
@@ -410,11 +444,13 @@ export function AdminShell({
   subtitle,
   actions,
   children,
+  dark = false,
 }: {
   title: string;
   subtitle?: string | undefined;
   actions?: ReactNode | undefined;
   children: ReactNode;
+  dark?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
@@ -431,7 +467,12 @@ export function AdminShell({
     });
 
   return (
-    <div className="dashboard-ui h-dvh overflow-hidden bg-surface-tint">
+    <div
+      className={cn(
+        "dashboard-ui h-dvh overflow-hidden",
+        dark ? "bg-[#090d16] text-slate-100 dark" : "bg-surface-tint",
+      )}
+    >
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-30 hidden border-r border-chrome-border bg-chrome transition-[width] duration-200 lg:block",
@@ -442,12 +483,22 @@ export function AdminShell({
       </aside>
 
       <div className={cn("flex h-dvh flex-col", collapsed ? "lg:pl-[76px]" : "lg:pl-[272px]")}>
-        <header className="relative z-20 shrink-0 border-b border-border bg-background/90 backdrop-blur-xl">
+        <header
+          className={cn(
+            "relative z-20 shrink-0 border-b backdrop-blur-xl",
+            dark
+              ? "border-slate-800 bg-[#0d131f]/90 text-slate-100"
+              : "border-border bg-background/90",
+          )}
+        >
           <div className="flex items-center gap-3 px-4 py-3 sm:px-6">
             <Sheet open={open} onOpenChange={setOpen}>
               <SheetTrigger
                 aria-label="Ouvrir le menu"
-                className="grid h-10 w-10 cursor-pointer place-items-center rounded-[6px] border border-border lg:hidden"
+                className={cn(
+                  "grid h-10 w-10 cursor-pointer place-items-center rounded-[6px] border",
+                  dark ? "border-slate-800 text-slate-200 hover:bg-slate-800" : "border-border",
+                )}
               >
                 <Menu className="h-5 w-5" />
               </SheetTrigger>
@@ -462,13 +513,20 @@ export function AdminShell({
 
             <div className="min-w-0 flex-1">
               <div className="flex min-w-0 items-center gap-2">
-                <h1 className="truncate text-lg font-black tracking-tight">{title}</h1>
-                <span className="hidden shrink-0 items-center gap-1 rounded-[4px] border border-border bg-muted/60 px-1.5 py-0.5 text-[10px] font-black uppercase text-muted-foreground sm:inline-flex">
+                <h1 className={cn("truncate text-lg font-black tracking-tight", dark ? "text-slate-100" : "")}>{title}</h1>
+                <span
+                  className={cn(
+                    "hidden shrink-0 items-center gap-1 rounded-[4px] border px-1.5 py-0.5 text-[10px] font-black uppercase sm:inline-flex",
+                    dark
+                      ? "border-slate-800 bg-slate-800/80 text-slate-300"
+                      : "border-border bg-muted/60 text-muted-foreground",
+                  )}
+                >
                   <ShieldCheck className="h-3 w-3" /> Admin
                 </span>
               </div>
               {subtitle ? (
-                <p className="truncate text-xs text-muted-foreground">{subtitle}</p>
+                <p className={cn("truncate text-xs", dark ? "text-slate-400" : "text-muted-foreground")}>{subtitle}</p>
               ) : null}
             </div>
 
@@ -476,7 +534,12 @@ export function AdminShell({
               {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
               <Link
                 to="/dashboard"
-                className="hidden h-10 cursor-pointer items-center gap-2 rounded-[6px] border border-border px-3 text-sm font-semibold transition-colors hover:bg-muted xl:inline-flex"
+                className={cn(
+                  "hidden h-10 cursor-pointer items-center gap-2 rounded-[6px] border px-3 text-sm font-semibold transition-colors xl:inline-flex",
+                  dark
+                    ? "border-slate-800 bg-slate-900/60 text-slate-200 hover:bg-slate-800"
+                    : "border-border hover:bg-muted",
+                )}
               >
                 <Store className="h-4 w-4 text-primary" /> Ma boutique
               </Link>
@@ -485,7 +548,7 @@ export function AdminShell({
           </div>
         </header>
 
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <div className={cn("min-h-0 flex-1 overflow-y-auto overscroll-contain", dark ? "bg-[#090d16]" : "")}>
           <main className="mx-auto w-full max-w-[1400px] space-y-6 px-4 py-5 sm:px-5">{children}</main>
         </div>
       </div>

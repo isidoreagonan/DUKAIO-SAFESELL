@@ -4,6 +4,28 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 > **Note d'environnement :** Ce projet a été initialement généré avec Lovable, mais a été entièrement migré sur Antigravity. Il n'est plus synchronisé avec Lovable Cloud et utilise désormais exclusivement la propre instance Supabase de l'utilisateur.
 
+## [16/09/2026] - Refonte UX/UI Professionnelle du Studio Marketing & Cadres Modulaires (Style SaaS)
+
+### Ajouté & Amélioré
+- **Refonte Architecturale Complète du Studio Marketing (`/admin/marketing`) :**
+  - **Bandeau Exécutif Supérieur (Inspiré des plateformes SaaS haut de gamme) :**
+    - Titre officiel et badges de conformité (`EXPÉDITEUR VÉRIFIÉ`, `PRÊT À DIFFUSER`, statut du modèle actif).
+    - Métadonnées officielles visibles : Expéditeur `agonan@dukaio.com`, Responsable `AGONAN ISIDORE (Fondateur & CEO)`.
+    - Carte d'indicateur clé à droite : **Audience Ciblée** dynamique (`140 destinataires` avec type d'audience).
+    - Actions d'envergure directes : *« M'envoyer un test »* et *« Diffuser ({count}) »*.
+  - **Barre d'Onglets Horizontale (Navigation épurée en 4 vues distinctes) :**
+    - **1. Rédacteur & Studio :** Vue scindée en 2 colonnes avec l'éditeur de contenu et la prévisualisation en direct (Desktop / Mobile).
+    - **2. Ciblage & Destinataires ({count}) :** Gestionnaire dédié de la segmentation des vendeurs et du fichier d'audience externe CSV (140 contacts).
+    - **3. Modèles Prêts à l'Emploi (13) :** Bibliothèque officielle avec filtres thématiques par objectifs et chargement en 1 clic dans le Studio.
+    - **4. Historique & Journal :** Traçabilité et historique officiel des diffusions et actions d'audit.
+  - **Structuration en « Cadres UX » (Card Layout moderne & aéré) :**
+    - En-têtes de cartes avec icônes distinctes, titres majuscules, sous-titres descriptifs et badges de statut.
+    - Sous-sections numérotées fines (`1. INFORMATIONS...`, `2. MÉTRIQUES...`).
+    - Grilles de métadonnées Key-Value équilibrées.
+    - Échantillon des destinataires validés sous forme de cartes modulaires avec pastilles d'état `✓ Prêt` et action de retrait individuel.
+  - **Fidélité au Mode Clair de DUKAIO :**
+    - Respect absolu de l'identité visuelle claire, moderne et lumineuse de DUKAIO (fonds blancs épurés, bordures zinc subtiles, typographie soignée et touches orange signature).
+
 ## [15/09/2026] - Import CSV & Campagne de Réactivation des Anciens Membres
 
 ### Ajouté & Amélioré

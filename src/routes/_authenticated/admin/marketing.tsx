@@ -3,9 +3,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import {
   ArrowUpRight,
   BadgeCheck,
+  Calendar,
+  Check,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
+  Clock,
   Copy,
   CreditCard,
   Crown,
@@ -33,6 +36,7 @@ import {
   Plus,
   RefreshCw,
   Rocket,
+  RotateCcw,
   Search,
   Send,
   ShieldAlert,
@@ -316,7 +320,7 @@ export function parseAndSanitizeCsv(text: string): {
     let extractedName = "";
 
     const bracketMatch = trimmed.match(/<([^>]+)>/);
-    if (bracketMatch) {
+    if (bracketMatch && bracketMatch[1]) {
       extractedEmail = bracketMatch[1].trim();
       extractedName = trimmed.replace(/<[^>]+>/, "").trim();
     } else {
@@ -351,22 +355,27 @@ export function parseAndSanitizeCsv(text: string): {
     }
     seen.add(cleanEmail);
 
-    let firstName = "";
+    let firstName = "Marchand";
     if (extractedName) {
-      const parts = extractedName.split(/\s+/);
-      firstName = parts[parts.length - 1];
+      const parts = extractedName.split(/\s+/).filter(Boolean);
+      firstName = parts[parts.length - 1] || "Marchand";
     } else {
-      const local = cleanEmail.split("@")[0].replace(/\d+$/g, "").replace(/[._-]/g, " ").trim();
+      const atSplit = cleanEmail.split("@")[0] || "";
+      const local = atSplit.replace(/\d+$/g, "").replace(/[._-]/g, " ").trim();
       firstName = local ? local.charAt(0).toUpperCase() + local.slice(1) : "Marchand";
     }
 
-    contacts.push({
+    const item: ParsedCsvContact = {
       email: cleanEmail,
-      name: extractedName || undefined,
       firstName,
       raw: trimmed,
       typoFixed: hadTypo,
-    });
+    };
+    if (extractedName) {
+      item.name = extractedName;
+    }
+
+    contacts.push(item);
   }
 
   return {
@@ -737,13 +746,13 @@ function extractYouTubeId(url: string): string | null {
   if (!url) return null;
   const regExp = /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|shorts\/|live\/|user\/\S+|\S+\/\S+\/))([\w-]{11})/;
   const match = url.match(regExp);
-  return match ? match[1] : null;
+  return match && match[1] ? match[1] : null;
 }
 
 function extractLoomId(url: string): string | null {
   if (!url) return null;
   const match = url.match(/loom\.com\/share\/([a-zA-Z0-9]+)/);
-  return match ? match[1] : null;
+  return match && match[1] ? match[1] : null;
 }
 
 function resolveVideoThumbnail(vUrl: string, rawThumb?: string): string {
@@ -894,12 +903,146 @@ function parseContentToHtml(rawText: string): string {
 }
 
 /* -------------------------------------------------------------------------- */
+/*                 Reusable Premium UI Components ("Cadres UI")               */
+/* -------------------------------------------------------------------------- */
+
+function AdminCard({
+  icon: Icon,
+  title,
+  subtitle,
+  badge,
+  action,
+  children,
+  className,
+}: {
+  icon?: any;
+  title: string;
+  subtitle?: string;
+  badge?: React.ReactNode;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-[8px] border border-slate-200/80 bg-white overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all",
+        className,
+      )}
+    >
+      <div className="bg-slate-50/75 px-4 py-3 sm:px-5 sm:py-3.5 border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2.5 min-w-0">
+          {Icon ? <Icon className="size-4 text-slate-700 shrink-0" /> : null}
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 truncate">
+                {title}
+              </h3>
+              {badge}
+            </div>
+            {subtitle ? (
+              <p className="text-[11px] text-slate-500 truncate">{subtitle}</p>
+            ) : null}
+          </div>
+        </div>
+        {action ? <div className="shrink-0">{action}</div> : null}
+      </div>
+      <div className="p-4 sm:p-5 text-slate-800">{children}</div>
+    </div>
+  );
+}
+
+function KeyValueGrid({
+  children,
+  cols = 4,
+}: {
+  children: React.ReactNode;
+  cols?: 2 | 3 | 4 | 5;
+}) {
+  const colClass =
+    {
+      2: "grid-cols-2",
+      3: "grid-cols-1 sm:grid-cols-3",
+      4: "grid-cols-2 sm:grid-cols-4",
+      5: "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5",
+    }[cols] || "grid-cols-2 sm:grid-cols-4";
+
+  return <div className={cn("grid gap-3 sm:gap-4", colClass)}>{children}</div>;
+}
+
+function KeyVal({
+  label,
+  value,
+  hint,
+  icon: Icon,
+  badge,
+  className,
+}: {
+  label: string;
+  value: React.ReactNode;
+  hint?: string;
+  icon?: any;
+  badge?: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn("rounded-[6px] border border-slate-200/80 bg-slate-50/60 p-2.5 sm:p-3", className)}>
+      <div className="flex items-center justify-between gap-1 mb-1">
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-1.5 truncate">
+          {Icon && <Icon className="size-3 text-slate-500" />}
+          {label}
+        </span>
+        {badge}
+      </div>
+      <div className="text-xs sm:text-sm font-bold text-slate-900 truncate">{value}</div>
+      {hint ? <p className="text-[10px] text-slate-500 mt-0.5 truncate">{hint}</p> : null}
+    </div>
+  );
+}
+
+function SubSectionHeader({
+  number,
+  title,
+  action,
+  className,
+}: {
+  number?: string | number;
+  title: string;
+  action?: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex items-center justify-between gap-2 pb-2 mb-3 border-b border-slate-200/80",
+        className,
+      )}
+    >
+      <div className="text-[11px] font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5 truncate">
+        {number ? (
+          <span className="size-4 rounded-[3px] bg-slate-100 border border-slate-200 text-slate-700 text-[10px] font-bold inline-flex items-center justify-center shrink-0">
+            {number}
+          </span>
+        ) : null}
+        <span>{title}</span>
+      </div>
+      {action ? <div className="shrink-0">{action}</div> : null}
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
 /*                               Main Studio View                             */
 /* -------------------------------------------------------------------------- */
 
 function AdminPlatformMarketing() {
   const { data: users, isLoading: usersLoading } = useAdminUsers();
   const sendCampaign = useAdminSendPlatformCampaign();
+  const { data: auditLogs } = useAdminAudit();
+
+  // Navigation Tabs State (Inspiré des meilleurs SaaS)
+  const [activeTab, setActiveTab] = useState<"composer" | "audience" | "templates" | "history">("composer");
+  const [templateCategoryFilter, setTemplateCategoryFilter] = useState<string>("all");
 
   // Selected Template
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("migration-ancien-saas");
@@ -1007,7 +1150,7 @@ function AdminPlatformMarketing() {
   }, [csvContacts, csvFilterQuery]);
 
   // Email Content States
-  const currentTpl = TEMPLATES.find((t) => t.id === selectedTemplateId) || TEMPLATES[0];
+  const currentTpl = (TEMPLATES.find((t) => t.id === selectedTemplateId) || TEMPLATES[0])!;
   const [subject, setSubject] = useState(currentTpl.subject);
   const [greeting, setGreeting] = useState(currentTpl.greeting);
   const [content, setContent] = useState(currentTpl.content);
@@ -1221,7 +1364,7 @@ function AdminPlatformMarketing() {
   }
 
   // Apply template
-  function applyTemplate(tpl: CampaignTemplate) {
+  function applyTemplate(tpl: CampaignTemplate, switchTab: boolean = true) {
     setSelectedTemplateId(tpl.id);
     setSubject(tpl.subject);
     setGreeting(tpl.greeting);
@@ -1236,8 +1379,16 @@ function AdminPlatformMarketing() {
         handleLoadPresetPreviousSaas();
       }
     }
-    toast.info(`Modèle « ${tpl.name} » chargé.`);
+    if (switchTab) {
+      setActiveTab("composer");
+    }
+    toast.success(`Modèle « ${tpl.name} » chargé dans le Studio.`);
   }
+
+  const filteredTemplates = useMemo(() => {
+    if (templateCategoryFilter === "all") return TEMPLATES;
+    return TEMPLATES.filter((t) => t.category === templateCategoryFilter);
+  }, [templateCategoryFilter]);
 
   const allUsers = users ?? [];
   const activeUsersCount = allUsers.filter((u) => u.stores_count > 0).length;
@@ -1359,327 +1510,746 @@ function AdminPlatformMarketing() {
       title="Marketing & Campagnes Marchands"
       subtitle="Envoyez des e-mails officiels ultra-professionnels, épurés et percutants avec votre signature."
     >
-      {/* Barre d'action et diffusion */}
-      <section className="flex flex-col gap-3 rounded-xl border border-border bg-card p-3.5 shadow-xs sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10 text-primary shrink-0">
-            <Mail className="size-4" />
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <h2 className="text-sm font-bold text-foreground">Studio de Diffusion E-mail</h2>
-              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
-                Expéditeur : agonan@dukaio.com
+      {/* -------------------------------------------------------------------- */}
+      {/*              BANDEAU EXÉCUTIF DU STUDIO MARKETING (WHITE THEME)      */}
+      {/* -------------------------------------------------------------------- */}
+      <section className="rounded-[8px] border border-slate-200/80 bg-white p-4 sm:p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)] space-y-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          {/* Entity Profile info */}
+          <div className="flex items-start sm:items-center gap-3.5 min-w-0">
+            <div className="relative shrink-0">
+              <img
+                src="/founder.png"
+                alt="AGONAN ISIDORE"
+                className="size-11 rounded-[6px] object-cover border border-slate-200 shadow-xs"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = "/isidore.png";
+                }}
+              />
+              <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-[9px] font-black text-white ring-2 ring-white">
+                ✓
               </span>
             </div>
-            <p className="text-[11px] text-muted-foreground truncate">
-              Préparez, testez et diffusez vos annonces et actualités auprès des marchands DUKAIO.
-            </p>
+            <div className="min-w-0 space-y-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-base sm:text-lg font-bold tracking-tight text-slate-900">
+                  Marketing & Campagnes Marchands
+                </h1>
+                <span className="inline-flex items-center gap-1 rounded-[4px] bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold text-emerald-700 uppercase tracking-wider">
+                  <BadgeCheck className="size-3 text-emerald-600" /> EXPÉDITEUR VÉRIFIÉ
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-[4px] bg-amber-50 border border-amber-200 px-2 py-0.5 text-[10px] font-bold text-amber-700 uppercase tracking-wider">
+                  PRÊT À DIFFUSER
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+                <span className="flex items-center gap-1">
+                  <Mail className="size-3 text-slate-400" />
+                  <strong className="text-slate-800">agonan@dukaio.com</strong>
+                </span>
+                <span>•</span>
+                <span className="font-semibold text-slate-800">AGONAN ISIDORE (Fondateur & CEO)</span>
+                <span>•</span>
+                <span className="flex items-center gap-1">
+                  <Crown className="size-3 text-amber-500" /> Modèle :{" "}
+                  <strong className="text-slate-800">{currentTpl.badge}</strong>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Key Metric Card */}
+          <div className="text-left sm:text-right px-4 py-2.5 rounded-[6px] border border-slate-200 bg-slate-50/80 shrink-0">
+            <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              Audience Ciblée
+            </span>
+            <div className="flex items-baseline sm:justify-end gap-1.5 mt-0.5">
+              <span className="text-xl sm:text-2xl font-black text-slate-900 font-mono">
+                {estimatedRecipients}
+              </span>
+              <span className="text-xs font-semibold text-slate-500">destinataire(s)</span>
+            </div>
+            <span className="block text-[10px] text-emerald-700 font-medium mt-0.5">
+              {targetType === "csv" ? "Audience externe CSV" : `Segment : ${targetType}`}
+            </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => void handleSendTest()}
-            disabled={sendCampaign.isPending || !subject.trim() || !content.trim()}
-            className="gap-1.5 text-xs font-semibold h-9"
-          >
-            <Mail className="size-3.5" /> M'envoyer un test
-          </Button>
+        {/* Action buttons */}
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-200/80">
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => void handleSendTest()}
+              disabled={sendCampaign.isPending || !subject.trim() || !content.trim()}
+              className="gap-1.5 text-xs font-semibold h-8 rounded-[6px] border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 shadow-none"
+            >
+              <Mail className="size-3.5 text-slate-500" /> M'envoyer un test
+            </Button>
+
+            {targetType === "csv" && csvContacts.length > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleClearCsv}
+                className="gap-1.5 text-xs font-semibold h-8 rounded-[6px] border border-rose-200 bg-rose-50/60 text-rose-600 hover:bg-rose-100/70 shadow-none"
+              >
+                <Trash2 className="size-3 text-rose-500" /> Vider l'audience
+              </Button>
+            )}
+
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                applyTemplate(currentTpl, false);
+                toast.info("Paramètres du modèle réinitialisés.");
+              }}
+              className="gap-1.5 text-xs font-semibold h-8 rounded-[6px] border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 shadow-none"
+            >
+              <RotateCcw className="size-3" /> Réinitialiser
+            </Button>
+          </div>
 
           <Button
             size="sm"
             onClick={() => setConfirmDialogOpen(true)}
             disabled={sendCampaign.isPending || estimatedRecipients === 0 || !subject.trim() || !content.trim()}
-            className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 h-9 shadow-sm"
+            className="gap-1.5 text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 h-8 rounded-[6px] shadow-sm px-4"
           >
-            <Send className="size-3.5" /> Diffuser ({estimatedRecipients})
+            <Send className="size-3.5" /> Diffuser la campagne ({estimatedRecipients})
           </Button>
         </div>
       </section>
-      {/* Top Quick Status KPIs */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard
-          label="Expéditeur Officiel"
-          value="agonan@dukaio.com"
-          hint="AGONAN ISIDORE (CEO)"
-          icon={Mail}
-        />
-        <StatCard
-          label="Audience Ciblée"
-          value={`${estimatedRecipients} marchand(s)`}
-          hint={targetType === "all" ? "Totalité de la base" : `Segment : ${targetType}`}
-          icon={Target}
-        />
-        <StatCard
-          label="Marchands Actifs"
-          value={String(activeUsersCount)}
-          hint="Boutiques en ligne"
-          icon={Store}
-        />
-        <StatCard
-          label="Abonnés Pro"
-          value={String(proCount)}
-          hint="Formule payante"
-          icon={Crown}
-        />
+
+      {/* -------------------------------------------------------------------- */}
+      {/*                BARRE D'ONGLETS HORIZONTALE (WHITE THEME)             */}
+      {/* -------------------------------------------------------------------- */}
+      <div className="flex items-center gap-1.5 overflow-x-auto p-1 bg-slate-100 border border-slate-200/80 rounded-[8px]">
+        <button
+          type="button"
+          onClick={() => setActiveTab("composer")}
+          className={cn(
+            "flex items-center gap-2 px-3.5 py-1.5 rounded-[6px] text-xs font-semibold transition-colors whitespace-nowrap",
+            activeTab === "composer"
+              ? "bg-white text-slate-900 border border-slate-200/80 shadow-sm"
+              : "text-slate-600 hover:text-slate-900 hover:bg-white/60",
+          )}
+        >
+          <FileText className="size-3.5 text-slate-500" />
+          <span>Studio & Rédacteur</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("audience")}
+          className={cn(
+            "flex items-center gap-2 px-3.5 py-1.5 rounded-[6px] text-xs font-semibold transition-colors whitespace-nowrap",
+            activeTab === "audience"
+              ? "bg-white text-slate-900 border border-slate-200/80 shadow-sm"
+              : "text-slate-600 hover:text-slate-900 hover:bg-white/60",
+          )}
+        >
+          <Target className="size-3.5 text-slate-500" />
+          <span>Ciblage & Destinataires</span>
+          <span
+            className={cn(
+              "rounded-[4px] px-1.5 py-0.2 text-[10px] font-bold",
+              activeTab === "audience"
+                ? "bg-slate-100 text-slate-800"
+                : "bg-slate-200/80 text-slate-600",
+            )}
+          >
+            {estimatedRecipients}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("templates")}
+          className={cn(
+            "flex items-center gap-2 px-3.5 py-1.5 rounded-[6px] text-xs font-semibold transition-colors whitespace-nowrap",
+            activeTab === "templates"
+              ? "bg-white text-slate-900 border border-slate-200/80 shadow-sm"
+              : "text-slate-600 hover:text-slate-900 hover:bg-white/60",
+          )}
+        >
+          <Sparkles className="size-3.5 text-slate-500" />
+          <span>Modèles d'E-mails</span>
+          <span
+            className={cn(
+              "rounded-[4px] px-1.5 py-0.2 text-[10px] font-bold",
+              activeTab === "templates"
+                ? "bg-slate-100 text-slate-800"
+                : "bg-slate-200/80 text-slate-600",
+            )}
+          >
+            13
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("history")}
+          className={cn(
+            "flex items-center gap-2 px-3.5 py-1.5 rounded-[6px] text-xs font-semibold transition-colors whitespace-nowrap",
+            activeTab === "history"
+              ? "bg-white text-slate-900 border border-slate-200/80 shadow-sm"
+              : "text-slate-600 hover:text-slate-900 hover:bg-white/60",
+          )}
+        >
+          <Clock className="size-3.5 text-slate-500" />
+          <span>Historique & Journal</span>
+        </button>
       </div>
 
-      {/* Main Studio Grid: Composer on Left, Live Preview on Right */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-start">
-        {/* LEFT COLUMN: Template Selector + Toolbar + Form (7 cols) */}
-        <div className="space-y-4 lg:col-span-6 xl:col-span-7">
-          {/* 1. Template Library Card */}
-          <Panel
-            title="1. Modèles d'e-mails prêts à l'emploi (13)"
-            action={
-              <span className="text-[11px] font-semibold text-muted-foreground">
-                Inspirés des meilleurs SaaS
+      {/* -------------------------------------------------------------------- */}
+      {/*                      CONTENU DE L'ONGLET SÉLECTIONNÉ                 */}
+      {/* -------------------------------------------------------------------- */}
+
+      {/* ==================================================================== */}
+      {/* TAB 1: RÉDACTEUR & STUDIO (SPLIT COMPOSER + LIVE PREVIEW)             */}
+      {/* ==================================================================== */}
+      {activeTab === "composer" && (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-start">
+          {/* Left Column: Form & Tools (7 cols) */}
+          <div className="space-y-5 lg:col-span-6 xl:col-span-7">
+            {/* Cadre UX 1: En-tête & Paramètres */}
+            <AdminCard
+              icon={Mail}
+              title="1. En-tête & Paramètres du Message"
+              subtitle="Expéditeur officiel, audience ciblée et salutation dynamique des marchands"
+              badge={
+                <span className="rounded-[4px] bg-primary/10 text-primary font-bold text-[10px] px-2 py-0.5 uppercase tracking-wider">
+                  Canal E-mail Officiel
+                </span>
+              }
+            >
+              <SubSectionHeader
+                number="1"
+                title="INFORMATIONS DU COURRIEL & EXPÉDITEUR"
+              />
+
+              <KeyValueGrid cols={3}>
+                <KeyVal
+                  icon={Mail}
+                  label="Expéditeur"
+                  value="agonan@dukaio.com"
+                  hint="Isidore Agonan (Fondateur & CEO)"
+                  badge={
+                    <span className="text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-1 rounded-[3px]">
+                      Vérifié
+                    </span>
+                  }
+                />
+                <KeyVal
+                  icon={Target}
+                  label="Audience active"
+                  value={`${estimatedRecipients} contact(s)`}
+                  hint={targetType === "csv" ? "Audience externe CSV" : `Segment : ${targetType}`}
+                  badge={
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("audience")}
+                      className="text-[10px] text-primary hover:underline font-bold"
+                    >
+                      Modifier ➔
+                    </button>
+                  }
+                />
+                <KeyVal
+                  icon={Sparkles}
+                  label="Salutation dynamique"
+                  value={
+                    <input
+                      value={greeting}
+                      onChange={(e) => setGreeting(e.target.value)}
+                      placeholder="Salut {{prenom}},"
+                      className="h-7 w-full text-xs font-semibold bg-white border border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-[4px] px-2 focus:border-primary focus:outline-none mt-0.5"
+                    />
+                  }
+                  hint="{{prenom}} inséré automatiquement"
+                />
+              </KeyValueGrid>
+
+              <div className="mt-4 pt-3 border-t border-slate-200/80">
+                <SubSectionHeader
+                  number="2"
+                  title="OBJET OFFICIEL DU COURRIEL"
+                />
+                <div>
+                  <input
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
+                    placeholder="Ex : 🚀 4 nouveautés déployées sur votre compte DUKAIO"
+                    className="h-8 w-full text-xs font-bold rounded-[6px] border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 px-3 focus:border-primary focus:outline-none"
+                  />
+                  <p className="text-[11px] text-slate-500 mt-1.5 flex items-center gap-1.5">
+                    <span className="text-slate-600 font-semibold">Conseil :</span>
+                    <span>
+                      Vos marchands lisent cet objet en premier. Utilisez <code>{"{{prenom}}"}</code> pour le personnaliser.
+                    </span>
+                  </p>
+                </div>
+              </div>
+            </AdminCard>
+
+            {/* Cadre UX 2: Corps du message & Outils riches */}
+            <AdminCard
+              icon={FileText}
+              title="2. Corps du Message & Composants Enrichis"
+              subtitle="Rédigez votre annonce avec des blocs interactifs percutants adaptés au e-commerce"
+              badge={
+                <span className="rounded-[4px] bg-slate-100 border border-slate-200 text-slate-700 font-mono text-[10px] px-2 py-0.5 font-bold uppercase">
+                  HTML RÉACTIF
+                </span>
+              }
+            >
+              <SubSectionHeader
+                number="1"
+                title="ASSISTANTS D'INSERTION INTERACTIFS"
+              />
+
+              <div className="flex flex-wrap items-center gap-1.5 rounded-[6px] border border-slate-200 bg-slate-50/70 p-2 mb-4">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={openVideoDialog}
+                  className="h-7 gap-1 text-[11px] font-semibold rounded-[6px] border border-slate-200 bg-white text-slate-700 hover:border-red-300 hover:text-red-600 hover:bg-slate-50 shadow-none"
+                >
+                  <PlayCircle className="size-3 text-red-500" /> + Carte Vidéo
+                </Button>
+
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={openImageDialog}
+                  className="h-7 gap-1 text-[11px] font-semibold rounded-[6px] border border-slate-200 bg-white text-slate-700 hover:border-emerald-300 hover:text-emerald-600 hover:bg-slate-50 shadow-none"
+                >
+                  <ImageIcon className="size-3 text-emerald-600" /> + GIF / Image
+                </Button>
+
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={openCalloutDialog}
+                  className="h-7 gap-1 text-[11px] font-semibold rounded-[6px] border border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:text-blue-600 hover:bg-slate-50 shadow-none"
+                >
+                  <Sparkles className="size-3 text-blue-600" /> + Encadré Stylé
+                </Button>
+
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={handleHighlightClick}
+                  className="h-7 gap-1 text-[11px] font-semibold rounded-[6px] border border-slate-200 bg-white text-slate-700 hover:border-amber-300 hover:text-amber-600 hover:bg-slate-50 shadow-none"
+                >
+                  <Tag className="size-3 text-amber-500" /> Surligner
+                </Button>
+
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    saveCurrentSelection();
+                    insertTokenAtCursor("• Point 1\n• Point 2\n• Point 3");
+                  }}
+                  className="h-7 gap-1 text-[11px] font-semibold rounded-[6px] border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 shadow-none"
+                >
+                  <List className="size-3 text-slate-500" /> Liste à puces
+                </Button>
+
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    saveCurrentSelection();
+                    insertTokenAtCursor("---");
+                  }}
+                  className="h-7 gap-1 text-[11px] font-semibold rounded-[6px] border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 shadow-none"
+                >
+                  Séparateur
+                </Button>
+              </div>
+
+              <SubSectionHeader
+                number="2"
+                title="RÉDACTEUR DE CONTENU"
+              />
+
+              <Textarea
+                ref={textareaRef}
+                value={content}
+                onSelect={saveCurrentSelection}
+                onKeyUp={saveCurrentSelection}
+                onClick={saveCurrentSelection}
+                onChange={(e) => setContent(e.target.value)}
+                rows={13}
+                placeholder="Rédigez ici le corps de votre message..."
+                className="font-mono text-xs leading-relaxed rounded-[6px] border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 p-3 focus:border-primary focus:outline-none"
+              />
+            </AdminCard>
+
+            {/* Cadre UX 3: Bouton CTA & Signature */}
+            <AdminCard
+              icon={Rocket}
+              title="3. Appel à l'Action (CTA) & Mot de Fin"
+              subtitle="Configurez le bouton principal cliquable et le post-scriptum personnel du fondateur"
+            >
+              <SubSectionHeader
+                number="1"
+                title="BOUTON PRINCIPAL D'ACTION (CTA)"
+              />
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 block mb-1">
+                    Texte du bouton CTA
+                  </label>
+                  <input
+                    value={ctaLabel}
+                    onChange={(e) => setCtaLabel(e.target.value)}
+                    placeholder="Ex : Créer ma boutique sur DUKAIO"
+                    className="h-8 w-full text-xs font-bold rounded-[6px] border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 px-3 focus:border-primary focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 block mb-1">
+                    Lien de redirection (URL)
+                  </label>
+                  <input
+                    value={ctaUrl}
+                    onChange={(e) => setCtaUrl(e.target.value)}
+                    placeholder="https://dukaio.com/signup"
+                    className="h-8 w-full text-xs rounded-[6px] border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 px-3 focus:border-primary focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 block mb-1">
+                    Style du bouton
+                  </label>
+                  <select
+                    value={ctaVariant}
+                    onChange={(e) => setCtaVariant(e.target.value as "dark" | "orange")}
+                    className="h-8 w-full rounded-[6px] border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-900 focus:border-primary focus:outline-none"
+                  >
+                    <option value="orange">Orange DUKAIO (Recommandé)</option>
+                    <option value="dark">Noir Épuré</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-slate-200/80">
+                <SubSectionHeader
+                  number="2"
+                  title="P.S. PERSONNEL DU FONDATEUR (SOUS LA SIGNATURE)"
+                />
+                <input
+                  value={founderNote}
+                  onChange={(e) => setFounderNote(e.target.value)}
+                  placeholder="Ex : Besoin d'aide pour transférer vos produits ? Répondez directement à ce mail."
+                  className="h-8 w-full text-xs rounded-[6px] border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 px-3 focus:border-primary focus:outline-none"
+                />
+
+                {/* CEO Profile preview card */}
+                <div className="mt-3 flex items-center gap-3 rounded-[6px] border border-slate-200 bg-slate-50/75 p-2.5">
+                  <div className="relative shrink-0">
+                    <img
+                      src="/founder.png"
+                      alt="AGONAN ISIDORE"
+                      className="size-10 rounded-full object-cover border border-slate-200 shadow-xs"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = "/isidore.png";
+                      }}
+                    />
+                    <span className="absolute -bottom-0.5 -right-0.5 size-3 rounded-full bg-emerald-500 ring-2 ring-white" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-bold text-slate-900">AGONAN ISIDORE</p>
+                      <span className="rounded-[4px] bg-primary/10 px-1.5 py-[1px] text-[9px] font-bold uppercase text-primary">
+                        Fondateur & CEO
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-0.5 truncate">
+                      Photo officielle du CEO apposée automatiquement au bas de cet e-mail.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </AdminCard>
+          </div>
+
+          {/* Right Column: Live Email Preview (5 cols) */}
+          <div className="space-y-3 lg:col-span-6 xl:col-span-5 sticky top-4">
+            <AdminCard
+              icon={Eye}
+              title="Aperçu de l'E-mail en Direct"
+              subtitle="Rendu instantané tel qu'affiché dans la boîte du marchand"
+              action={
+                <div className="flex items-center gap-1 rounded-[6px] border border-slate-200 bg-slate-100 p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setPreviewDevice("desktop")}
+                    className={cn(
+                      "flex items-center gap-1 px-2.5 py-1 rounded-[4px] text-xs font-semibold transition-colors",
+                      previewDevice === "desktop"
+                        ? "bg-white text-slate-900 shadow-sm"
+                        : "text-slate-600 hover:text-slate-900",
+                    )}
+                  >
+                    <Laptop className="size-3" /> Ordinateur
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewDevice("mobile")}
+                    className={cn(
+                      "flex items-center gap-1 px-2.5 py-1 rounded-[4px] text-xs font-semibold transition-colors",
+                      previewDevice === "mobile"
+                        ? "bg-white text-slate-900 shadow-sm"
+                        : "text-slate-600 hover:text-slate-900",
+                    )}
+                  >
+                    <Smartphone className="size-3" /> Mobile
+                  </button>
+                </div>
+              }
+            >
+              {/* Device Mockup Container */}
+              <div
+                className={cn(
+                  "mx-auto rounded-[6px] border border-slate-200 bg-slate-50 overflow-hidden transition-all shadow-sm",
+                  previewDevice === "mobile" ? "max-w-[350px]" : "w-full",
+                )}
+              >
+                {/* Mail Client Fake Top Bar */}
+                <div className="border-b border-slate-200 bg-slate-50/90 p-3 text-xs space-y-1 text-slate-600">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span>
+                      De : <strong className="text-slate-900">AGONAN ISIDORE</strong> &lt;agonan@dukaio.com&gt;
+                    </span>
+                    <span className="rounded-[4px] bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold px-1.5 py-0.5 text-[9px]">
+                      Vérifié DUKAIO
+                    </span>
+                  </div>
+                  <div className="text-[11px]">
+                    <span>À : <span className="text-slate-800 font-medium">marchand@boutique.com</span></span>
+                  </div>
+                  <div className="font-bold text-slate-900 text-xs pt-1 line-clamp-1">
+                    {subject || "Objet de votre e-mail..."}
+                  </div>
+                </div>
+
+                {/* Rendered Email Body (Pure Clean White Canvas) */}
+                <div className="bg-white p-5 sm:p-6 text-slate-800 text-left">
+                  {/* Salutation */}
+                  {previewGreeting ? (
+                    <p className="font-bold text-sm text-slate-900 mb-3.5">
+                      {previewGreeting}
+                    </p>
+                  ) : null}
+
+                  {/* HTML Content */}
+                  <div
+                    className="text-xs sm:text-[13px] leading-relaxed text-slate-700 space-y-3"
+                    dangerouslySetInnerHTML={{ __html: previewHtml }}
+                  />
+
+                  {/* CTA Button Render */}
+                  {ctaLabel.trim() && (
+                    <div className="my-5 text-center">
+                      <a
+                        href={ctaUrl.trim() || "#"}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={cn(
+                          "inline-block px-6 py-2.5 rounded-[4px] font-bold text-xs shadow-md transition-transform",
+                          ctaVariant === "orange"
+                            ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                            : "bg-slate-900 text-white hover:bg-slate-800",
+                        )}
+                      >
+                        {ctaLabel}
+                      </a>
+                      {ctaUrl.trim() ? (
+                        <p className="mt-1 text-[10px] text-slate-400 font-mono truncate">{ctaUrl}</p>
+                      ) : null}
+                    </div>
+                  )}
+
+                  {/* Founder Signature Block */}
+                  <div className="mt-6 pt-4 border-t border-slate-100 flex items-start gap-3">
+                    <img
+                      src="/founder.png"
+                      alt="AGONAN ISIDORE"
+                      className="size-11 rounded-full object-cover border border-slate-200 shadow-xs shrink-0"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = "/isidore.png";
+                      }}
+                    />
+                    <div className="text-xs">
+                      <p className="font-bold text-slate-900 flex items-center gap-1.5">
+                        AGONAN ISIDORE <span className="font-normal text-[11px] text-slate-500">• Fondateur & CEO — DUKAIO</span>
+                      </p>
+                      <p className="text-[11px] text-slate-500 mt-1 leading-snug">
+                        {founderNote || "Une question, un bug, une idée ? Réponds direct à ce mail — je lis tous les messages perso."}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Footer */}
+                  <div className="mt-6 pt-3 border-t border-slate-100 text-[10px] text-slate-400">
+                    DUKAIO — La plateforme e-commerce tout-en-un pour l'Afrique.<br />
+                    © {new Date().getFullYear()} DUKAIO. Tous droits réservés.
+                  </div>
+                </div>
+              </div>
+            </AdminCard>
+          </div>
+        </div>
+      )}
+
+      {/* ==================================================================== */}
+      {/* TAB 2: CIBLAGE & DESTINATAIRES (AUDIENCE & CSV)                       */}
+      {/* ==================================================================== */}
+      {activeTab === "audience" && (
+        <div className="space-y-6">
+          {/* Cadre UX 1: Segmentation officielle */}
+          <AdminCard
+            icon={Target}
+            title="1. Segmentation Officielle de l'Audience"
+            subtitle="Sélectionnez le groupe de marchands ou l'audience externe à qui adresser cette communication"
+            badge={
+              <span className="rounded-[4px] bg-primary/10 border border-primary/20 text-primary font-bold text-[10px] px-2 py-0.5 uppercase tracking-wider">
+                Segment : {targetType.toUpperCase()}
               </span>
             }
           >
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 max-h-56 overflow-y-auto pr-1">
-              {TEMPLATES.map((t) => {
-                const isSelected = selectedTemplateId === t.id;
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => applyTemplate(t)}
-                    className={cn(
-                      "flex flex-col items-start rounded-[6px] border p-2.5 text-left text-xs transition-all",
-                      isSelected
-                        ? "border-primary bg-primary/10 shadow-sm"
-                        : "border-border bg-card hover:bg-muted/50",
-                    )}
-                  >
-                    <div className="flex w-full items-center justify-between gap-1">
-                      <span className="text-[10px] font-black uppercase text-primary">
-                        {t.badge}
-                      </span>
-                      {isSelected ? (
-                        <CheckCircle2 className="size-3.5 text-primary shrink-0" />
-                      ) : null}
-                    </div>
-                    <p className="mt-1 font-bold text-foreground line-clamp-1">{t.name}</p>
-                    <p className="text-[11px] text-muted-foreground line-clamp-1">{t.subject}</p>
-                  </button>
-                );
-              })}
-            </div>
-          </Panel>
+            <SubSectionHeader
+              number="1"
+              title="CHOIX DU SEGMENT PRINCIPAL"
+            />
 
-          {/* 2. Audience Targeting Panel */}
-          <Panel title="2. Ciblage des destinataires">
-            <div className="space-y-3 text-xs">
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-                <button
-                  type="button"
-                  onClick={() => setTargetType("all")}
-                  className={cn(
-                    "rounded-[6px] border p-2 text-left transition-colors",
-                    targetType === "all" ? "border-primary bg-primary/10 font-bold" : "border-border bg-background hover:bg-muted",
-                  )}
-                >
-                  <p className="font-semibold text-foreground">Tous les vendeurs</p>
-                  <p className="text-[10px] text-muted-foreground">{allUsers.length} comptes</p>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setTargetType("active")}
-                  className={cn(
-                    "rounded-[6px] border p-2 text-left transition-colors",
-                    targetType === "active" ? "border-primary bg-primary/10 font-bold" : "border-border bg-background hover:bg-muted",
-                  )}
-                >
-                  <p className="font-semibold text-foreground">Boutiques Actives</p>
-                  <p className="text-[10px] text-muted-foreground">{activeUsersCount} vendeurs</p>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setTargetType("pro")}
-                  className={cn(
-                    "rounded-[6px] border p-2 text-left transition-colors",
-                    targetType === "pro" ? "border-primary bg-primary/10 font-bold" : "border-border bg-background hover:bg-muted",
-                  )}
-                >
-                  <p className="font-semibold text-foreground">Abonnés Pro</p>
-                  <p className="text-[10px] text-muted-foreground">{proCount} marchands</p>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setTargetType("free")}
-                  className={cn(
-                    "rounded-[6px] border p-2 text-left transition-colors",
-                    targetType === "free" ? "border-primary bg-primary/10 font-bold" : "border-border bg-background hover:bg-muted",
-                  )}
-                >
-                  <p className="font-semibold text-foreground">Formule Gratuite</p>
-                  <p className="text-[10px] text-muted-foreground">{freeCount} comptes</p>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTargetType("csv");
-                    if (csvContacts.length === 0) {
-                      handleLoadPresetPreviousSaas();
-                    }
-                  }}
-                  className={cn(
-                    "rounded-[6px] border p-2 text-left transition-colors relative overflow-hidden",
-                    targetType === "csv"
-                      ? "border-primary bg-primary/10 font-bold ring-1 ring-primary"
-                      : "border-border bg-background hover:bg-muted",
-                  )}
-                >
-                  <div className="flex items-center justify-between">
-                    <p className="font-semibold text-foreground flex items-center gap-1">
-                      <FileSpreadsheet className="size-3.5 text-primary shrink-0" />
-                      <span>Liste CSV</span>
-                    </p>
-                    <span className="rounded bg-primary/20 text-primary text-[9px] font-black px-1 py-0.2">
-                      EXTERNE
-                    </span>
-                  </div>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">
-                    {csvContacts.length > 0 ? `${csvContacts.length} contacts` : "140 pré-chargés"}
-                  </p>
-                </button>
-              </div>
-
-              {/* Dedicated CSV / External Audience Management Card */}
-              {targetType === "csv" && (
-                <div className="rounded-[8px] border border-primary/30 bg-primary/5 p-3.5 space-y-3 mt-2">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <FileSpreadsheet className="size-4 text-primary shrink-0" />
-                      <span className="font-bold text-xs text-foreground">
-                        Audience Externe — Destinataires CSV importés
-                      </span>
-                      <span className="rounded-full bg-primary/20 text-primary font-extrabold text-[10px] px-2 py-0.5">
-                        {csvContacts.length} e-mail(s) validé(s)
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-1.5">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={handleLoadPresetPreviousSaas}
-                        className="h-7 text-[11px] font-bold gap-1 border-primary/40 bg-background text-primary hover:bg-primary hover:text-primary-foreground shadow-sm"
-                      >
-                        <Zap className="size-3" /> Recharger les 140 contacts
-                      </Button>
-
-                      <label className="cursor-pointer inline-flex items-center gap-1 h-7 px-2.5 rounded-[6px] border border-border bg-background hover:bg-muted text-[11px] font-semibold text-foreground shadow-sm">
-                        <Upload className="size-3" />
-                        <span>Fichier CSV</span>
-                        <input
-                          type="file"
-                          accept=".csv,.txt"
-                          onChange={handleCsvFileUpload}
-                          className="hidden"
-                        />
-                      </label>
-
-                      {csvContacts.length > 0 && (
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => setCsvListModalOpen(true)}
-                          className="h-7 text-[11px] font-semibold gap-1 text-muted-foreground hover:text-foreground"
-                        >
-                          <Eye className="size-3" /> Voir la liste ({csvContacts.length})
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Realtime Stats Grid */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
-                    <div className="rounded-[4px] bg-background border border-border/80 px-2 py-1.5">
-                      <span className="text-muted-foreground block text-[10px]">Lignes analysées :</span>
-                      <strong className="text-foreground">{csvStats.totalRaw}</strong>
-                    </div>
-                    <div className="rounded-[4px] bg-emerald-500/10 border border-emerald-500/20 px-2 py-1.5">
-                      <span className="text-emerald-600 block text-[10px]">Adresses valides :</span>
-                      <strong className="text-emerald-700 dark:text-emerald-300 font-bold">{csvContacts.length}</strong>
-                    </div>
-                    <div className="rounded-[4px] bg-sky-500/10 border border-sky-500/20 px-2 py-1.5">
-                      <span className="text-sky-600 block text-[10px]">Fautes corrigées :</span>
-                      <strong className="text-sky-700 dark:text-sky-300 font-bold">{csvStats.typosFixedCount}</strong>
-                    </div>
-                    <div className="rounded-[4px] bg-amber-500/10 border border-amber-500/20 px-2 py-1.5">
-                      <span className="text-amber-600 block text-[10px]">Doublons filtrés :</span>
-                      <strong className="text-amber-700 dark:text-amber-300">{csvStats.duplicatesCount}</strong>
-                    </div>
-                  </div>
-
-                  {/* Paste / Direct Text Editor */}
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <label className="font-semibold text-muted-foreground">
-                        Éditer ou coller directement des e-mails (séparateur: saut de ligne, virgule, point-virgule) :
-                      </label>
-                      {csvRawText && (
-                        <button
-                          type="button"
-                          onClick={handleClearCsv}
-                          className="text-[10px] text-red-500 hover:underline font-medium flex items-center gap-0.5"
-                        >
-                          <Trash2 className="size-2.5" /> Vider
-                        </button>
-                      )}
-                    </div>
-                    <Textarea
-                      value={csvRawText}
-                      onChange={(e) => handleCsvTextChange(e.target.value)}
-                      placeholder="email&#10;utilisateur1@gmail.com&#10;utilisateur2@yahoo.fr&#10;..."
-                      rows={3}
-                      className="font-mono text-xs bg-background"
-                    />
-                  </div>
-
-                  {/* Quick Preview Chips */}
-                  {csvContacts.length > 0 && (
-                    <div>
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
-                        Aperçu de la personnalisation (6 premiers contacts) :
-                      </p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
-                        {csvContacts.slice(0, 6).map((c, idx) => (
-                          <div
-                            key={idx}
-                            className="flex items-center justify-between gap-1.5 rounded-[4px] border border-border/80 bg-background p-1.5 text-[11px]"
-                          >
-                            <div className="truncate">
-                              <p className="font-bold text-foreground truncate">{c.email}</p>
-                              <p className="text-[10px] text-muted-foreground truncate">
-                                Salutation : <span className="text-primary font-semibold">Salut {c.firstName},</span>
-                              </p>
-                            </div>
-                            <span className="text-[9px] font-bold text-emerald-600 bg-emerald-500/15 rounded px-1 shrink-0">
-                              ✓ Prêt
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
+              <button
+                type="button"
+                onClick={() => setTargetType("all")}
+                className={cn(
+                  "rounded-[6px] border p-3 text-left transition-all",
+                  targetType === "all"
+                    ? "border-primary bg-primary/5 ring-1 ring-primary shadow-sm"
+                    : "border-slate-200/80 bg-white hover:border-slate-300 hover:shadow-sm",
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <p className="font-bold text-xs text-slate-800">Tous les vendeurs</p>
+                  {targetType === "all" && <CheckCircle2 className="size-3.5 text-primary" />}
                 </div>
-              )}
+                <p className="text-base font-bold text-slate-900 mt-1 font-mono">{allUsers.length}</p>
+                <p className="text-[10px] text-slate-500">Totalité de la base</p>
+              </button>
 
-              {/* Segment Country / Single User */}
-              <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-border/80">
-                <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setTargetType("active")}
+                className={cn(
+                  "rounded-[6px] border p-3 text-left transition-all",
+                  targetType === "active"
+                    ? "border-primary bg-primary/5 ring-1 ring-primary shadow-sm"
+                    : "border-slate-200/80 bg-white hover:border-slate-300 hover:shadow-sm",
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <p className="font-bold text-xs text-slate-800">Boutiques Actives</p>
+                  {targetType === "active" && <CheckCircle2 className="size-3.5 text-primary" />}
+                </div>
+                <p className="text-base font-bold text-slate-900 mt-1 font-mono">{activeUsersCount}</p>
+                <p className="text-[10px] text-slate-500">Avec boutique en ligne</p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setTargetType("pro")}
+                className={cn(
+                  "rounded-[6px] border p-3 text-left transition-all",
+                  targetType === "pro"
+                    ? "border-primary bg-primary/5 ring-1 ring-primary shadow-sm"
+                    : "border-slate-200/80 bg-white hover:border-slate-300 hover:shadow-sm",
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <p className="font-bold text-xs text-slate-800">Abonnés Pro</p>
+                  {targetType === "pro" && <CheckCircle2 className="size-3.5 text-primary" />}
+                </div>
+                <p className="text-base font-bold text-slate-900 mt-1 font-mono">{proCount}</p>
+                <p className="text-[10px] text-slate-500">Formule payante</p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setTargetType("free")}
+                className={cn(
+                  "rounded-[6px] border p-3 text-left transition-all",
+                  targetType === "free"
+                    ? "border-primary bg-primary/5 ring-1 ring-primary shadow-sm"
+                    : "border-slate-200/80 bg-white hover:border-slate-300 hover:shadow-sm",
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <p className="font-bold text-xs text-slate-800">Formule Gratuite</p>
+                  {targetType === "free" && <CheckCircle2 className="size-3.5 text-primary" />}
+                </div>
+                <p className="text-base font-bold text-slate-900 mt-1 font-mono">{freeCount}</p>
+                <p className="text-[10px] text-slate-500">Utilisateurs standard</p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setTargetType("csv");
+                  if (csvContacts.length === 0) {
+                    handleLoadPresetPreviousSaas();
+                  }
+                }}
+                className={cn(
+                  "rounded-[6px] border p-3 text-left transition-all relative overflow-hidden",
+                  targetType === "csv"
+                    ? "border-primary bg-primary/5 ring-1 ring-primary shadow-sm"
+                    : "border-slate-200/80 bg-white hover:border-slate-300 hover:shadow-sm",
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <p className="font-bold text-xs text-slate-800 flex items-center gap-1">
+                    <FileSpreadsheet className="size-3.5 text-primary shrink-0" />
+                    <span>Liste CSV</span>
+                  </p>
+                  <span className="rounded-[3px] bg-primary/20 text-primary text-[9px] font-bold px-1">
+                    EXTERNE
+                  </span>
+                </div>
+                <p className="text-base font-bold text-slate-900 mt-1 font-mono">{csvContacts.length}</p>
+                <p className="text-[10px] text-slate-500">
+                  {csvContacts.length > 0 ? "Destinataires prêts" : "140 pré-chargés"}
+                </p>
+              </button>
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-slate-200/80">
+              <SubSectionHeader
+                number="2"
+                title="FILTRES SECONDAIRES & MARCHÉS"
+              />
+
+              <div className="flex flex-wrap items-center gap-4">
+                {/* Target by Country */}
+                <div className="flex items-center gap-2 rounded-[6px] border border-slate-200 bg-slate-50/70 p-2 text-xs text-slate-700">
                   <input
                     type="radio"
                     id="target-country"
@@ -1688,7 +2258,7 @@ function AdminPlatformMarketing() {
                     onChange={() => setTargetType("country")}
                     className="text-primary"
                   />
-                  <label htmlFor="target-country" className="font-semibold text-foreground cursor-pointer">
+                  <label htmlFor="target-country" className="font-semibold text-xs text-slate-800 cursor-pointer">
                     Par Marché / Pays :
                   </label>
                   <select
@@ -1697,7 +2267,7 @@ function AdminPlatformMarketing() {
                       setTargetType("country");
                       setTargetCountry(e.target.value);
                     }}
-                    className="h-8 rounded-[4px] border border-border bg-background px-2 text-xs font-bold text-foreground"
+                    className="h-7 rounded-[4px] border border-slate-200 bg-white px-2 text-xs font-semibold text-slate-800 focus:border-primary focus:outline-none"
                   >
                     <option value="bj">🇧🇯 Bénin</option>
                     <option value="ci">🇨🇮 Côte d'Ivoire</option>
@@ -1711,7 +2281,8 @@ function AdminPlatformMarketing() {
                   </select>
                 </div>
 
-                <div className="flex items-center gap-2 flex-1 min-w-[240px]">
+                {/* Target Single User */}
+                <div className="flex items-center gap-2 rounded-[6px] border border-slate-200 bg-slate-50/70 p-2 flex-1 min-w-[280px]">
                   <input
                     type="radio"
                     id="target-single"
@@ -1720,8 +2291,8 @@ function AdminPlatformMarketing() {
                     onChange={() => setTargetType("single")}
                     className="text-primary"
                   />
-                  <label htmlFor="target-single" className="font-semibold text-foreground cursor-pointer shrink-0">
-                    Vendeur précis :
+                  <label htmlFor="target-single" className="font-semibold text-xs text-slate-800 cursor-pointer shrink-0">
+                    Vendeur spécifique :
                   </label>
                   <div className="relative flex-1">
                     <Input
@@ -1730,11 +2301,11 @@ function AdminPlatformMarketing() {
                         setTargetType("single");
                         setUserSearchQuery(e.target.value);
                       }}
-                      placeholder="Nom ou e-mail…"
-                      className="h-8 text-xs"
+                      placeholder="Rechercher par nom, e-mail ou téléphone…"
+                      className="h-7 text-xs rounded-[4px] border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:border-primary focus:outline-none"
                     />
                     {searchedUsers.length > 0 && userSearchQuery ? (
-                      <div className="absolute left-0 right-0 top-full z-20 mt-1 rounded-[6px] border border-border bg-popover p-1 shadow-lg">
+                      <div className="absolute left-0 right-0 top-full z-20 mt-1 rounded-[6px] border border-slate-200 bg-white p-1 shadow-xl">
                         {searchedUsers.map((u) => (
                           <button
                             key={u.id}
@@ -1743,7 +2314,7 @@ function AdminPlatformMarketing() {
                               setTargetUserId(u.id);
                               setUserSearchQuery(`${u.full_name || u.email} (${u.email})`);
                             }}
-                            className="w-full text-left p-1.5 rounded text-xs hover:bg-muted truncate block"
+                            className="w-full text-left p-1.5 rounded-[4px] text-xs hover:bg-slate-100 text-slate-800 truncate block"
                           >
                             <b>{u.full_name || "Sans nom"}</b> • {u.email}
                           </button>
@@ -1754,339 +2325,428 @@ function AdminPlatformMarketing() {
                 </div>
               </div>
             </div>
-          </Panel>
+          </AdminCard>
 
-          {/* 3. Composer & Rich Toolbar */}
-          <Panel title="3. Rédaction & Contenu du message">
-            <div className="space-y-3.5">
-              {/* Subject & Greeting */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="sm:col-span-2">
-                  <label className="text-xs font-bold text-foreground">Objet de l'e-mail</label>
-                  <Input
-                    value={subject}
-                    onChange={(e) => setSubject(e.target.value)}
-                    placeholder="Ex : 🚀 4 nouveautés sur ton compte DUKAIO"
-                    className="mt-1 h-8 text-xs font-semibold"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-foreground">Salutation</label>
-                  <Input
-                    value={greeting}
-                    onChange={(e) => setGreeting(e.target.value)}
-                    placeholder="Ex : Salut {{prenom}},"
-                    className="mt-1 h-8 text-xs"
-                  />
-                </div>
-              </div>
-
-              {/* Rich Block Quick Insert Toolbar */}
-              <div>
-                <label className="text-xs font-bold text-foreground block mb-1.5">
-                  Insérer des éléments enrichis (assistants interactifs) :
-                </label>
-                <div className="flex flex-wrap items-center gap-1.5 rounded-[6px] border border-border bg-muted/30 p-1.5">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={openVideoDialog}
-                    className="h-7 gap-1 text-[11px] font-semibold bg-background hover:border-red-500 hover:text-red-600 shadow-sm"
-                  >
-                    <PlayCircle className="size-3 text-red-500" /> + Carte Vidéo
-                  </Button>
-
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={openImageDialog}
-                    className="h-7 gap-1 text-[11px] font-semibold bg-background hover:border-emerald-500 hover:text-emerald-600 shadow-sm"
-                  >
-                    <ImageIcon className="size-3 text-emerald-500" /> + GIF / Image
-                  </Button>
-
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={openCalloutDialog}
-                    className="h-7 gap-1 text-[11px] font-semibold bg-background hover:border-blue-500 hover:text-blue-600 shadow-sm"
-                  >
-                    <Sparkles className="size-3 text-blue-500" /> + Encadré Stylé
-                  </Button>
-
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={handleHighlightClick}
-                    className="h-7 gap-1 text-[11px] font-semibold bg-background hover:border-yellow-500 hover:text-yellow-600 shadow-sm"
-                  >
-                    <Tag className="size-3 text-yellow-600" /> Surligner
-                  </Button>
-
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      saveCurrentSelection();
-                      insertTokenAtCursor("• Point 1\n• Point 2\n• Point 3");
-                    }}
-                    className="h-7 gap-1 text-[11px] font-semibold bg-background shadow-sm"
-                  >
-                    <List className="size-3 text-muted-foreground" /> Liste à puces
-                  </Button>
-
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      saveCurrentSelection();
-                      insertTokenAtCursor("---");
-                    }}
-                    className="h-7 text-[11px] font-semibold bg-background shadow-sm"
-                  >
-                    Séparateur
-                  </Button>
-                </div>
-              </div>
-
-              {/* Textarea Editor */}
-              <div>
-                <Textarea
-                  ref={textareaRef}
-                  value={content}
-                  onSelect={saveCurrentSelection}
-                  onKeyUp={saveCurrentSelection}
-                  onClick={saveCurrentSelection}
-                  onChange={(e) => setContent(e.target.value)}
-                  rows={14}
-                  placeholder="Rédigez ici le corps de votre message..."
-                  className="font-mono text-xs leading-relaxed"
-                />
-              </div>
-
-              {/* CTA Button Settings */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 rounded-[6px] border border-border bg-muted/20 p-3">
-                <div>
-                  <label className="text-xs font-bold text-foreground">Texte du bouton CTA</label>
-                  <Input
-                    value={ctaLabel}
-                    onChange={(e) => setCtaLabel(e.target.value)}
-                    placeholder="Ex : Ouvrir DUKAIO"
-                    className="mt-1 h-8 text-xs font-semibold"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-foreground">Lien de redirection (URL)</label>
-                  <Input
-                    value={ctaUrl}
-                    onChange={(e) => setCtaUrl(e.target.value)}
-                    placeholder="https://dukaio.com/dashboard"
-                    className="mt-1 h-8 text-xs"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-foreground">Style du bouton</label>
-                  <select
-                    value={ctaVariant}
-                    onChange={(e) => setCtaVariant(e.target.value as "dark" | "orange")}
-                    className="mt-1 h-8 w-full rounded-[6px] border border-border bg-background px-2 text-xs font-semibold text-foreground"
-                  >
-                    <option value="dark">Noir Épuré (Recommandé)</option>
-                    <option value="orange">Orange DUKAIO</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Founder Note P.S. */}
-              <div>
-                <label className="text-xs font-bold text-foreground">
-                  P.S. personnel du fondateur (sous la signature)
-                </label>
-                <Input
-                  value={founderNote}
-                  onChange={(e) => setFounderNote(e.target.value)}
-                  placeholder="Ex : Une question ? Réponds direct à ce mail, je lis tout perso."
-                  className="mt-1 h-8 text-xs"
-                />
-              </div>
-            </div>
-          </Panel>
-        </div>
-
-        {/* RIGHT COLUMN: Real-Time Live Email Preview (5 cols) */}
-        <div className="space-y-3 lg:col-span-6 xl:col-span-5 sticky top-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <Eye className="size-4 text-primary" />
-              <span className="text-xs font-black uppercase tracking-wider text-foreground">
-                Aperçu de l'e-mail en direct
+          {/* Cadre UX 2: Gestionnaire d'Audience Externe CSV */}
+          <AdminCard
+            icon={FileSpreadsheet}
+            title="2. Gestionnaire d'Audience Externe (CSV & Ancien SaaS)"
+            subtitle="Importation, validation et nettoyage automatique des contacts de votre précédente plateforme"
+            badge={
+              <span className="rounded-[4px] bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold text-[10px] px-2 py-0.5 uppercase tracking-wider">
+                {csvContacts.length} e-mails validés
               </span>
-            </div>
-
-            {/* Desktop vs Mobile Toggle */}
-            <div className="flex items-center gap-1 rounded-[6px] border border-border bg-muted/40 p-0.5">
-              <button
-                type="button"
-                onClick={() => setPreviewDevice("desktop")}
-                className={cn(
-                  "flex items-center gap-1 px-2.5 py-1 rounded-[4px] text-xs font-bold transition-all",
-                  previewDevice === "desktop"
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                <Laptop className="size-3.5" /> Ordinateur
-              </button>
-              <button
-                type="button"
-                onClick={() => setPreviewDevice("mobile")}
-                className={cn(
-                  "flex items-center gap-1 px-2.5 py-1 rounded-[4px] text-xs font-bold transition-all",
-                  previewDevice === "mobile"
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                <Smartphone className="size-3.5" /> Mobile
-              </button>
-            </div>
-          </div>
-
-          {/* Device Mockup Shell */}
-          <div
-            className={cn(
-              "mx-auto rounded-[12px] border border-border bg-card shadow-2xl overflow-hidden transition-all",
-              previewDevice === "mobile" ? "max-w-[360px]" : "w-full",
-            )}
+            }
           >
-            {/* Fake Mail Client Header */}
-            <div className="border-b border-border bg-muted/40 p-3 text-xs space-y-1">
-              <div className="flex items-center justify-between text-muted-foreground text-[11px]">
-                <span>De : <strong className="text-foreground">AGONAN ISIDORE</strong> &lt;agonan@dukaio.com&gt;</span>
-                <span className="rounded bg-emerald-500/15 text-emerald-600 font-bold px-1.5 py-0.5 text-[9px]">Vérifié DUKAIO</span>
-              </div>
-              <div className="text-muted-foreground text-[11px]">
-                <span>À : <span className="text-foreground">marchand@boutique.com</span></span>
-              </div>
-              <div className="font-extrabold text-foreground text-xs pt-1 line-clamp-1">
-                {subject || "Objet de votre e-mail..."}
-              </div>
-            </div>
+            {/* Sub-section 1: Indicateurs de qualité */}
+            <SubSectionHeader
+              number="1"
+              title="INDICATEURS DE QUALITÉ & TRAITEMENT (STYLE CAPTURE 2)"
+            />
 
-            {/* Rendered Email Body (Pure White Background) */}
-            <div className="bg-white p-5 sm:p-6 text-slate-800 text-left">
-              {/* Greeting */}
-              {previewGreeting ? (
-                <p className="font-bold text-sm text-slate-900 mb-3">
-                  {previewGreeting}
-                </p>
-              ) : null}
+            <KeyValueGrid cols={4}>
+              <KeyVal
+                icon={List}
+                label="Lignes analysées"
+                value={String(csvStats.totalRaw)}
+                hint="Total entrées détectées"
+              />
+              <KeyVal
+                icon={CheckCircle2}
+                label="Adresses valides"
+                value={String(csvContacts.length)}
+                hint="Format e-mail rigoureux"
+                badge={
+                  <span className="text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-1 rounded-[3px]">
+                    ✓ Prêt
+                  </span>
+                }
+              />
+              <KeyVal
+                icon={Sparkles}
+                label="Fautes corrigées"
+                value={String(csvStats.typosFixedCount)}
+                hint="Auto-fix @gmai ➔ @gmail"
+                badge={
+                  <span className="text-[9px] font-bold bg-sky-50 text-sky-700 border border-sky-200 px-1 rounded-[3px]">
+                    Auto-nettoyé
+                  </span>
+                }
+              />
+              <KeyVal
+                icon={Filter}
+                label="Doublons éliminés"
+                value={String(csvStats.duplicatesCount)}
+                hint="Dédoublonnage unique"
+              />
+            </KeyValueGrid>
 
-              {/* HTML Content */}
-              <div
-                className="text-xs sm:text-[13px] leading-relaxed text-slate-700 space-y-3"
-                dangerouslySetInnerHTML={{ __html: previewHtml }}
+            {/* Sub-section 2: Actions rapides */}
+            <div className="mt-5 pt-3 border-t border-slate-200/80">
+              <SubSectionHeader
+                number="2"
+                title="ACTIONS DU FICHIER SOURCE"
               />
 
-              {/* CTA Button if present */}
-              {ctaLabel && ctaUrl ? (
-                <div className="my-5">
-                  <a
-                    href={ctaUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className={cn(
-                      "inline-block rounded-[6px] px-5 py-2.5 text-xs font-bold text-white shadow-sm transition-transform active:scale-95",
-                      ctaVariant === "orange" ? "bg-[#f97316]" : "bg-[#0f172a]",
-                    )}
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={handleLoadPresetPreviousSaas}
+                  className="h-8 text-xs font-semibold gap-1.5 rounded-[6px] border border-primary/30 bg-primary/5 text-primary hover:bg-primary hover:text-white shadow-none"
+                >
+                  <Zap className="size-3.5" /> Recharger les 140 contacts de l'ancien SaaS
+                </Button>
+
+                <label className="cursor-pointer inline-flex items-center gap-1.5 h-8 px-3 rounded-[6px] border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 shadow-none transition-colors">
+                  <Upload className="size-3.5 text-slate-500" />
+                  <span>Importer un fichier .CSV</span>
+                  <input
+                    type="file"
+                    accept=".csv,.txt"
+                    onChange={handleCsvFileUpload}
+                    className="hidden"
+                  />
+                </label>
+
+                {csvContacts.length > 0 && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setCsvListModalOpen(true)}
+                    className="h-8 text-xs font-semibold gap-1.5 rounded-[6px] border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 shadow-none"
                   >
-                    {ctaLabel}
-                  </a>
-                  <p className="mt-1.5 text-[10px] text-slate-400 break-all">
-                    {ctaUrl}
-                  </p>
-                </div>
-              ) : null}
+                    <Eye className="size-3.5 text-slate-500" /> Voir la liste complète ({csvContacts.length})
+                  </Button>
+                )}
 
-              {/* Founder Signature Block */}
-              <div className="mt-6 pt-4 border-t border-slate-100 flex items-start gap-3">
-                <img
-                  src="https://plttjjyclxgegjlghsmf.supabase.co/storage/v1/object/public/store-media/platform/founder-agonan-isidore.png"
-                  alt="AGONAN ISIDORE"
-                  className="size-10 rounded-full border border-slate-200 object-cover shrink-0 shadow-sm"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).src = "/founder.png";
-                  }}
-                />
-                <div>
-                  <p className="font-bold text-xs text-slate-900 leading-tight">
-                    AGONAN ISIDORE <span className="font-normal text-[11px] text-slate-500">• Fondateur & CEO — DUKAIO</span>
-                  </p>
-                  <p className="text-[11px] text-slate-400 mt-1 leading-snug">
-                    {founderNote || "Une question, un bug, une idée ? Réponds direct à ce mail — je lis tous les messages perso."}
-                  </p>
-                </div>
-              </div>
-
-              {/* Footer */}
-              <div className="mt-6 pt-3 border-t border-slate-100 text-[10px] text-slate-400">
-                DUKAIO — La plateforme e-commerce tout-en-un pour l'Afrique.<br />
-                © {new Date().getFullYear()} DUKAIO. Tous droits réservés.
+                {csvRawText && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleClearCsv}
+                    className="h-8 text-xs font-semibold gap-1 rounded-[6px] text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                  >
+                    <Trash2 className="size-3" /> Vider
+                  </Button>
+                )}
               </div>
             </div>
-          </div>
+
+            {/* Sub-section 3: Saisie directe */}
+            <div className="mt-5 pt-3 border-t border-slate-200/80">
+              <SubSectionHeader
+                number="3"
+                title="SAISIE & ÉDITION DIRECTE DU TEXTE"
+              />
+
+              <Textarea
+                value={csvRawText}
+                onChange={(e) => handleCsvTextChange(e.target.value)}
+                placeholder="email&#10;utilisateur1@gmail.com&#10;utilisateur2@yahoo.fr&#10;..."
+                rows={3}
+                className="font-mono text-xs rounded-[6px] border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 p-3 focus:border-primary focus:outline-none"
+              />
+              <p className="text-[11px] text-slate-500 mt-1">
+                Collez n'importe quelle liste d'adresses séparées par saut de ligne, virgule ou point-virgule. La validation s'exécute en direct.
+              </p>
+            </div>
+
+            {/* Sub-section 4: Pièces Justificatives (Style Capture 2) */}
+            {csvContacts.length > 0 && (
+              <div className="mt-5 pt-3 border-t border-slate-200/80">
+                <SubSectionHeader
+                  number="4"
+                  title="ÉCHANTILLON DES DESTINATAIRES VALIDES (STYLE CAPTURE 2)"
+                  action={
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setCsvListModalOpen(true)}
+                      className="h-6 text-[11px] font-semibold text-primary hover:underline"
+                    >
+                      Ouvrir l'explorateur complet ➔
+                    </Button>
+                  }
+                />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                  {csvContacts.slice(0, 6).map((c, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between gap-2 rounded-[6px] border border-slate-200/80 bg-white p-2.5 text-xs hover:border-slate-300 hover:shadow-sm transition-all"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="grid size-7 place-items-center rounded-[4px] bg-slate-100 text-slate-700 shrink-0">
+                          <Mail className="size-3.5" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-mono text-xs font-medium text-slate-900 truncate">{c.email}</p>
+                          <p className="text-[11px] text-slate-500 truncate">
+                            Salutation : <strong className="text-primary">Salut {c.firstName},</strong>
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1 shrink-0">
+                        {c.typoFixed ? (
+                          <span className="text-[9px] font-bold text-sky-700 bg-sky-50 border border-sky-200 rounded-[3px] px-1">
+                            Corrigé
+                          </span>
+                        ) : (
+                          <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-[3px] px-1">
+                            ✓ Prêt
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveSingleCsvContact(c.email)}
+                          className="text-slate-400 hover:text-rose-500 p-0.5 transition-colors"
+                          title="Retirer ce contact"
+                        >
+                          <X className="size-3" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </AdminCard>
         </div>
-      </div>
+      )}
+
+      {/* ==================================================================== */}
+      {/* TAB 3: BIBLIOTHÈQUE DE MODÈLES (13 MODÈLES SAAS)                     */}
+      {/* ==================================================================== */}
+      {activeTab === "templates" && (
+        <AdminCard
+          icon={Sparkles}
+          title="Bibliothèque Officielle de Modèles (13)"
+          subtitle="Modèles pré-rédigés inspirés des meilleurs SaaS mondiaux pour vos annonces, relances et nouveautés"
+          badge={
+            <span className="rounded-[4px] bg-primary/10 border border-primary/20 text-primary font-bold text-[10px] px-2 py-0.5 uppercase tracking-wider">
+              13 Modèles Prêts à l'Emploi
+            </span>
+          }
+        >
+          {/* Sub-section 1: Filtres par catégorie */}
+          <SubSectionHeader
+            number="1"
+            title="FILTRER PAR OBJECTIF DE CAMPAGNE"
+          />
+
+          <div className="flex flex-wrap items-center gap-1.5 mb-5">
+            {[
+              { id: "all", label: "Tous les modèles", count: TEMPLATES.length },
+              { id: "announcement", label: "Réactivation & Migration", count: 1 },
+              { id: "feature", label: "Nouveautés & Changelog", count: 4 },
+              { id: "growth", label: "Ventes & Croissance", count: 3 },
+              { id: "video", label: "Démo Vidéo", count: 1 },
+              { id: "founder", label: "Mot du Fondateur", count: 2 },
+              { id: "promo", label: "Forte Saison", count: 1 },
+            ].map((cat) => {
+              const isSelected = templateCategoryFilter === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => setTemplateCategoryFilter(cat.id)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-[6px] text-xs font-semibold transition-colors flex items-center gap-1.5",
+                    isSelected
+                      ? "bg-slate-900 text-white border border-slate-900 shadow-sm"
+                      : "border border-slate-200 bg-white hover:bg-slate-50 text-slate-700",
+                  )}
+                >
+                  <span>{cat.label}</span>
+                  <span
+                    className={cn(
+                      "rounded-[4px] px-1.5 py-0.2 text-[10px] font-bold",
+                      isSelected ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-600",
+                    )}
+                  >
+                    {cat.count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Sub-section 2: Grille des modèles */}
+          <SubSectionHeader
+            number="2"
+            title={`CATALOGUE DES MODÈLES (${filteredTemplates.length})`}
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5">
+            {filteredTemplates.map((t) => {
+              const isCurrentlyActive = selectedTemplateId === t.id;
+              return (
+                <div
+                  key={t.id}
+                  className={cn(
+                    "flex flex-col justify-between rounded-[8px] border p-4 transition-all",
+                    isCurrentlyActive
+                      ? "border-primary/50 bg-primary/5 ring-1 ring-primary/30 shadow-sm"
+                      : "border-slate-200/80 bg-white hover:border-slate-300 hover:shadow-md",
+                  )}
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-[10px] font-bold uppercase text-primary tracking-wider">
+                        {t.badge}
+                      </span>
+                      {isCurrentlyActive ? (
+                        <span className="inline-flex items-center gap-1 rounded-[3px] bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold px-1.5 py-0.5">
+                          <Check className="size-3" /> Actuellement Chargé
+                        </span>
+                      ) : null}
+                    </div>
+
+                    <h4 className="font-bold text-sm text-slate-900 leading-snug">
+                      {t.name}
+                    </h4>
+
+                    <div className="rounded-[6px] border border-slate-200 bg-slate-50 p-2 text-xs">
+                      <span className="text-[10px] font-semibold text-slate-500 uppercase block mb-0.5">
+                        Objet :
+                      </span>
+                      <p className="font-semibold text-slate-800 line-clamp-1">{t.subject}</p>
+                    </div>
+
+                    <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed">
+                      {t.content.replace(/\[.*?]/g, "").slice(0, 160)}…
+                    </p>
+                  </div>
+
+                  <div className="pt-4 mt-4 border-t border-slate-200/80 flex items-center justify-between gap-2">
+                    <span className="text-[10px] font-medium text-slate-500">
+                      {t.ctaLabel ? `CTA : ${t.ctaLabel}` : "Sans bouton externe"}
+                    </span>
+
+                    <Button
+                      size="sm"
+                      onClick={() => applyTemplate(t, true)}
+                      className={cn(
+                        "h-8 text-xs font-semibold gap-1 rounded-[6px]",
+                        isCurrentlyActive
+                          ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                          : "border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 hover:text-slate-900",
+                      )}
+                    >
+                      <span>Charger dans le Studio</span>
+                      <ChevronRight className="size-3" />
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </AdminCard>
+      )}
+
+      {/* ==================================================================== */}
+      {/* TAB 4: HISTORIQUE & JOURNAL D'AUDIT                                   */}
+      {/* ==================================================================== */}
+      {activeTab === "history" && (
+        <AdminCard
+          icon={Clock}
+          title="Journal Officiel des Diffusions & Audit"
+          subtitle="Traçabilité complète des campagnes marketing et e-mails envoyés depuis la plateforme"
+        >
+          <SubSectionHeader
+            number="1"
+            title="DERNIÈRES ACTIONS MARKETING ENREGISTRÉES"
+          />
+
+          {auditLogs && auditLogs.length > 0 ? (
+            <div className="rounded-[8px] border border-slate-200 overflow-hidden divide-y divide-slate-100 text-xs">
+              {auditLogs.slice(0, 15).map((log) => (
+                <div
+                  key={log.id}
+                  className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-slate-50/70 transition-colors"
+                >
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-slate-900">
+                        {log.action}
+                      </span>
+                      <span className="rounded-[3px] bg-slate-100 border border-slate-200 px-1.5 py-0.2 text-[10px] font-mono text-slate-600">
+                        {log.actor_email || log.actor_id}
+                      </span>
+                    </div>
+                    {log.details ? (
+                      <p className="text-[11px] text-slate-500 font-mono truncate max-w-xl">
+                        {JSON.stringify(log.details)}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div className="shrink-0 text-[11px] text-slate-500 flex items-center gap-1.5">
+                    <Clock className="size-3" />
+                    <span>{new Date(log.created_at).toLocaleString("fr-FR")}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-8 text-center border border-dashed border-slate-200 rounded-[8px] bg-slate-50/50">
+              <Clock className="size-8 mx-auto text-slate-400 mb-2 opacity-60" />
+              <p className="text-xs font-medium text-slate-700">Aucun historique de diffusion enregistré</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">Les prochaines campagnes envoyées ou tests apparaîtront ici.</p>
+            </div>
+          )}
+        </AdminCard>
+      )}
 
       {/* -------------------------------------------------------------------- */}
       {/*                       MODAL 1: INSERT VIDEO CARD                     */}
       {/* -------------------------------------------------------------------- */}
       <Dialog open={videoModalOpen} onOpenChange={setVideoModalOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md border-slate-200 bg-white text-slate-900 rounded-[8px] shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-2 text-slate-900">
               <PlayCircle className="size-5 text-red-500" /> Insérer une carte vidéo
             </DialogTitle>
-            <DialogDescription className="text-xs">
+            <DialogDescription className="text-xs text-slate-500">
               Ajoutez un lecteur vidéo cliquable avec image de couverture et bouton Play.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-3.5 py-2">
             <div>
-              <label className="text-xs font-bold text-foreground">Titre de la vidéo</label>
-              <Input
+              <label className="text-xs font-semibold text-slate-700">Titre de la vidéo</label>
+              <input
                 value={videoTitle}
                 onChange={(e) => setVideoTitle(e.target.value)}
                 placeholder="Ex : Démo en 3 min : Comment scaler vos ventes"
-                className="mt-1 h-8 text-xs font-semibold"
+                className="mt-1 h-8 w-full text-xs font-semibold rounded-[6px] border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 px-3 focus:border-primary focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="text-xs font-bold text-foreground">Lien de la vidéo (YouTube, Loom, Google Drive...)</label>
-              <Input
+              <label className="text-xs font-semibold text-slate-700">Lien de la vidéo (YouTube, Loom, Google Drive...)</label>
+              <input
                 value={videoUrl}
                 onChange={(e) => handleVideoUrlChange(e.target.value)}
                 placeholder="https://youtube.com/watch?v=... ou https://loom.com/... ou https://drive.google.com/..."
-                className="mt-1 h-8 text-xs"
+                className="mt-1 h-8 w-full text-xs rounded-[6px] border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 px-3 focus:border-primary focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="text-xs font-bold text-foreground block mb-1">
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
                 Image de couverture (Miniature)
               </label>
 
               {/* Quick Presets */}
               <div className="mb-2">
-                <p className="text-[10px] text-muted-foreground mb-1.5 font-semibold">Miniatures rapides pré-configurées :</p>
+                <p className="text-[10px] text-slate-500 mb-1.5 font-semibold">Miniatures rapides pré-configurées :</p>
                 <div className="grid grid-cols-3 gap-1.5">
                   {VIDEO_PRESET_THUMBS.map((preset) => (
                     <button
@@ -2094,10 +2754,10 @@ function AdminPlatformMarketing() {
                       type="button"
                       onClick={() => setVideoThumb(preset.url)}
                       className={cn(
-                        "flex items-center gap-1.5 px-2 py-1 rounded-[4px] border text-[11px] font-semibold text-left transition-all",
+                        "flex items-center gap-1.5 px-2 py-1 rounded-[4px] border text-[11px] font-semibold text-left transition-colors",
                         videoThumb === preset.url
                           ? "border-primary bg-primary/10 text-primary"
-                          : "border-border bg-card hover:bg-muted/60 text-foreground",
+                          : "border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700",
                       )}
                     >
                       <span className="truncate">{preset.label}</span>
@@ -2108,13 +2768,13 @@ function AdminPlatformMarketing() {
 
               <div className="space-y-2">
                 <div className="flex gap-2">
-                  <Input
+                  <input
                     value={videoThumb}
                     onChange={(e) => setVideoThumb(e.target.value)}
                     placeholder="URL de l'image de couverture"
-                    className="h-8 text-xs flex-1"
+                    className="h-8 text-xs flex-1 rounded-[6px] border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 px-3 focus:border-primary focus:outline-none"
                   />
-                  <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 rounded-[6px] border border-border bg-muted/40 hover:bg-muted text-xs font-semibold">
+                  <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 rounded-[6px] border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700">
                     <Upload className="size-3.5" />
                     <span>Téléverser</span>
                     <input
@@ -2127,8 +2787,8 @@ function AdminPlatformMarketing() {
                   </label>
                 </div>
                 {isUploadingThumb ? (
-                  <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-                    <Loader2 className="size-3 animate-spin" /> Téléversement en cours...
+                  <p className="text-[11px] text-slate-500 flex items-center gap-1">
+                    <Loader2 className="size-3 animate-spin text-primary" /> Téléversement en cours...
                   </p>
                 ) : null}
               </div>
@@ -2136,7 +2796,7 @@ function AdminPlatformMarketing() {
 
             {/* Live Video Card Preview in Dialog */}
             {videoThumb ? (
-              <div className="rounded-[8px] border border-border overflow-hidden bg-slate-900 shadow-sm relative">
+              <div className="rounded-[6px] border border-slate-200 overflow-hidden bg-slate-900 shadow-sm relative">
                 <img
                   src={videoThumb}
                   alt="Aperçu miniature"
@@ -2147,23 +2807,28 @@ function AdminPlatformMarketing() {
                     <Play className="size-4 fill-white translate-x-0.5" />
                   </div>
                 </div>
-                <div className="p-2 bg-slate-950/90 text-left">
+                <div className="p-2 bg-slate-900/90 text-left">
                   <p className="font-bold text-xs text-white line-clamp-1">{videoTitle || "Titre de la vidéo"}</p>
-                  <p className="text-[10px] text-slate-400">Lien : {videoUrl || "https://..."}</p>
+                  <p className="text-[10px] text-slate-300">Lien : {videoUrl || "https://..."}</p>
                 </div>
               </div>
             ) : null}
           </div>
 
           <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => setVideoModalOpen(false)}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setVideoModalOpen(false)}
+              className="rounded-[6px] border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+            >
               Annuler
             </Button>
             <Button
               size="sm"
               onClick={handleConfirmInsertVideo}
               disabled={isUploadingThumb || !videoTitle.trim() || !videoUrl.trim()}
-              className="bg-primary text-primary-foreground font-bold"
+              className="bg-primary text-primary-foreground font-bold rounded-[6px]"
             >
               Insérer la vidéo
             </Button>
@@ -2175,34 +2840,34 @@ function AdminPlatformMarketing() {
       {/*                       MODAL 2: INSERT GIF / IMAGE                    */}
       {/* -------------------------------------------------------------------- */}
       <Dialog open={imageModalOpen} onOpenChange={setImageModalOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md border-slate-200 bg-white text-slate-900 rounded-[8px] shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ImageIcon className="size-5 text-emerald-500" /> Insérer un GIF ou une Image
+            <DialogTitle className="flex items-center gap-2 text-slate-900">
+              <ImageIcon className="size-5 text-emerald-600" /> Insérer un GIF ou une Image
             </DialogTitle>
-            <DialogDescription className="text-xs">
+            <DialogDescription className="text-xs text-slate-500">
               Téléversez une image depuis votre ordinateur ou collez un lien GIF animé.
             </DialogDescription>
           </DialogHeader>
 
           <Tabs value={imageTab} onValueChange={(v) => setImageTab(v as any)} className="w-full">
-            <TabsList className="grid grid-cols-2 w-full h-8">
-              <TabsTrigger value="upload" className="text-xs font-bold">
+            <TabsList className="grid grid-cols-2 w-full h-8 rounded-[6px] bg-slate-100 border border-slate-200 p-0.5">
+              <TabsTrigger value="upload" className="text-xs font-semibold rounded-[4px] data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm">
                 <Upload className="size-3 mr-1" /> Téléverser fichier
               </TabsTrigger>
-              <TabsTrigger value="url" className="text-xs font-bold">
+              <TabsTrigger value="url" className="text-xs font-semibold rounded-[4px] data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm">
                 <LinkIcon className="size-3 mr-1" /> Lien URL / Giphy
               </TabsTrigger>
             </TabsList>
 
             <div className="py-3 space-y-3">
               <TabsContent value="upload" className="m-0 space-y-2">
-                <label className="border-2 border-dashed border-border rounded-[8px] p-4 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-muted/30 transition-colors">
-                  <Upload className="size-6 text-muted-foreground" />
-                  <p className="text-xs font-bold text-foreground">
+                <label className="border-2 border-dashed border-slate-300 rounded-[8px] p-4 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-slate-50 transition-colors">
+                  <Upload className="size-6 text-slate-400" />
+                  <p className="text-xs font-semibold text-slate-700">
                     Cliquez pour choisir une image ou GIF
                   </p>
-                  <p className="text-[10px] text-muted-foreground">PNG, JPG, GIF animé, WebP (jusqu'à 8 Mo)</p>
+                  <p className="text-[10px] text-slate-500">PNG, JPG, GIF animé, WebP (jusqu'à 8 Mo)</p>
                   <input
                     type="file"
                     accept="image/*"
@@ -2212,39 +2877,39 @@ function AdminPlatformMarketing() {
                   />
                 </label>
                 {isUploadingImage ? (
-                  <p className="text-xs text-muted-foreground flex items-center justify-center gap-1.5 py-1">
+                  <p className="text-xs text-slate-500 flex items-center justify-center gap-1.5 py-1">
                     <Loader2 className="size-3.5 animate-spin text-primary" /> Téléversement sur Supabase Storage...
                   </p>
                 ) : null}
               </TabsContent>
 
               <TabsContent value="url" className="m-0 space-y-2">
-                <label className="text-xs font-bold text-foreground">Lien direct de l'image ou GIF</label>
-                <Input
+                <label className="text-xs font-semibold text-slate-700">Lien direct de l'image ou GIF</label>
+                <input
                   value={imageUrl}
                   onChange={(e) => setImageUrl(e.target.value)}
                   placeholder="https://media.giphy.com/... ou https://..."
-                  className="h-8 text-xs"
+                  className="h-8 w-full text-xs rounded-[6px] border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 px-3 focus:border-primary focus:outline-none"
                 />
               </TabsContent>
 
               <div>
-                <label className="text-xs font-bold text-foreground">Légende optionnelle (sous l'image)</label>
-                <Input
+                <label className="text-xs font-semibold text-slate-700">Légende optionnelle (sous l'image)</label>
+                <input
                   value={imageCaption}
                   onChange={(e) => setImageCaption(e.target.value)}
                   placeholder="Ex : Démonstration de l'interface en direct"
-                  className="mt-1 h-8 text-xs"
+                  className="mt-1 h-8 w-full text-xs rounded-[6px] border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 px-3 focus:border-primary focus:outline-none"
                 />
               </div>
 
               {imageUrl ? (
-                <div className="rounded-[8px] border border-border p-2 bg-muted/20">
-                  <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1">Aperçu :</p>
+                <div className="rounded-[6px] border border-slate-200 p-2 bg-slate-50">
+                  <p className="text-[10px] font-semibold uppercase text-slate-500 mb-1">Aperçu :</p>
                   <img
                     src={imageUrl}
                     alt="Aperçu"
-                    className="max-h-40 w-full object-contain rounded-[4px] border border-border bg-white"
+                    className="max-h-40 w-full object-contain rounded-[4px] border border-slate-200 bg-white"
                   />
                 </div>
               ) : null}
@@ -2252,14 +2917,19 @@ function AdminPlatformMarketing() {
           </Tabs>
 
           <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => setImageModalOpen(false)}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setImageModalOpen(false)}
+              className="rounded-[6px] border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+            >
               Annuler
             </Button>
             <Button
               size="sm"
               onClick={handleConfirmInsertImage}
               disabled={isUploadingImage || !imageUrl.trim()}
-              className="bg-primary text-primary-foreground font-bold"
+              className="bg-primary text-primary-foreground font-bold rounded-[6px]"
             >
               Insérer dans l'e-mail
             </Button>
@@ -2271,19 +2941,19 @@ function AdminPlatformMarketing() {
       {/*                       MODAL 3: INSERT CALLOUT                        */}
       {/* -------------------------------------------------------------------- */}
       <Dialog open={calloutModalOpen} onOpenChange={setCalloutModalOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md border-slate-200 bg-white text-slate-900 rounded-[8px] shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Sparkles className="size-5 text-blue-500" /> Insérer un encadré stylé
+            <DialogTitle className="flex items-center gap-2 text-slate-900">
+              <Sparkles className="size-5 text-blue-600" /> Insérer un encadré stylé
             </DialogTitle>
-            <DialogDescription className="text-xs">
+            <DialogDescription className="text-xs text-slate-500">
               Mettez en valeur une astuce, une alerte importante ou un conseil clé.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-3.5 py-2">
             <div>
-              <label className="text-xs font-bold text-foreground block mb-1">Style & Couleur</label>
+              <label className="text-xs font-semibold text-slate-700 block mb-1">Style & Couleur</label>
               <div className="grid grid-cols-4 gap-2">
                 <button
                   type="button"
@@ -2292,10 +2962,10 @@ function AdminPlatformMarketing() {
                     setCalloutTitle("💡 Astuce Pro");
                   }}
                   className={cn(
-                    "p-2 rounded-[6px] border text-center text-xs font-bold transition-all",
+                    "p-2 rounded-[6px] border text-center text-xs font-semibold transition-colors",
                     calloutColor === "blue"
-                      ? "border-sky-500 bg-sky-50 text-sky-700 shadow-sm"
-                      : "border-border hover:bg-muted",
+                      ? "border-sky-500 bg-sky-50 text-sky-700 ring-1 ring-sky-500"
+                      : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
                   )}
                 >
                   💡 Bleu
@@ -2308,10 +2978,10 @@ function AdminPlatformMarketing() {
                     setCalloutTitle("⚡ Point Important");
                   }}
                   className={cn(
-                    "p-2 rounded-[6px] border text-center text-xs font-bold transition-all",
+                    "p-2 rounded-[6px] border text-center text-xs font-semibold transition-colors",
                     calloutColor === "amber"
-                      ? "border-amber-500 bg-amber-50 text-amber-700 shadow-sm"
-                      : "border-border hover:bg-muted",
+                      ? "border-amber-500 bg-amber-50 text-amber-700 ring-1 ring-amber-500"
+                      : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
                   )}
                 >
                   ⚡ Ambre
@@ -2324,10 +2994,10 @@ function AdminPlatformMarketing() {
                     setCalloutTitle("🚀 Recommandation");
                   }}
                   className={cn(
-                    "p-2 rounded-[6px] border text-center text-xs font-bold transition-all",
+                    "p-2 rounded-[6px] border text-center text-xs font-semibold transition-colors",
                     calloutColor === "green"
-                      ? "border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm"
-                      : "border-border hover:bg-muted",
+                      ? "border-emerald-500 bg-emerald-50 text-emerald-700 ring-1 ring-emerald-500"
+                      : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
                   )}
                 >
                   🚀 Vert
@@ -2340,10 +3010,10 @@ function AdminPlatformMarketing() {
                     setCalloutTitle("⚠️ Attention");
                   }}
                   className={cn(
-                    "p-2 rounded-[6px] border text-center text-xs font-bold transition-all",
+                    "p-2 rounded-[6px] border text-center text-xs font-semibold transition-colors",
                     calloutColor === "red"
-                      ? "border-red-500 bg-red-50 text-red-700 shadow-sm"
-                      : "border-border hover:bg-muted",
+                      ? "border-rose-500 bg-rose-50 text-rose-700 ring-1 ring-rose-500"
+                      : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
                   )}
                 >
                   ⚠️ Rouge
@@ -2352,36 +3022,41 @@ function AdminPlatformMarketing() {
             </div>
 
             <div>
-              <label className="text-xs font-bold text-foreground">Titre de l'encadré</label>
-              <Input
+              <label className="text-xs font-semibold text-slate-700">Titre de l'encadré</label>
+              <input
                 value={calloutTitle}
                 onChange={(e) => setCalloutTitle(e.target.value)}
                 placeholder="Ex : 💡 Astuce de vente"
-                className="mt-1 h-8 text-xs font-semibold"
+                className="mt-1 h-8 w-full text-xs font-semibold rounded-[6px] border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 px-3 focus:border-primary focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="text-xs font-bold text-foreground">Texte du message</label>
+              <label className="text-xs font-semibold text-slate-700">Texte du message</label>
               <Textarea
                 value={calloutBody}
                 onChange={(e) => setCalloutBody(e.target.value)}
                 rows={3}
                 placeholder="Saisissez ici le texte à mettre en valeur..."
-                className="mt-1 text-xs"
+                className="mt-1 text-xs rounded-[6px] border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 p-2.5 focus:border-primary focus:outline-none"
               />
             </div>
           </div>
 
           <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => setCalloutModalOpen(false)}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCalloutModalOpen(false)}
+              className="rounded-[6px] border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+            >
               Annuler
             </Button>
             <Button
               size="sm"
               onClick={handleConfirmInsertCallout}
               disabled={!calloutBody.trim()}
-              className="bg-primary text-primary-foreground font-bold"
+              className="bg-primary text-primary-foreground font-bold rounded-[6px]"
             >
               Insérer l'encadré
             </Button>
@@ -2393,35 +3068,40 @@ function AdminPlatformMarketing() {
       {/*                       MODAL 4: HIGHLIGHT TEXT                        */}
       {/* -------------------------------------------------------------------- */}
       <Dialog open={highlightModalOpen} onOpenChange={setHighlightModalOpen}>
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className="sm:max-w-sm border-slate-200 bg-white text-slate-900 rounded-[8px] shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Tag className="size-5 text-yellow-600" /> Surligner un texte
+            <DialogTitle className="flex items-center gap-2 text-slate-900">
+              <Tag className="size-5 text-amber-500" /> Surligner un texte
             </DialogTitle>
-            <DialogDescription className="text-xs">
+            <DialogDescription className="text-xs text-slate-500">
               Mettez en surbrillance jaune un mot ou une phrase clé.
             </DialogDescription>
           </DialogHeader>
 
           <div className="py-2 space-y-2">
-            <label className="text-xs font-bold text-foreground">Texte à surligner</label>
-            <Input
+            <label className="text-xs font-semibold text-slate-700">Texte à surligner</label>
+            <input
               value={highlightText}
               onChange={(e) => setHighlightText(e.target.value)}
               placeholder="Ex : +22% de conversion"
-              className="h-8 text-xs"
+              className="h-8 w-full text-xs rounded-[6px] border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 px-3 focus:border-primary focus:outline-none"
             />
           </div>
 
           <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => setHighlightModalOpen(false)}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setHighlightModalOpen(false)}
+              className="rounded-[6px] border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+            >
               Annuler
             </Button>
             <Button
               size="sm"
               onClick={handleConfirmHighlight}
               disabled={!highlightText.trim()}
-              className="bg-primary text-primary-foreground font-bold"
+              className="bg-primary text-primary-foreground font-bold rounded-[6px]"
             >
               Surligner
             </Button>
@@ -2433,56 +3113,79 @@ function AdminPlatformMarketing() {
       {/*                       MODAL 5: CONFIRM BROADCAST                     */}
       {/* -------------------------------------------------------------------- */}
       <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
-        <DialogContent>
+        <DialogContent className="border-slate-200 bg-white text-slate-900 rounded-[8px] shadow-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-primary">
               <Megaphone className="size-5" /> Confirmer la diffusion de la campagne
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-slate-500">
               {targetType === "csv" ? (
                 <>
                   Vous allez envoyer cet e-mail officiel à{" "}
-                  <b>{csvContacts.length} contact(s) externe(s)</b> importé(s) via CSV.
+                  <b className="text-slate-900">{csvContacts.length} contact(s) externe(s)</b> importé(s) via CSV.
                 </>
               ) : (
                 <>
-                  Vous allez envoyer cet e-mail officiel à <b>{estimatedRecipients} marchand(s)</b>.
+                  Vous allez envoyer cet e-mail officiel à <b className="text-slate-900">{estimatedRecipients} marchand(s)</b>.
                 </>
               )}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-2.5 rounded-[6px] border border-border bg-muted/30 p-3 text-xs">
+          <div className="space-y-2.5 rounded-[6px] border border-slate-200 bg-slate-50/75 p-3 text-xs text-slate-700">
+            <div className="flex items-center gap-3 pb-2.5 border-b border-slate-200/80">
+              <img
+                src="/founder.png"
+                alt="AGONAN ISIDORE"
+                className="size-10 rounded-full object-cover border border-slate-200 shadow-xs shrink-0"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = "/isidore.png";
+                }}
+              />
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-bold text-slate-900">AGONAN ISIDORE</span>
+                  <span className="rounded-[4px] bg-primary/10 px-1.5 py-[1px] text-[9px] font-bold uppercase text-primary">
+                    Fondateur & CEO
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500">Expéditeur officiel : agonan@dukaio.com</p>
+              </div>
+            </div>
             <p>
-              <b>Expéditeur :</b> AGONAN ISIDORE &lt;agonan@dukaio.com&gt;
+              <b className="text-slate-900">Expéditeur :</b> AGONAN ISIDORE &lt;agonan@dukaio.com&gt;
             </p>
             <p>
-              <b>Objet :</b> {subject}
+              <b className="text-slate-900">Objet :</b> {subject}
             </p>
             <p>
-              <b>Audience ciblée :</b>{" "}
+              <b className="text-slate-900">Audience ciblée :</b>{" "}
               {targetType === "csv"
                 ? `${csvContacts.length} contacts importés (Ancien SaaS / Prospects)`
                 : `${estimatedRecipients} compte(s) (${targetType})`}
             </p>
             <p>
-              <b>Signature :</b> AGONAN ISIDORE (Fondateur & CEO — DUKAIO)
+              <b className="text-slate-900">Signature :</b> AGONAN ISIDORE (Fondateur & CEO — DUKAIO)
             </p>
             {targetType === "csv" && (
-              <div className="mt-2 rounded border border-emerald-500/30 bg-emerald-500/10 p-2 text-[11px] text-emerald-800 dark:text-emerald-200">
+              <div className="mt-2 rounded-[4px] border border-emerald-200 bg-emerald-50 p-2 text-[11px] text-emerald-800">
                 💎 <b>Campagne de réactivation :</b> Chaque courriel comportera le bouton d'action officiel vers <b>dukaio.com/signup</b> ainsi qu'une mention claire permettant d'ignorer le message.
               </div>
             )}
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setConfirmDialogOpen(false)}
+              className="rounded-[6px] border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+            >
               Annuler
             </Button>
             <Button
               disabled={sendCampaign.isPending}
               onClick={() => void handleSendBroadcast()}
-              className="bg-primary text-primary-foreground font-bold"
+              className="bg-primary text-primary-foreground font-bold rounded-[6px]"
             >
               Diffuser immédiatement
             </Button>
@@ -2494,13 +3197,13 @@ function AdminPlatformMarketing() {
       {/*                       MODAL 6: INSPECT CSV CONTACTS                  */}
       {/* -------------------------------------------------------------------- */}
       <Dialog open={csvListModalOpen} onOpenChange={setCsvListModalOpen}>
-        <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col">
+        <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col border-slate-200 bg-white text-slate-900 rounded-[8px] shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-2 text-slate-900">
               <FileSpreadsheet className="size-5 text-primary" />
               <span>Audience Externe — {csvContacts.length} contacts</span>
             </DialogTitle>
-            <DialogDescription className="text-xs">
+            <DialogDescription className="text-xs text-slate-500">
               Vérifiez la liste des destinataires, l'auto-correction des fautes de domaine et la salutation personnalisée.
             </DialogDescription>
           </DialogHeader>
@@ -2508,47 +3211,47 @@ function AdminPlatformMarketing() {
           <div className="py-2 space-y-3 flex-1 overflow-hidden flex flex-col">
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
-                <Search className="size-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <Input
+                <Search className="size-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
                   value={csvFilterQuery}
                   onChange={(e) => setCsvFilterQuery(e.target.value)}
                   placeholder="Filtrer par e-mail ou prénom..."
-                  className="pl-8 h-8 text-xs"
+                  className="pl-8 h-8 w-full text-xs rounded-[6px] border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:border-primary focus:outline-none"
                 />
               </div>
-              <span className="text-xs text-muted-foreground whitespace-nowrap font-semibold">
+              <span className="text-xs text-slate-600 whitespace-nowrap font-semibold">
                 {filteredCsvContacts.length} affiché(s)
               </span>
             </div>
 
-            <div className="flex-1 overflow-y-auto border border-border rounded-[6px] divide-y divide-border text-xs max-h-[50vh]">
+            <div className="flex-1 overflow-y-auto border border-slate-200 rounded-[6px] divide-y divide-slate-100 bg-white text-xs max-h-[50vh]">
               {filteredCsvContacts.map((c, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center justify-between p-2.5 hover:bg-muted/40 transition-colors"
+                  className="flex items-center justify-between p-2.5 hover:bg-slate-50 transition-colors"
                 >
                   <div className="flex items-center gap-2.5 truncate">
-                    <span className="text-[10px] font-mono text-muted-foreground w-6 text-right shrink-0">
+                    <span className="text-[10px] font-mono text-slate-400 w-6 text-right shrink-0">
                       #{idx + 1}
                     </span>
                     <div className="truncate">
                       <div className="flex items-center gap-1.5">
-                        <p className="font-semibold text-foreground truncate">{c.email}</p>
+                        <p className="font-mono font-medium text-slate-900 truncate">{c.email}</p>
                         {c.typoFixed && (
-                          <span className="text-[9px] font-bold text-sky-600 bg-sky-500/15 rounded px-1 shrink-0">
+                          <span className="text-[9px] font-bold text-sky-700 bg-sky-50 border border-sky-200 rounded-[3px] px-1 shrink-0">
                             Auto-corrigé
                           </span>
                         )}
                       </div>
-                      <p className="text-[11px] text-muted-foreground">
-                        Salutation : <span className="text-primary font-bold">Salut {c.firstName},</span>
+                      <p className="text-[11px] text-slate-500">
+                        Salutation : <span className="text-primary font-semibold">Salut {c.firstName},</span>
                       </p>
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => handleRemoveSingleCsvContact(c.email)}
-                    className="text-muted-foreground hover:text-red-500 p-1 transition-colors"
+                    className="text-slate-400 hover:text-rose-600 p-1 transition-colors"
                     title="Retirer ce contact"
                   >
                     <X className="size-3.5" />
@@ -2556,18 +3259,22 @@ function AdminPlatformMarketing() {
                 </div>
               ))}
               {filteredCsvContacts.length === 0 && (
-                <p className="p-6 text-center text-xs text-muted-foreground">
+                <p className="p-6 text-center text-xs text-slate-500">
                   Aucun contact ne correspond à votre recherche.
                 </p>
               )}
             </div>
           </div>
 
-          <DialogFooter className="flex items-center justify-between sm:justify-between border-t pt-3">
-            <span className="text-xs text-muted-foreground">
-              Total prêt à être contacté : <strong className="text-foreground">{csvContacts.length} e-mails</strong>
+          <DialogFooter className="flex items-center justify-between sm:justify-between border-t border-slate-200 pt-3">
+            <span className="text-xs text-slate-500">
+              Total prêt à être contacté : <strong className="text-slate-800">{csvContacts.length} e-mails</strong>
             </span>
-            <Button size="sm" onClick={() => setCsvListModalOpen(false)}>
+            <Button
+              size="sm"
+              onClick={() => setCsvListModalOpen(false)}
+              className="rounded-[6px] border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+            >
               Fermer
             </Button>
           </DialogFooter>
