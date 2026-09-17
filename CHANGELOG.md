@@ -4,6 +4,19 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 > **Note d'environnement :** Ce projet a été initialement généré avec Lovable, mais a été entièrement migré sur Antigravity. Il n'est plus synchronisé avec Lovable Cloud et utilise désormais exclusivement la propre instance Supabase de l'utilisateur.
 
+## [17/09/2026] - Refonte En-tête Découverte (Logo Officiel Meta & Design "Bibliothèque" fidèle à la Capture 2)
+
+### Corrigé & Amélioré
+- **Design d'En-tête Conforme à la Capture 2 :**
+  - Remplacement du format en pilules isolées par un bloc d'en-tête majestueux inspiré des meilleures plateformes d'analyse publicitaire.
+  - Intégration du **véritable logo officiel Meta Platforms** en haute définition avec son dégradé bleu signature (`#0064E1` vers `#0082FB`), placé à gauche du titre.
+  - Titre principal épuré et puissant : **Bibliothèque**.
+  - Sous-titre officiel : *"Parcourez tous les produits disponibles sur la plateforme"* (adapté élégamment selon l'onglet actif : Boutiques, Produits, Publicités).
+- **Suppression du Badge "Flux en direct" :**
+  - Retrait intégral de la pastille verte clignotante *"Flux en direct"* à la demande de l'utilisateur (suppression de l'aspect jugé trop artificiel / "trop IA").
+- **Mise à Niveau Vectorielle Globale de la Marque Meta :**
+  - Remplacement des anciens tracés simplifiés dans `meta-badge.tsx` par les courbes officielles Meta avec gestion vectorielle des dégradés, garantissant une netteté absolue sur desktop et mobile.
+
 ## [17/09/2026] - Désactivation de la Recherche en Direct Apify & Suppression de la Bannière de Quota
 
 ### Corrigé & Amélioré
