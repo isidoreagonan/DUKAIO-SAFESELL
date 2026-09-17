@@ -11,11 +11,11 @@ import {
   DISCOVERY_COUNTRIES,
   flagUrl,
   useDiscoveryAdvertisers,
+  useDiscoveryFacets,
   type StoreFilters,
 } from "@/lib/discovery";
 import { useDiscoveryAccess } from "@/lib/entitlements";
 import { DiscoveryPaywall } from "@/components/discovery/paywall-dialog";
-import { BrandSearchPanel, LiveBrandSearch } from "@/components/discovery/live-search";
 
 
 export const Route = createFileRoute("/_authenticated/dashboard/decouverte/boutiques")({
@@ -81,34 +81,13 @@ function DiscoveryStoresPage() {
   const [paywall, setPaywall] = useState(false);
   const [visible, setVisible] = useState(30);
   const access = useDiscoveryAccess();
+  const { data: facets } = useDiscoveryFacets();
   const locked = !access.allowed;
   const { data: stores, isLoading } = useDiscoveryAdvertisers(filters);
 
   const set = <K extends keyof StoreFilters>(key: K, value: StoreFilters[K]) =>
     setFilters((prev) => ({ ...prev, [key]: value }));
 
-  /** Après une recherche en direct : on affiche exactement la marque cherchée. */
-  const [found, setFound] = useState<{
-    term: string;
-    count: number;
-    ads: number;
-    products: number;
-  } | null>(null);
-  const showFound = (info: { term: string; stores: number; found: number; products: number }) => {
-    setTerm(info.term);
-    setFound({
-      term: info.term,
-      count: info.stores,
-      ads: info.found,
-      products: info.products,
-    });
-    setFilters((prev) => ({
-      sort: "recent",
-      search: info.term,
-      ...(prev.country ? { country: prev.country } : {}),
-    }));
-    setVisible(30);
-  };
 
   return (
     <DashboardShell>
@@ -184,38 +163,6 @@ function DiscoveryStoresPage() {
         ]}
       />
 
-      <BrandSearchPanel
-        onPick={(value) => {
-          setTerm(value);
-          set("search", value);
-        }}
-      />
-
-
-      {found ? (
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-[6px] border border-emerald-200 bg-emerald-50 p-3">
-          <div className="min-w-0">
-            <p className="text-sm font-bold text-emerald-900">
-              Résultats pour « {found.term} » · {found.count} boutique(s) · {found.ads}{" "}
-              publicité(s) · {found.products} produit(s)
-            </p>
-            <p className="mt-0.5 text-xs text-emerald-800">
-              Elles rejoignent la base commune : vous les retrouverez aussi dans Publicités et Produits.
-            </p>
-          </div>
-          <button
-            onClick={() => {
-              setFound(null);
-              setTerm("");
-              setFilters({ sort: "traction" });
-            }}
-            className="h-9 shrink-0 cursor-pointer rounded-[6px] border border-emerald-300 bg-background px-4 text-sm font-bold text-emerald-900 hover:bg-emerald-100"
-          >
-            Revoir toutes les boutiques
-          </button>
-        </div>
-      ) : null}
-
       {isLoading ? (
         <div className="grid h-64 place-items-center">
           <Loader2 className="h-6 w-6 animate-spin text-orange-500" />
@@ -224,36 +171,41 @@ function DiscoveryStoresPage() {
         <div className="rounded-[6px] border border-dashed border-border bg-background px-6 py-14 text-center">
           <p className="text-base font-black">Aucune boutique repérée pour ces filtres</p>
           <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-            Les boutiques apparaissent dès que des publicités sont collectées dans l'onglet Publicités.
+            Modifiez vos filtres ou effectuez une recherche avec un autre nom de boutique ou mot-clé.
           </p>
-          {filters.search ? (
-            <div className="mx-auto mt-4 max-w-xl text-left">
-              <LiveBrandSearch
-                term={filters.search}
-                country={filters.country}
-                locked={locked}
-                onLocked={() => setPaywall(true)}
-                onFound={showFound}
-              />
-            </div>
-          ) : null}
         </div>
       ) : (
         <>
-          {filters.search ? (
-            <LiveBrandSearch
-              term={filters.search}
-              country={filters.country}
-              locked={locked}
-              onLocked={() => setPaywall(true)}
-              onFound={showFound}
-              label="Cherchez cette marque en direct pour tout voir"
-            />
-          ) : null}
-          <p className="mb-3 text-xs text-muted-foreground">
-            {(stores ?? []).length} boutiques · estimations calculées sur des faits vérifiables, jamais de chiffre
-            d'affaires inventé.
-          </p>
+
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/80 bg-muted/30 p-3 shadow-2xs">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="inline-flex items-center rounded-md bg-orange-500/15 px-2.5 py-1 text-xs font-black text-orange-700 dark:text-orange-300">
+                {Math.min(visible, (stores ?? []).length)} sur {(stores ?? []).length} boutiques
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {filters.search ? (
+                  <>
+                    pour la recherche <strong className="text-foreground">« {filters.search} »</strong> · issues de l'analyse de {facets?.total ? facets.total.toLocaleString() : "1 139+"} publicités
+                  </>
+                ) : (
+                  <>
+                    concurrentes actives · répertoriées depuis l'analyse de {facets?.total ? facets.total.toLocaleString() : "1 139+"} publicités
+                  </>
+                )}
+              </span>
+            </div>
+            {filters.search ? (
+              <button
+                onClick={() => {
+                  setTerm("");
+                  set("search", undefined);
+                }}
+                className="inline-flex items-center gap-1 rounded-md border border-orange-200 bg-orange-50 px-2.5 py-1 text-xs font-bold text-orange-700 hover:bg-orange-100 dark:border-orange-900/40 dark:bg-orange-950/40 dark:text-orange-300 cursor-pointer transition-colors"
+              >
+                ✕ Voir toutes les boutiques
+              </button>
+            ) : null}
+          </div>
           <div className="grid auto-rows-fr grid-cols-2 items-stretch gap-2.5 sm:gap-3 xl:grid-cols-3 2xl:grid-cols-4">
             {(stores ?? []).slice(0, visible).map((store) => (
               <StoreCard key={store.key} store={store} onAnalyse={setOpenId} />

@@ -78,9 +78,24 @@ function AdDetail() {
       <div className="grid gap-8 md:grid-cols-2">
         <div className="overflow-hidden rounded-xl border border-border bg-card">
           {ad.video_url ? (
-            <video src={ad.video_url} controls poster={media ?? undefined} className="w-full" />
+            <video
+              src={ad.video_url}
+              controls
+              playsInline
+              preload="metadata"
+              referrerPolicy="no-referrer"
+              poster={media ?? undefined}
+              onError={(e) => {
+                const el = e.currentTarget;
+                const streamUrl = `/api/public/video/stream?id=${ad.id}`;
+                if (!el.src.includes(streamUrl)) {
+                  el.src = streamUrl;
+                }
+              }}
+              className="w-full"
+            />
           ) : media ? (
-            <img src={media} alt={ad.title} className="w-full object-cover" />
+            <img src={media} alt={ad.title} referrerPolicy="no-referrer" className="w-full object-cover" />
           ) : (
             <div className="aspect-square bg-muted" />
           )}

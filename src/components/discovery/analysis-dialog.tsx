@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { PlatformBadge } from "@/components/discovery/platform-badge";
 import {
+  AlertTriangle,
   BarChart3,
   CalendarDays,
   ExternalLink,
@@ -11,10 +12,12 @@ import {
   Loader2,
   Megaphone,
   Package,
+  RefreshCw,
   ShoppingBag,
   Users,
   X,
 } from "lucide-react";
+import { toast } from "sonner";
 import {
   adMedia,
   compact,
@@ -26,6 +29,7 @@ import {
   useDiscoveryAdDetail,
   useDomainTraffic,
   useEnsureDiscoveryStore,
+  useRefreshAdVideo,
   estimateRevenue,
   pixelLabel,
   type DiscoveryAd,
@@ -99,6 +103,182 @@ function Creative({ ad, onOpen }: { ad: DiscoveryAd; onOpen: (id: string) => voi
         {ad.body || ad.headline || "Sans texte"}
       </span>
     </button>
+  );
+}
+
+function AdMediaSection({ ad }: { ad: DiscoveryAd }) {
+  const [videoUrl, setVideoUrl] = useState<string | null>(ad.video_url);
+  const [videoError, setVideoError] = useState(false);
+  const [hasAutoRetried, setHasAutoRetried] = useState(false);
+  const media = adMedia(ad);
+  const refreshVideo = useRefreshAdVideo();
+
+  useEffect(() => {
+    setVideoUrl(ad.video_url);
+    setVideoError(false);
+    setHasAutoRetried(false);
+  }, [ad.id, ad.video_url]);
+
+  const handleRefresh = (silent = false) => {
+    refreshVideo.mutate(ad.id, {
+      onSuccess: (result) => {
+        if (result?.ok && result.video_url) {
+          setVideoUrl(result.video_url);
+          setVideoError(false);
+          if (!silent) toast.success("Flux vidéo Meta actualisé avec succès !");
+        } else {
+          setVideoError(true);
+          if (!silent) toast.info("Cette publicité est archivée sur Meta.");
+        }
+      },
+      onError: () => {
+        setVideoError(true);
+        if (!silent) toast.error("Impossible de rafraîchir le flux vidéo pour l'instant.");
+      },
+    });
+  };
+
+  const handleVideoError = () => {
+    const proxyUrl = `/api/public/video/stream?id=${ad.id}`;
+    if (videoUrl !== proxyUrl) {
+      setVideoUrl(proxyUrl);
+    } else if (!hasAutoRetried && ad.external_id) {
+      setHasAutoRetried(true);
+      handleRefresh(true);
+    } else {
+      setVideoError(true);
+    }
+  };
+
+  if (refreshVideo.isPending) {
+    return (
+      <div className="flex flex-col overflow-hidden rounded-[8px] border border-border bg-background">
+        <div className="relative aspect-video w-full bg-black/90 flex flex-col items-center justify-center gap-3 p-6 text-center text-white">
+          <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+          <p className="text-sm font-bold">
+            Synchronisation du flux officiel Meta…
+          </p>
+          <span className="max-w-xs text-xs text-muted-foreground">
+            Récupération du jeton vidéo haute définition (0 Ko de stockage consommé).
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  if (videoUrl && !videoError) {
+    return (
+      <div className="flex flex-col overflow-hidden rounded-[8px] border border-border bg-background">
+        <video
+          key={videoUrl}
+          src={videoUrl}
+          controls
+          playsInline
+          preload="metadata"
+          referrerPolicy="no-referrer"
+          poster={media ?? undefined}
+          onError={handleVideoError}
+          className="max-h-[520px] w-full bg-black object-contain"
+        />
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border bg-muted/40 px-3 py-2 text-[11px] text-muted-foreground">
+          <span className="flex items-center gap-1.5 font-medium">
+            <Film className="h-3.5 w-3.5 text-orange-500" />
+            Vidéo publicitaire (Stream direct Meta)
+          </span>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => handleRefresh(false)}
+              disabled={refreshVideo.isPending}
+              className="inline-flex cursor-pointer items-center gap-1 font-semibold hover:text-foreground hover:underline disabled:opacity-50"
+            >
+              <RefreshCw className={cn("h-3 w-3", refreshVideo.isPending && "animate-spin")} />
+              Actualiser le flux
+            </button>
+            {ad.ad_library_url ? (
+              <a
+                href={ad.ad_library_url}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 font-semibold text-orange-600 hover:text-orange-700 hover:underline"
+              >
+                Meta Ad Library <ExternalLink className="h-3 w-3" />
+              </a>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (ad.video_url && videoError) {
+    return (
+      <div className="flex flex-col overflow-hidden rounded-[8px] border border-border bg-background">
+        <div className="relative aspect-video w-full bg-black">
+          {media ? (
+            <img
+              src={media}
+              alt=""
+              referrerPolicy="no-referrer"
+              className="h-full w-full object-cover opacity-60"
+            />
+          ) : (
+            <div className="grid h-full w-full place-items-center bg-muted text-muted-foreground">
+              <Film className="h-10 w-10 opacity-40" />
+            </div>
+          )}
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2.5 p-4 text-center text-white bg-black/65 backdrop-blur-[2px]">
+            <span className="grid h-10 w-10 place-items-center rounded-full bg-slate-900/80 text-amber-400 shadow-md">
+              <AlertTriangle className="h-5 w-5" />
+            </span>
+            <p className="max-w-sm text-xs font-semibold leading-snug">
+              Le flux direct a expiré ou est protégé. Vous pouvez resynchroniser le flux Meta en 1 clic ou regarder l'annonce directement sur la bibliothèque officielle.
+            </p>
+            <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleRefresh(false)}
+                disabled={refreshVideo.isPending}
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-[5px] bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground shadow transition-colors hover:bg-primary/90 disabled:opacity-50"
+              >
+                <RefreshCw className={cn("h-3.5 w-3.5", refreshVideo.isPending && "animate-spin")} />
+                {refreshVideo.isPending ? "Resynchronisation..." : "Resynchroniser avec Meta"}
+              </button>
+              {ad.ad_library_url ? (
+                <a
+                  href={ad.ad_library_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-[5px] bg-orange-600 px-3 py-1.5 text-xs font-bold text-white shadow transition-colors hover:bg-orange-700"
+                >
+                  Regarder sur Meta Ad Library <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (media) {
+    return (
+      <section className="overflow-hidden rounded-[8px] border border-border bg-background">
+        <img src={media} alt="" referrerPolicy="no-referrer" className="w-full object-cover" />
+      </section>
+    );
+  }
+
+  return (
+    <a
+      href={ad.ad_library_url ?? "#"}
+      target="_blank"
+      rel="noreferrer"
+      className="flex h-48 flex-col items-center justify-center gap-2 rounded-[8px] border border-border bg-background text-sm font-semibold text-muted-foreground hover:bg-muted/40"
+    >
+      <ImageOff className="h-6 w-6" /> Visuel expiré chez Meta
+      <span className="text-xs font-bold text-orange-600">Ouvrir la bibliothèque Meta</span>
+    </a>
   );
 }
 
@@ -491,23 +671,7 @@ export function AdAnalysisDialog({
                         </span>
                       ) : null}
                     </section>
-                    <section className="overflow-hidden rounded-[8px] border border-border bg-background">
-                      {ad.video_url ? (
-                        <video src={ad.video_url} controls poster={adMedia(ad) ?? undefined} className="w-full bg-black" />
-                      ) : adMedia(ad) ? (
-                        <img src={adMedia(ad)!} alt="" className="w-full object-cover" />
-                      ) : (
-                        <a
-                          href={ad.ad_library_url ?? "#"}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="flex h-48 flex-col items-center justify-center gap-2 text-sm font-semibold text-muted-foreground"
-                        >
-                          <ImageOff className="h-6 w-6" /> Visuel expiré chez Meta
-                          <span className="text-xs font-bold text-orange-600">Ouvrir la bibliothèque Meta</span>
-                        </a>
-                      )}
-                    </section>
+                    <AdMediaSection ad={ad} />
                   </div>
                 </div>
               ) : null}

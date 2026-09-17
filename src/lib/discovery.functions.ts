@@ -75,6 +75,27 @@ async function withSignedMedia(ads: DiscoveryAd[]): Promise<DiscoveryAd[]> {
 
 
 
+const STOP_WORDS = new Set([
+  "de",
+  "du",
+  "des",
+  "le",
+  "la",
+  "les",
+  "un",
+  "une",
+  "pour",
+  "et",
+  "en",
+  "au",
+  "aux",
+  "a",
+  "d",
+  "sur",
+  "avec",
+  "par",
+]);
+
 /** Texte comparable : minuscules, sans accents ni ponctuation. */
 function normalizeText(value: string) {
   return value
@@ -85,15 +106,17 @@ function normalizeText(value: string) {
     .trim();
 }
 
-/** Mots recherchés (tous doivent être présents). */
+/** Mots recherchés (ignorant les mots de liaison). */
 function searchTokens(term: string) {
-  return normalizeText(term).split(" ").filter(Boolean);
+  const words = normalizeText(term).split(" ").filter(Boolean);
+  const meaningful = words.filter((w) => !STOP_WORDS.has(w) && w.length >= 2);
+  return meaningful.length > 0 ? meaningful : words;
 }
 
 function matchesTokens(haystack: string, tokens: string[]) {
   if (tokens.length === 0) return true;
   const text = normalizeText(haystack);
-  return tokens.every((token) => text.includes(token));
+  return tokens.some((token) => text.includes(token));
 }
 
 /** Tout ce qui décrit un produit dans une publicité. */
@@ -172,7 +195,7 @@ const filters = z.object({
   minVariations: z.number().int().min(1).max(100).optional(),
   search: z.string().max(120).optional(),
   sort: z.enum(["traction", "recent", "duration", "variations"]).default("traction"),
-  limit: z.number().int().min(1).max(2000).default(60),
+  limit: z.number().int().min(1).max(50000).default(60),
 });
 
 export type DiscoveryFilters = z.infer<typeof filters>;
@@ -186,7 +209,7 @@ export const listDiscoveryAds = createServerFn({ method: "POST" })
     const rules = discoveryRules(await discoveryPlanOf(ctx));
     /* Formule gratuite : échantillon imposé (niche beauté, France), sans filtre. */
     const data: DiscoveryFilters = rules.filters
-      ? { ...input, limit: Math.min(input.limit, rules.ads) }
+      ? { ...input, limit: Number.isFinite(rules.ads) ? Math.min(input.limit, rules.ads) : input.limit }
       : {
           media: "all",
           status: "active",
@@ -242,7 +265,7 @@ export const listDiscoveryAds = createServerFn({ method: "POST" })
             : "traction_score";
     const { data: rows, error } = await query
       .order(column, { ascending: false, nullsFirst: false })
-      .limit(data.search ? 1000 : data.limit);
+      .limit(data.search ? Math.max(1000, data.limit) : data.limit);
     if (error) throw new Error(error.message);
     let list = (rows ?? []) as DiscoveryAd[];
     if (data.search) {
@@ -260,12 +283,12 @@ export const getDiscoveryFacets = createServerFn({ method: "POST" })
     const ctx = context as unknown as AuthedContext;
     const { data } = await ctx.supabase
       .from("discovery_ads")
-      .select("country, category, landing_domain, publisher_platforms, platform, last_seen_at")
-      .limit(2000);
-    const rows = (data ?? []) as Pick<
+      .select("country, category, landing_domain, publisher_platforms, platform, last_seen_at, video_url")
+      .limit(3000);
+    const rows = (data ?? []) as (Pick<
       Tables<"discovery_ads">,
       "country" | "category" | "landing_domain" | "publisher_platforms" | "platform" | "last_seen_at"
-    >[];
+    > & { video_url?: string | null })[];
     const count = (values: (string | null)[]) => {
       const map = new Map<string, number>();
       for (const value of values) {
@@ -276,8 +299,12 @@ export const getDiscoveryFacets = createServerFn({ method: "POST" })
         .map(([value, total]) => ({ value, total }))
         .sort((a, b) => b.total - a.total);
     };
+    const videoCount = rows.filter((r) => Boolean(r.video_url)).length;
+    const storeCount = new Set(rows.map((r) => r.landing_domain).filter(Boolean)).size;
     return {
       total: rows.length,
+      videoTotal: videoCount,
+      storesTotal: storeCount,
       countries: count(rows.map((row) => row.country)),
       categories: count(rows.map((row) => row.category)),
       domains: count(rows.map((row) => row.landing_domain)).slice(0, 40),
@@ -346,6 +373,144 @@ export const getDiscoveryAdDetail = createServerFn({ method: "POST" })
     };
   });
 
+/**
+ * Rafraîchit à la demande le jeton vidéo Meta sans stocker de fichier (0 Ko de stockage).
+ * Interroge la page officielle de l'annonce Meta pour extraire la nouvelle URL CDN fraîche.
+ */
+export const refreshDiscoveryAdVideo = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const ctx = context as unknown as AuthedContext;
+    const { data: ad } = await ctx.supabase
+      .from("discovery_ads")
+      .select("id, external_id, page_name, video_url, platform")
+      .eq("id", data.id)
+      .maybeSingle();
+
+    if (!ad || !ad.external_id) {
+      return { ok: false, video_url: null, reason: "Publicité introuvable" };
+    }
+
+    let freshUrl: string | null = null;
+
+    // 1. Essai léger : extraction directe depuis la page Ad Library
+    try {
+      const targetUrl = `https://www.facebook.com/ads/library/?id=${encodeURIComponent(ad.external_id)}`;
+      const res = await fetch(targetUrl, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+          "Accept-Language": "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7",
+          "Sec-Fetch-Dest": "document",
+          "Sec-Fetch-Mode": "navigate",
+          "Sec-Fetch-Site": "none",
+        },
+        signal: AbortSignal.timeout(5_000),
+      });
+
+      if (res.ok) {
+        const html = await res.text();
+        const matches = [
+          html.match(/"video_hd_url"\s*:\s*"([^"]+)"/),
+          html.match(/"video_sd_url"\s*:\s*"([^"]+)"/),
+          html.match(/"playable_url"\s*:\s*"([^"]+)"/),
+          html.match(/"playable_url_quality_hd"\s*:\s*"([^"]+)"/),
+        ];
+
+        for (const m of matches) {
+          if (m && m[1]) {
+            const candidate = m[1].replace(/\\u0025/g, "%").replace(/\\/g, "");
+            if (candidate.startsWith("http")) {
+              freshUrl = candidate;
+              break;
+            }
+          }
+        }
+      }
+    } catch {
+      /* Poursuite vers le repli Apify */
+    }
+
+    // 2. Repli résilient Apify : si Meta a envoyé un challenge anti-bot
+    if (!freshUrl) {
+      const apifyKey = process.env["APIFY_API_KEY"];
+      const searchTarget = ad.page_name || ad.external_id;
+      if (apifyKey && searchTarget) {
+        try {
+          const searchMetaUrl = `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=ALL&q=${encodeURIComponent(
+            searchTarget,
+          )}&search_type=keyword_unordered&media_type=all`;
+
+          const apifyRes = await fetch(
+            "https://api.apify.com/v2/acts/curious_coder~facebook-ads-library-scraper/run-sync-get-dataset-items?timeout=45&maxItems=10",
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${apifyKey}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                urls: [{ url: searchMetaUrl }],
+                count: 10,
+                limitPerSource: 10,
+              }),
+              signal: AbortSignal.timeout(35_000),
+            },
+          );
+
+          if (apifyRes.ok) {
+            const items = (await apifyRes.json()) as Array<{
+              ad_archive_id?: string;
+              page_name?: string;
+              snapshot?: {
+                cards?: Array<{ video_hd_url?: string; video_sd_url?: string }>;
+                videos?: Array<{ video_hd_url?: string; video_sd_url?: string }>;
+                extra_videos?: Array<{ video_hd_url?: string; video_sd_url?: string }>;
+              };
+            }>;
+
+            if (Array.isArray(items)) {
+              for (const item of items) {
+                const snapshot = item.snapshot;
+                const pool = [
+                  ...(snapshot?.cards ?? []),
+                  ...(snapshot?.videos ?? []),
+                  ...(snapshot?.extra_videos ?? []),
+                ].filter(Boolean);
+
+                for (const media of pool) {
+                  const candidate = media.video_hd_url || media.video_sd_url;
+                  if (candidate && candidate.startsWith("http")) {
+                    freshUrl = candidate;
+                    break;
+                  }
+                }
+                if (freshUrl) break;
+              }
+            }
+          }
+        } catch {
+          /* Échec du repli Apify */
+        }
+      }
+    }
+
+    if (freshUrl) {
+      // Sauvegarde du nouveau jeton en base (0 Ko de stockage Supabase Storage utilisé)
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      await supabaseAdmin
+        .from("discovery_ads")
+        .update({ video_url: freshUrl, last_seen_at: new Date().toISOString() })
+        .eq("id", data.id);
+
+      return { ok: true, video_url: freshUrl };
+    }
+
+    return { ok: false, video_url: ad.video_url, reason: "Flux vidéo archivé sur Meta" };
+  });
+
 /** Historique du nombre de pubs lancées par mois (pour les graphiques). */
 function buildTimeline(ads: DiscoveryAd[]) {
   const map = new Map<string, number>();
@@ -371,14 +536,26 @@ async function adsMatchingSearch(
 ) {
   const clean = term.trim();
   if (clean.length < 2) return [] as DiscoveryAd[];
-  const like = `%${clean}%`;
+  const tokens = searchTokens(clean);
+  const words = Array.from(new Set([clean, ...tokens.slice(0, 3)])).filter((w) => w.length >= 2);
+
   let query = ctx.supabase.from("discovery_ads").select("*");
   if (filters.country) query = query.eq("country", filters.country);
   if (filters.category) query = query.eq("category", filters.category);
+
+  const orConditions = words.flatMap((word) => {
+    const like = `%${word}%`;
+    return [
+      `page_name.ilike.${like}`,
+      `headline.ilike.${like}`,
+      `body.ilike.${like}`,
+      `landing_domain.ilike.${like}`,
+      `keyword.ilike.${like}`,
+    ];
+  });
+
   const { data } = await query
-    .or(
-      `page_name.ilike.${like},headline.ilike.${like},body.ilike.${like},landing_domain.ilike.${like},keyword.ilike.${like}`,
-    )
+    .or(orConditions.join(","))
     .order("last_seen_at", { ascending: false })
     .limit(400);
   return (data ?? []) as DiscoveryAd[];
@@ -870,7 +1047,7 @@ export const searchDiscoveryBrandFn = createServerFn({ method: "POST" })
     const plan = await discoveryPlanOf(ctx);
     const rules = discoveryRules(plan);
     if (rules.liveSearches <= 0) {
-      throw new Error("La recherche en direct d'une marque est réservée aux formules payantes.");
+      throw new Error("La recherche en direct est désactivée. Les recherches s'effectuent directement dans le catalogue.");
     }
 
     const term = data.term.trim();

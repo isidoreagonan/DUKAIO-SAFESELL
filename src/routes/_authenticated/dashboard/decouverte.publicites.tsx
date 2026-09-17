@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { z } from "zod";
 import {
   Activity,
   CalendarDays,
@@ -38,10 +39,18 @@ import {
 import { useIsAdmin } from "@/lib/admin";
 import { useDiscoveryAccess } from "@/lib/entitlements";
 import { DiscoveryPaywall } from "@/components/discovery/paywall-dialog";
-import { BrandSearchPanel, LiveBrandSearch } from "@/components/discovery/live-search";
 
+const adSearchSchema = z.object({
+  category: z.string().optional().catch(undefined),
+  country: z.string().optional().catch(undefined),
+  search: z.string().optional().catch(undefined),
+  media: z.enum(["all", "video", "image"]).optional().catch(undefined),
+  status: z.enum(["all", "active", "inactive"]).optional().catch(undefined),
+  sort: z.enum(["traction", "recent", "duration", "variations"]).optional().catch(undefined),
+});
 
 export const Route = createFileRoute("/_authenticated/dashboard/decouverte/publicites")({
+  validateSearch: (search: Record<string, unknown>) => adSearchSchema.parse(search),
   head: () => ({
     meta: [
       { title: "Découverte — publicités qui tournent | DUKAIO" },
@@ -101,12 +110,55 @@ const VARIATIONS = [
 ];
 
 function DiscoveryAdsPage() {
-  const [filters, setFilters] = useState<AdFilters>({ sort: "traction", media: "all", status: "active" });
-  const [term, setTerm] = useState("");
+  const urlSearch = Route.useSearch();
+  const [filters, setFilters] = useState<AdFilters>(() => ({
+    sort: urlSearch.sort ?? "traction",
+    media: urlSearch.media ?? "all",
+    status: urlSearch.status ?? "active",
+    category: urlSearch.category || undefined,
+    country: urlSearch.country || undefined,
+    search: urlSearch.search || undefined,
+  }));
+  const [term, setTerm] = useState(urlSearch.search ?? "");
   const [openId, setOpenId] = useState<string | null>(null);
   const [paywall, setPaywall] = useState(false);
   const access = useDiscoveryAccess();
   const locked = !access.allowed;
+
+  useEffect(() => {
+    setFilters((prev) => {
+      const nextCategory = urlSearch.category !== undefined ? (urlSearch.category || undefined) : prev.category;
+      const nextCountry = urlSearch.country !== undefined ? (urlSearch.country || undefined) : prev.country;
+      const nextSearch = urlSearch.search !== undefined ? (urlSearch.search || undefined) : prev.search;
+      const nextMedia = urlSearch.media ?? prev.media ?? "all";
+      const nextStatus = urlSearch.status ?? prev.status ?? "active";
+      const nextSort = urlSearch.sort ?? prev.sort ?? "traction";
+
+      if (
+        prev.category === nextCategory &&
+        prev.country === nextCountry &&
+        prev.search === nextSearch &&
+        prev.media === nextMedia &&
+        prev.status === nextStatus &&
+        prev.sort === nextSort
+      ) {
+        return prev;
+      }
+      return {
+        ...prev,
+        category: nextCategory,
+        country: nextCountry,
+        search: nextSearch,
+        media: nextMedia,
+        status: nextStatus,
+        sort: nextSort,
+      };
+    });
+    if (urlSearch.search !== undefined) {
+      setTerm(urlSearch.search || "");
+    }
+  }, [urlSearch.category, urlSearch.country, urlSearch.search, urlSearch.media, urlSearch.status, urlSearch.sort]);
+
   const { data: ads, isLoading } = useDiscoveryAds(filters);
   const { data: facets } = useDiscoveryFacets();
   const { data: isAdmin } = useIsAdmin();
@@ -116,33 +168,6 @@ function DiscoveryAdsPage() {
   const set = <K extends keyof AdFilters>(key: K, value: AdFilters[K]) =>
     setFilters((prev) => ({ ...prev, [key]: value }));
 
-  /**
-   * Après une recherche en direct : on n'affiche que ce que le vendeur a cherché
-   * (les filtres qui pourraient le masquer sont relâchés), et ces publicités
-   * rejoignent définitivement la base commune.
-   */
-  const [found, setFound] = useState<{
-    term: string;
-    count: number;
-    stores: number;
-    products: number;
-  } | null>(null);
-  const showFound = (info: { term: string; found: number; stores: number; products: number }) => {
-    setTerm(info.term);
-    setFound({
-      term: info.term,
-      count: info.found,
-      stores: info.stores,
-      products: info.products,
-    });
-    setFilters((prev) => ({
-      sort: "recent",
-      media: "all",
-      status: "all",
-      search: info.term,
-      ...(prev.country ? { country: prev.country } : {}),
-    }));
-  };
 
   const updatedAt = useMemo(() => {
     const latest = (ads ?? [])
@@ -353,74 +378,49 @@ function DiscoveryAdsPage() {
         }
       />
 
-      <BrandSearchPanel
-        onPick={(value) => {
-          setTerm(value);
-          set("search", value);
-        }}
-      />
-
-
-      {found ? (
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-[6px] border border-emerald-200 bg-emerald-50 p-3">
-          <div className="min-w-0">
-            <p className="text-sm font-bold text-emerald-900">
-              Résultats pour « {found.term} » · {found.count} publicité(s) · {found.stores}{" "}
-              boutique(s) · {found.products} produit(s)
-            </p>
-            <p className="mt-0.5 text-xs text-emerald-800">
-              Elles sont maintenant ajoutées à la base commune : vous les retrouverez aussi dans les onglets
-              Boutiques et Produits.
-            </p>
-          </div>
-          <button
-            onClick={() => {
-              setFound(null);
-              setTerm("");
-              setFilters({ sort: "traction", media: "all", status: "active" });
-            }}
-            className="h-9 shrink-0 cursor-pointer rounded-[6px] border border-emerald-300 bg-background px-4 text-sm font-bold text-emerald-900 hover:bg-emerald-100"
-          >
-            Revoir toutes les publicités
-          </button>
-        </div>
-      ) : null}
-
       {isLoading ? (
         <div className="grid h-64 place-items-center">
           <Loader2 className="h-6 w-6 animate-spin text-orange-500" />
         </div>
       ) : (ads ?? []).length === 0 ? (
         <div className="rounded-[6px] border border-dashed border-border bg-background px-6 py-14 text-center">
-          <p className="text-base font-black">Aucune publicité ne correspond à ces filtres</p>
+          <p className="text-base font-black">Aucune publicité ne correspond à ces critères</p>
           <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-            Élargissez les pays, la durée ou la niche — ou lancez la recherche en direct de la marque.
+            Modifiez vos filtres ou effectuez une recherche avec d'autres mots-clés.
           </p>
-          {filters.search ? (
-            <div className="mx-auto mt-4 max-w-xl text-left">
-              <LiveBrandSearch
-                term={filters.search}
-                country={filters.country}
-                locked={locked}
-                onLocked={() => setPaywall(true)}
-                onFound={showFound}
-              />
-            </div>
-          ) : null}
         </div>
       ) : (
         <>
-          {filters.search ? (
-            <LiveBrandSearch
-              term={filters.search}
-              country={filters.country}
-              locked={locked}
-              onLocked={() => setPaywall(true)}
-              onFound={showFound}
-              label="Cherchez cette marque en direct pour tout voir"
-            />
-          ) : null}
-          <p className="mb-3 text-xs text-muted-foreground">{(ads ?? []).length} publicités affichées</p>
+
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/80 bg-muted/30 p-3 shadow-2xs">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="inline-flex items-center rounded-md bg-orange-500/15 px-2.5 py-1 text-xs font-black text-orange-700 dark:text-orange-300">
+                {(ads ?? []).length} affichées
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {filters.search ? (
+                  <>
+                    publicités trouvées pour <strong className="text-foreground">« {filters.search} »</strong> · sur un total de {facets?.total ? facets.total.toLocaleString() : "1 139+"} publicités actives
+                  </>
+                ) : (
+                  <>
+                    sur un total de <strong className="text-foreground font-bold">{facets?.total ? facets.total.toLocaleString() : "1 139+"} publicités actives surveillées</strong> (dont {facets?.videoTotal ?? "536"} vidéos HD)
+                  </>
+                )}
+              </span>
+            </div>
+            {filters.search ? (
+              <button
+                onClick={() => {
+                  setTerm("");
+                  set("search", undefined);
+                }}
+                className="inline-flex items-center gap-1 rounded-md border border-orange-200 bg-orange-50 px-2.5 py-1 text-xs font-bold text-orange-700 hover:bg-orange-100 dark:border-orange-900/40 dark:bg-orange-950/40 dark:text-orange-300 cursor-pointer transition-colors"
+              >
+                ✕ Voir toutes les publicités
+              </button>
+            ) : null}
+          </div>
           <div className="grid auto-rows-fr grid-cols-2 items-stretch gap-2.5 sm:gap-4 xl:grid-cols-3 2xl:grid-cols-4">
             {(ads ?? []).map((ad) => (
               <AdCard key={ad.id} ad={ad} onAnalyse={setOpenId} />

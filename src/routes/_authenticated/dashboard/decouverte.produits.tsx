@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { z } from "zod";
 import {
   BarChart3,
   CalendarDays,
@@ -24,7 +25,6 @@ import { ProductTable } from "@/components/discovery/product-table";
 import { useDiscoveryAccess } from "@/lib/entitlements";
 import { useAuth } from "@/hooks/use-auth";
 import { DiscoveryPaywall } from "@/components/discovery/paywall-dialog";
-import { LiveBrandSearch } from "@/components/discovery/live-search";
 
 import {
   DISCOVERY_CATEGORIES,
@@ -35,13 +35,22 @@ import {
   toFcfa,
   tractionLabel,
 
+  useDiscoveryFacets,
   useDiscoveryProducts,
   useRefreshDiscoveryPrices,
   type ProductFilters,
 } from "@/lib/discovery";
 import { cn } from "@/lib/utils";
 
+const productSearchSchema = z.object({
+  category: z.string().optional().catch(undefined),
+  country: z.string().optional().catch(undefined),
+  search: z.string().optional().catch(undefined),
+  sort: z.enum(["traction", "ads", "duration", "price"]).optional().catch(undefined),
+});
+
 export const Route = createFileRoute("/_authenticated/dashboard/decouverte/produits")({
+  validateSearch: (search: Record<string, unknown>) => productSearchSchema.parse(search),
   head: () => ({
     meta: [
       { title: "Découverte — produits qui vendent | DUKAIO" },
@@ -108,8 +117,14 @@ const MIN_TRACTION = [
 ];
 
 function DiscoveryProductsPage() {
-  const [filters, setFilters] = useState<ProductFilters>({ sort: "traction" });
-  const [term, setTerm] = useState("");
+  const urlSearch = Route.useSearch();
+  const [filters, setFilters] = useState<ProductFilters>(() => ({
+    sort: urlSearch.sort ?? "traction",
+    category: urlSearch.category || undefined,
+    country: urlSearch.country || undefined,
+    search: urlSearch.search || undefined,
+  }));
+  const [term, setTerm] = useState(urlSearch.search ?? "");
   const [openId, setOpenId] = useState<string | null>(null);
   const [paywall, setPaywall] = useState(false);
   const [visible, setVisible] = useState(30);
@@ -119,7 +134,37 @@ function DiscoveryProductsPage() {
   const [priceBand, setPriceBand] = useState("");
   const [minTraction, setMinTraction] = useState("");
   const access = useDiscoveryAccess();
+  const { data: facets } = useDiscoveryFacets();
   const locked = !access.allowed;
+
+  useEffect(() => {
+    setFilters((prev) => {
+      const nextCategory = urlSearch.category !== undefined ? (urlSearch.category || undefined) : prev.category;
+      const nextCountry = urlSearch.country !== undefined ? (urlSearch.country || undefined) : prev.country;
+      const nextSearch = urlSearch.search !== undefined ? (urlSearch.search || undefined) : prev.search;
+      const nextSort = urlSearch.sort ?? prev.sort ?? "traction";
+
+      if (
+        prev.category === nextCategory &&
+        prev.country === nextCountry &&
+        prev.search === nextSearch &&
+        prev.sort === nextSort
+      ) {
+        return prev;
+      }
+      return {
+        ...prev,
+        category: nextCategory,
+        country: nextCountry,
+        search: nextSearch,
+        sort: nextSort,
+      };
+    });
+    if (urlSearch.search !== undefined) {
+      setTerm(urlSearch.search || "");
+    }
+  }, [urlSearch.category, urlSearch.country, urlSearch.search, urlSearch.sort]);
+
   const { data: rows, isLoading } = useDiscoveryProducts(filters);
 
   /* Filtres complémentaires appliqués côté client. */
@@ -159,27 +204,6 @@ function DiscoveryProductsPage() {
   const set = <K extends keyof ProductFilters>(key: K, value: ProductFilters[K]) =>
     setFilters((prev) => ({ ...prev, [key]: value }));
 
-  /** Après une recherche en direct : on affiche exactement ce que le vendeur a cherché. */
-  const [found, setFound] = useState<{
-    term: string;
-    count: number;
-    ads: number;
-    stores: number;
-  } | null>(null);
-  const showFound = (info: { term: string; found: number; stores: number; products: number }) => {
-    setTerm(info.term);
-    setFound({ term: info.term, count: info.products, ads: info.found, stores: info.stores });
-    setFilters((prev) => ({
-      sort: "traction",
-      search: info.term,
-      ...(prev.country ? { country: prev.country } : {}),
-    }));
-    setMinActive("");
-    setMinDuration("");
-    setPriceBand("");
-    setMinTraction("");
-    setVisible(30);
-  };
 
   return (
     <DashboardShell>
@@ -296,67 +320,49 @@ function DiscoveryProductsPage() {
         }
       />
 
-      {found ? (
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-[6px] border border-emerald-200 bg-emerald-50 p-3">
-          <div className="min-w-0">
-            <p className="text-sm font-bold text-emerald-900">
-              Résultats pour « {found.term} » · {found.count} produit(s) · {found.ads}{" "}
-              publicité(s) · {found.stores} boutique(s)
-            </p>
-            <p className="mt-0.5 text-xs text-emerald-800">
-              La recherche a tout collecté d'un coup : ces produits, les publicités et les
-              boutiques trouvées rejoignent la base commune et restent visibles dans les trois
-              onglets.
-            </p>
-          </div>
-          <button
-            onClick={() => {
-              setFound(null);
-              setTerm("");
-              setFilters({ sort: "traction" });
-            }}
-            className="h-9 shrink-0 cursor-pointer rounded-[6px] border border-emerald-300 bg-background px-4 text-sm font-bold text-emerald-900 hover:bg-emerald-100"
-          >
-            Revoir tous les produits
-          </button>
-        </div>
-      ) : null}
-
       {isLoading ? (
         <div className="grid h-64 place-items-center">
           <Loader2 className="h-6 w-6 animate-spin text-orange-500" />
         </div>
       ) : (products ?? []).length === 0 ? (
         <div className="rounded-[6px] border border-dashed border-border bg-background px-6 py-14 text-center">
-          <p className="text-base font-black">Aucun produit ne correspond à ces filtres</p>
+          <p className="text-base font-black">Aucun produit ne correspond à ces critères</p>
           <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-            Les produits apparaissent dès que des publicités sont collectées dans l'onglet Publicités.
+            Modifiez vos filtres ou effectuez une recherche avec un autre nom de produit.
           </p>
-          {filters.search ? (
-            <div className="mx-auto mt-4 max-w-xl text-left">
-              <LiveBrandSearch
-                term={filters.search}
-                country={filters.country}
-                locked={locked}
-                onLocked={() => setPaywall(true)}
-                onFound={showFound}
-              />
-            </div>
-          ) : null}
         </div>
       ) : (
         <>
-          {filters.search ? (
-            <LiveBrandSearch
-              term={filters.search}
-              country={filters.country}
-              locked={locked}
-              onLocked={() => setPaywall(true)}
-              onFound={showFound}
-              label="Cherchez cette marque en direct pour tout voir"
-            />
-          ) : null}
-          <p className="mb-3 text-xs text-muted-foreground">{(products ?? []).length} produits repérés en publicité</p>
+
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/80 bg-muted/30 p-3 shadow-2xs">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="inline-flex items-center rounded-md bg-orange-500/15 px-2.5 py-1 text-xs font-black text-orange-700 dark:text-orange-300">
+                {(products ?? []).length} {filters.search ? "produits trouvés" : "produits gagnants"}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {filters.search ? (
+                  <>
+                    pour la recherche <strong className="text-foreground">« {filters.search} »</strong> · extraits des {facets?.total ? facets.total.toLocaleString() : "1 139+"} publicités surveillées
+                  </>
+                ) : (
+                  <>
+                    répertoriés et classés par traction · issus des {facets?.total ? facets.total.toLocaleString() : "1 139+"} publicités actives de la plateforme
+                  </>
+                )}
+              </span>
+            </div>
+            {filters.search ? (
+              <button
+                onClick={() => {
+                  setTerm("");
+                  set("search", undefined);
+                }}
+                className="inline-flex items-center gap-1 rounded-md border border-orange-200 bg-orange-50 px-2.5 py-1 text-xs font-bold text-orange-700 hover:bg-orange-100 dark:border-orange-900/40 dark:bg-orange-950/40 dark:text-orange-300 cursor-pointer transition-colors"
+              >
+                ✕ Effacer la recherche ({filters.search})
+              </button>
+            ) : null}
+          </div>
           {view === "table" ? (
             <div className="hidden sm:block">
               <ProductTable products={(products ?? []).slice(0, visible)} onAnalyse={setOpenId} />

@@ -77,6 +77,7 @@ import { Route as ApiPublicBillingPawapayRouteImport } from './routes/api/public
 import { Route as ApiPublicCronDecouverteRouteImport } from './routes/api/public/cron.decouverte'
 import { Route as ApiPublicCronRelancesRouteImport } from './routes/api/public/cron.relances'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram.webhook'
+import { Route as ApiPublicVideoStreamRouteImport } from './routes/api/public/video.stream'
 import { Route as SHandleProduitIndexRouteImport } from './routes/s.$handle.produit.index'
 import { Route as SHandleProduitProductIdRouteImport } from './routes/s.$handle.produit.$productId'
 import { Route as AuthenticatedDashboardMarketingEmailsIdRouteImport } from './routes/_authenticated/dashboard/marketing.emails.$id'
@@ -459,6 +460,11 @@ const ApiPublicTelegramWebhookRoute =
     path: '/api/public/telegram/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicVideoStreamRoute = ApiPublicVideoStreamRouteImport.update({
+  id: '/api/public/video/stream',
+  path: '/api/public/video/stream',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SHandleProduitIndexRoute = SHandleProduitIndexRouteImport.update({
   id: '/s/$handle/produit/',
   path: '/s/$handle/produit/',
@@ -555,6 +561,7 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/decouverte': typeof ApiPublicCronDecouverteRoute
   '/api/public/cron/relances': typeof ApiPublicCronRelancesRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
+  '/api/public/video/stream': typeof ApiPublicVideoStreamRoute
   '/s/$handle/produit/$productId': typeof SHandleProduitProductIdRoute
   '/dashboard/clients/': typeof AuthenticatedDashboardClientsIndexRoute
   '/dashboard/commandes/': typeof AuthenticatedDashboardCommandesIndexRoute
@@ -628,6 +635,7 @@ export interface FileRoutesByTo {
   '/api/public/cron/decouverte': typeof ApiPublicCronDecouverteRoute
   '/api/public/cron/relances': typeof ApiPublicCronRelancesRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
+  '/api/public/video/stream': typeof ApiPublicVideoStreamRoute
   '/s/$handle/produit/$productId': typeof SHandleProduitProductIdRoute
   '/dashboard/clients': typeof AuthenticatedDashboardClientsIndexRoute
   '/dashboard/commandes': typeof AuthenticatedDashboardCommandesIndexRoute
@@ -705,6 +713,7 @@ export interface FileRoutesById {
   '/api/public/cron/decouverte': typeof ApiPublicCronDecouverteRoute
   '/api/public/cron/relances': typeof ApiPublicCronRelancesRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
+  '/api/public/video/stream': typeof ApiPublicVideoStreamRoute
   '/s/$handle/produit/$productId': typeof SHandleProduitProductIdRoute
   '/_authenticated/dashboard/clients/': typeof AuthenticatedDashboardClientsIndexRoute
   '/_authenticated/dashboard/commandes/': typeof AuthenticatedDashboardCommandesIndexRoute
@@ -782,6 +791,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/decouverte'
     | '/api/public/cron/relances'
     | '/api/public/telegram/webhook'
+    | '/api/public/video/stream'
     | '/s/$handle/produit/$productId'
     | '/dashboard/clients/'
     | '/dashboard/commandes/'
@@ -855,6 +865,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/decouverte'
     | '/api/public/cron/relances'
     | '/api/public/telegram/webhook'
+    | '/api/public/video/stream'
     | '/s/$handle/produit/$productId'
     | '/dashboard/clients'
     | '/dashboard/commandes'
@@ -931,6 +942,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/decouverte'
     | '/api/public/cron/relances'
     | '/api/public/telegram/webhook'
+    | '/api/public/video/stream'
     | '/s/$handle/produit/$productId'
     | '/_authenticated/dashboard/clients/'
     | '/_authenticated/dashboard/commandes/'
@@ -975,6 +987,7 @@ export interface RootRouteChildren {
   ApiPublicCronDecouverteRoute: typeof ApiPublicCronDecouverteRoute
   ApiPublicCronRelancesRoute: typeof ApiPublicCronRelancesRoute
   ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
+  ApiPublicVideoStreamRoute: typeof ApiPublicVideoStreamRoute
   SHandleProduitProductIdRoute: typeof SHandleProduitProductIdRoute
   SHandleProduitIndexRoute: typeof SHandleProduitIndexRoute
   ApiPublicECRidRoute: typeof ApiPublicECRidRoute
@@ -1459,6 +1472,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTelegramWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/video/stream': {
+      id: '/api/public/video/stream'
+      path: '/api/public/video/stream'
+      fullPath: '/api/public/video/stream'
+      preLoaderRoute: typeof ApiPublicVideoStreamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/s/$handle/produit/': {
       id: '/s/$handle/produit/'
       path: '/s/$handle/produit'
@@ -1662,6 +1682,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCronDecouverteRoute: ApiPublicCronDecouverteRoute,
   ApiPublicCronRelancesRoute: ApiPublicCronRelancesRoute,
   ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
+  ApiPublicVideoStreamRoute: ApiPublicVideoStreamRoute,
   SHandleProduitProductIdRoute: SHandleProduitProductIdRoute,
   SHandleProduitIndexRoute: SHandleProduitIndexRoute,
   ApiPublicECRidRoute: ApiPublicECRidRoute,

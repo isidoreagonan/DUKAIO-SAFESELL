@@ -4,6 +4,129 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 > **Note d'environnement :** Ce projet a été initialement généré avec Lovable, mais a été entièrement migré sur Antigravity. Il n'est plus synchronisé avec Lovable Cloud et utilise désormais exclusivement la propre instance Supabase de l'utilisateur.
 
+## [17/09/2026] - Désactivation de la Recherche en Direct Apify & Suppression de la Bannière de Quota
+
+### Corrigé & Amélioré
+- **Désactivation Totale de la Collecte Apify à la Demande :**
+  - Fin des déclenchements Apify en direct lors des recherches utilisateurs (maintien de 100% des crédits Apify de l'utilisateur, 0 $ dépensé inutilement).
+  - La recherche s'effectue désormais exclusivement et instantanément dans la base de données DUKAIO (Postgres / Supabase).
+  - Sécurisation côté serveur (`discovery.functions.ts` - `searchDiscoveryBrandFn`) rejetant toute tentative de collecte en direct avec un message clair.
+- **Suppression Complète de la Bannière de Quota & des Badges de Recherches Récentes :**
+  - Retrait du bandeau *"Recherches de marque : X restante(s) sur Y ce mois-ci [Formule Pro]"* et des étiquettes de recherches dans `decouverte.publicites.tsx`, `decouverte.boutiques.tsx` et `decouverte.produits.tsx`.
+  - Retrait des boutons d'action *"Analyser cette marque en direct"* lors des recherches ou en état vide.
+  - État vide repensé et élégant : lorsqu'aucun élément ne correspond aux filtres, un message épuré invite simplement à réajuster la recherche sans solliciter de robot externe.
+- **Scan Professionnel Multi-Niches Élargi (1 139 publicités au total, 536 vidéos) :**
+  - Exécution ciblée à coût ultra-maîtrisé sur les niches demandées par l'utilisateur :
+    - *Massage & Bien-être :* pistolets de massage, masseurs cervicaux, ceintures lombaires chauffantes, coussins orthopédiques, ceintures de sudation.
+    - *Auto & Équipements :* rétroviseurs avec caméra/dashcam, supports téléphone, gonfleurs sans fil, nettoyeurs haute pression portables.
+    - *Beauté, Dermaplaning & Dentaire :* rasoirs dermaplaning visage, aspirateurs de points noirs, hydropulseurs dentaires sans fil, brosses à dents soniques, brosses lissantes.
+    - *Cuisine & Maison Pratique :* hachoirs sans fil, scelleuses sous vide, lampes solaires, organisateurs dressing.
+    - *Tech & Gadgets :* micros cravate sans fil, projecteurs LED portables, caméras de surveillance WiFi, montres connectées.
+  - Enrichissement automatique de 38 nouvelles boutiques e-commerce détectées avec leurs catalogues et prix.
+  - La base atteint désormais **1 139 publicités gagnantes actives**, dont **536 vidéos HD**, tout en préservant le solde de crédits Apify de l'utilisateur.
+- **Logos Officiels Meta & Google Ads & Épuration Mobile :**
+  - Intégration des logos officiels certifiés **Meta Ads** (boucle infinie bleue) et **Google Ads** (4 couleurs) dans l'en-tête Découverte avec badge lumineux discret *"Flux en direct"*.
+  - Suppression des 4 gros blocs de cartes métriques pour éviter toute surcharge visuelle sur mobile et préserver un design épuré, digne des meilleurs outils SaaS du marché.
+  - Clarification totale des compteurs de résultats : affichage d'un bandeau stylisé dissociant clairement le nombre d'éléments trouvés pour une recherche spécifique (ex: 103 produits) et le total global de la plateforme (1 139 publicités), avec bouton d'effacement rapide.
+
+## [17/09/2026] - Grand Nettoyage, Collecte Massive de 630 Publicités Gagnantes (Apify) & Relais Streaming « Zéro Stockage »
+
+### Corrigé & Ajouté
+- **Nettoyage Intégral de la Base de Données :**
+  - Purge de 396 anciennes publicités vidéo dont les jetons d'origine étaient expirés (erreur 403).
+  - Suppression de 238 boutiques orphelines dans `discovery_stores` qui ne contenaient plus aucune annonce active.
+- **Collecte Ciblée Massive de 630 Publicités Gagnantes Fraîches via Robot Apify :**
+  - Collecte automatisée et ciblée sur les marchés clés : **Bénin (BJ), Côte d'Ivoire (CI), Sénégal (SN), Cameroun (CM), Congo (CD), France (FR) et États-Unis (US)**.
+  - Couverture des niches à forte rentabilité et fort potentiel e-commerce :
+    - *Beauté & Soins Dentaires :* blanchiment dentaire, dentifrice charbon/probiotiques, sérums visage.
+    - *Tech & Hygiène :* rasoirs électriques, tondeuses de précision, épilateurs laser IPL.
+    - *Auto & Équipement :* nettoyeurs haute pression sans fil pour voiture, compresseurs portables, accessoires auto.
+    - *Cuisine & Maison :* friteuses sans huile (Air Fryer), mixeurs portables rechargeables, ustensiles et casseroles inox.
+  - La base Découverte compte désormais **916 publicités actives de premier plan**, dont 378 vidéos avec des flux directs neufs (HTTP 206 Partial Content).
+- **Création du Relais Streaming Transparent « Zéro Stockage » (`/api/public/video/stream`) :**
+  - Endpoint serveur léger TanStack Start / Nitro streamant les octets vidéo en direct avec support complet des requêtes partielles (`Range: bytes=...`, code 206).
+  - **Auto-guérison instantanée :** En cas d'expiration d'un jeton Meta en coulisses (403/410), le relais serveur contacte automatiquement Apify, renouvelle le jeton et maintient le streaming vidéo sans interruption pour l'utilisateur.
+  - **Strictement 0 octet consommé sur Supabase Storage :** Aucun fichier MP4 n'est enregistré sur le disque, garantissant la préservation intégrale du quota de 100 Go pour les boutiques marchandes.
+- **Lecteur Hybride Double Sécurité (`AdMediaSection` dans `analysis-dialog.tsx`) :**
+  - Tente d'abord la lecture directe rapide avec `referrerPolicy="no-referrer"`.
+  - Bascule automatiquement vers le relais streaming `/api/public/video/stream?id=...` en cas de restriction réseau.
+  - Intègre un écran d'attente élégant (*« Synchronisation du flux officiel Meta… »*) en cas de régénération de jeton.
+- **Résolution Définitive & Lecteur Vidéo Auto-Guérissant (0 Ko de Stockage Consommé) :**
+  - **Déblocage des flux vidéo Meta CDN :** Ajout de `referrerPolicy="no-referrer"`, `playsInline` et `preload="metadata"` sur les balises `<video>` pour contourner le blocage anti-hotlink de Meta.
+  - **Moteur de Rafraîchissement Résilient Apify (Self-Healing Token Refresh) :** Création de la fonction serveur `refreshDiscoveryAdVideo` et du hook `useRefreshAdVideo`. Lorsque le jeton signé Meta d'une annonce (`oe=...`) a expiré, le système effectue une requête intelligente auprès de l'acteur Apify de collecte Meta Ads avec le nom de la marque (`page_name`), extrait le flux vidéo frais haute définition (HTTP 206 Partial Content, 100% lisible) et actualise l'URL texte en base de données.
+  - **0 Ko de Stockage Supabase Storage :** Strict respect de la règle d'or : aucune vidéo n'est téléchargée ni stockée dans Supabase Storage (réservé exclusivement aux boutiques des marchands).
+  - **Expérience Utilisateur Fluide :** Ajout d'un état de chargement élégant dans le lecteur (`Synchronisation du flux officiel Meta…`) pendant la mise à jour du jeton, éliminant tout blocage ou redirection forcée vers Facebook.
+  - **Interface de secours élégante :** En cas d'indisponibilité ou d'archivage côté Meta, affichage de l'affiche de la pub avec boutons d'action :
+    - *« Resynchroniser avec Meta »* (bouton manuel avec spinner pour relancer l'extraction du flux).
+    - *« Regarder sur Meta Ad Library »* (lien direct officiel vers la bibliothèque publicitaire Meta).
+  - **Barre d'outils vidéo en lecture normale :** Bouton *« Actualiser le flux »* intégré directement sous la vidéo et lien direct vers Meta Ad Library.
+- **Synchronisation Complète des Filtres d'URL dans l'Espace Découverte (`decouverte.produits.tsx` & `decouverte.publicites.tsx`) :**
+  - Configuration de `validateSearch` avec Zod sur les routes TanStack Router pour valider et capturer les paramètres d'URL (`category`, `search`, `country`, `sort`, `media`, `status`).
+  - Initialisation et synchronisation dynamique des filtres et du champ de recherche (`Route.useSearch()` + `useEffect`) dès l'arrivée sur la page ou lors d'un changement de paramètres.
+  - Les puces de filtres (Niche, Marché, etc.) et la barre de saisie reflètent désormais fidèlement les filtres appliqués depuis la page d'accueil ou les liens directs.
+- **Raccordement Intégral des Liens et de la Recherche depuis la Page d'Accueil (`dashboard/index.tsx`) :**
+  - **6 Cartes de Catégories Interactives :**
+    - *Mode femme* ➔ `/dashboard/decouverte/produits` avec filtre niche `Mode & accessoires` et recherche `femme`.
+    - *Mode homme* ➔ `/dashboard/decouverte/produits` avec filtre niche `Mode & accessoires` et recherche `homme`.
+    - *Électronique* ➔ `/dashboard/decouverte/produits` avec filtre niche `Tech & gadgets`.
+    - *Maison & Cuisine* ➔ `/dashboard/decouverte/produits` avec filtre niche `Cuisine`.
+    - *Beauté & Soin* ➔ `/dashboard/decouverte/produits` avec filtre niche `Beauté & soin`.
+    - *Toutes les pubs* ➔ `/dashboard/decouverte/publicites`.
+  - **Barre de Recherche « Trouvons votre prochain produit gagnant » :** Soumission avec redirection immédiate vers `/dashboard/decouverte/produits?search=...` (ex : *sérum*, *kit de blanchiment dentaire*), filtrant instantanément les produits gagnants et préservant le mot-clé lors du basculement vers l'onglet *Publicités*.
+- **Moteur de Recherche Multi-Mots Tolérant (`discovery.functions.ts`) :**
+  - Amélioration de `searchTokens` et `adsMatchingSearch` : élimination automatique des mots de liaison français courants (*de*, *du*, *des*, *le*, *la*, *un*, *pour*, etc.) pour garantir que des requêtes comme *« kit de blanchiment dentaire »* trouvent les résultats pertinents contenant *« kit blanchiment »* ou *« dentaire »* sans être pénalisées.
+- **Conservation des Filtres lors de la Navigation par Onglets (`DiscoveryHeader`) :**
+  - Le passage entre les onglets *Boutiques*, *Produits* et *Publicités* conserve désormais automatiquement les paramètres de recherche de l'utilisateur (`search={(prev) => prev}`).
+
+## [16/09/2026] - Refonte Élite de la Page d'Accueil du Dashboard (Style Shopify Command Center)
+
+### Ajouté & Amélioré
+- **Transformation Complète de la Page Accueil (`/dashboard`) en Centre de Pilotage & Découverte :**
+  - **Suppression du doublon avec l'onglet Analyses :** Retrait des graphiques et courbes analytiques lourdes pour laisser l'onglet *Analyses* comme sanctuaire des statistiques avancées, et faire d'*Accueil* une page d'action, d'inspiration et d'accélération.
+  - **1. Barre Supérieure Exécutive :**
+    - Indicateur de statut en direct de la boutique avec puce pulsante verte (*« Prête pour la vente »*).
+    - Bouton d'action rapide *« Copier le lien »* avec notification toast en 1 clic.
+    - Bouton principal *« Voir la boutique »* (ouverture du storefront) et lien discret vers le *Centre d'aide*.
+  - **2. Bandeau Opérationnel Intelligent de Priorités (COD) :**
+    - Détection automatique des commandes en attente d'appel client (*« X commande(s) en attente de confirmation téléphonique »*) avec bouton d'accès immédiat pour traiter et expédier.
+  - **3. En-tête Héro & Recherche IA (Inspiré de Shopify Sidekick) :**
+    - Salutation personnalisée avec le prénom du marchand.
+    - Titre phare : *« Trouvons votre prochain produit gagnant »*.
+    - Barre de recherche/prompt IA interactive permettant de saisir un type de produit et d'atterrir instantanément sur les offres et publicités gagnantes correspondantes.
+  - **4. Rangée de Découverte de Produits par Catégorie (6 Cartes Photos Haute Définition) :**
+    - Cartes au format portrait avec photos léchées, transitions au survol et flèche de navigation :
+      - *Mode femme*
+      - *Mode homme*
+      - *Électronique & High-Tech* (mise en avant spécifique)
+      - *Maison & Cuisine*
+      - *Beauté & Soin*
+      - *Toutes les pubs*
+  - **5. Deux Grandes Vitrines de Démarrage Rapide :**
+    - *Générer une page produit avec DUKAIO IA* (badge *« IA Intégrée · 10s chrono »*, argumentaire COD et bouton vers `/dashboard/produits/ia`).
+    - *Vendre vos propres produits* (badge *« Vos propres stocks »* et bouton d'import direct vers `/dashboard/produits/nouveau`).
+  - **6. Trois Piliers d'Accélération & de Croissance :**
+    - *Choisissez le design de votre boutique* (maquette visuelle de thème et lien vers l'éditeur).
+    - *Nommer votre boutique & marque* (maquette de badge de marque et lien vers les paramètres).
+    - *Paiement à la livraison & WhatsApp* (maquette de badge COD Cash on Delivery et gestion des commandes).
+
+## [16/09/2026] - Accès Illimité aux Publicités (Formules Starter & Pro) & Optimisations Ergonomiques
+
+### Ajouté & Amélioré
+- **Déblocage Intégral de l'Accès aux Publicités pour les Abonnés (`src/lib/plans.ts` & `src/lib/discovery-plan.ts`) :**
+  - **Suppression du bridage sur le nombre de publicités :** Les formules **Starter** et **Pro** bénéficient désormais d'un accès sans aucune restriction à toutes les publicités de l'espace Découverte (`ads: Number.POSITIVE_INFINITY`).
+  - **Mise à jour claire et vendeuse du descriptif des formules :**
+    - **Formule Starter :** *« Accès illimité aux publicités (espace Découverte) »*.
+    - **Formule Pro :** *« Accès illimité et prioritaire aux publicités (espace Découverte) »*.
+    - **Formule Découverte (Gratuit) :** *« Accès aux publicités limité (15 aperçus sans recherche ni filtre) »*.
+  - **Moteur Serveur de la Découverte (`src/lib/discovery.functions.ts`) :**
+    - Prise en charge des limites infinies sans plafond artificiel (`Number.isFinite`), augmentation de la limite de requête Zod jusqu'à 50 000, et pagination fluide permettant de consulter la totalité de la bibliothèque publicitaire.
+- **Harmonisation Ergonomique & Zéro Ascenseur sur la Barre Latérale (`src/components/dashboard/shell.tsx`) :**
+  - Agrandissement standardisé des entrées de navigation (`h-8 text-[13.5px]` avec icônes de `16px`).
+  - Alignement rigoureux des menus déroulants (`CollapsibleNavItem`), des sous-catégories et des boutons de bas de page (*Déconnexion*, *Centre d'aide*).
+  - Compactage équilibré de l'en-tête logo (`py-3`) garantissant que la barre latérale s'affiche en entier **sans aucun défilement vertical (0 scrollbar sur PC)**, même avec le sous-menu « Découverte » entièrement déplié.
+- **Barre de Navigation Flottante Dynamique sur la Landing Page (`src/components/landing/nav.tsx`) :**
+  - Animation de transition ultra-fluide au défilement (hauteur, padding, transparence et flou `backdrop-blur` optimisé).
+
 ## [16/09/2026] - Refonte UX/UI Professionnelle du Studio Marketing & Cadres Modulaires (Style SaaS)
 
 ### Ajouté & Amélioré

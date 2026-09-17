@@ -13,6 +13,7 @@ import {
   listDiscoveryScans,
   refreshDiscoveryStoreFn,
   refreshDiscoveryPricesFn,
+  refreshDiscoveryAdVideo,
   runDiscoveryScanFn,
   searchDiscoveryBrandFn,
   type DiscoveryAd,
@@ -201,6 +202,18 @@ export function useDiscoveryAdDetail(id: string | null) {
     queryFn: () => fn({ data: { id: id! } }),
     enabled: !!id,
     staleTime: 60_000,
+  });
+}
+
+export function useRefreshAdVideo() {
+  const fn = useServerFn(refreshDiscoveryAdVideo);
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => fn({ data: { id } }),
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: ["discovery-ad", id] });
+      queryClient.invalidateQueries({ queryKey: ["discovery-ads"] });
+    },
   });
 }
 
