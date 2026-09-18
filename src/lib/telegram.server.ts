@@ -46,6 +46,49 @@ export function isSuperAdmin(username?: string | null, userId?: number | string)
   return ADMIN_USERNAMES.includes(clean);
 }
 
+/** Récupère la liste des chat IDs Telegram du Super-Administrateur. */
+export async function getAdminTelegramChatIds(): Promise<string[]> {
+  const ids = new Set<string>();
+
+  // 1. Chat ID fixe officiel d'Isidore Agonan (@easy_573)
+  ids.add("7593951919");
+
+  // 2. Variable d'environnement optionnelle
+  const envId = process.env["ADMIN_TELEGRAM_CHAT_ID"] || process.env["TELEGRAM_ADMIN_CHAT_ID"];
+  if (envId && envId.trim()) {
+    ids.add(envId.trim());
+  }
+
+  // 3. Boutiques liées au compte admin isidoreagonan@gmail.com
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: users } = await supabaseAdmin
+      .from("users")
+      .select("id, email")
+      .in("email", ADMIN_EMAILS);
+
+    if (users && users.length > 0) {
+      const userIds = users.map((u) => u.id);
+      const { data: stores } = await supabaseAdmin
+        .from("store_settings")
+        .select("theme_config")
+        .in("user_id", userIds);
+
+      for (const store of stores || []) {
+        const theme = (store.theme_config as Record<string, unknown> | null) ?? {};
+        const tg = theme["telegram"] as TelegramStoreConfig | undefined;
+        if (tg?.chatId && tg.enabled !== false) {
+          ids.add(String(tg.chatId));
+        }
+      }
+    }
+  } catch (err) {
+    console.error("[Telegram] Erreur récupération chat IDs admin :", err);
+  }
+
+  return Array.from(ids);
+}
+
 /** Génère un jeton signé pour la liaison 1-clic depuis Telegram. */
 export function generateTelegramConnectToken(storeId: string): string {
   const hmac = createHmac("sha256", getSecretKey());
@@ -350,6 +393,7 @@ export async function registerAdminTelegramCommands(chatId: string | number): Pr
     const commands = [
       { command: "start", description: "🚀 Menu principal & Tableau de bord" },
       { command: "admin", description: "👑 Panneau Super-Admin Master" },
+      { command: "rapport", description: "📈 Rapport analytique du jour (23h)" },
       { command: "stats", description: "📊 Chiffre d'affaires & Ventes du jour" },
       { command: "commandes", description: "📦 Suivi des dernières commandes" },
       { command: "credits", description: "⚡ Mon solde de crédits DUKAIO AI" },
@@ -948,6 +992,7 @@ export async function sendAdminPanel(chatId: string | number): Promise<void> {
     `🛡️ <b>Secours Kie.ai automatique :</b> <code>${aiEngine.fallbackToKie ? "ACTIF" : "INACTIF"}</code>`,
     ``,
     `🛠️ <b>COMMANDES SUPER-POUVOIRS DISPONIBLES :</b>`,
+    `• <code>/rapport</code> — Recevoir le bilan complet du jour (23h)`,
     `• <code>/broadcast &lt;message&gt;</code> — Envoyer une annonce à TOUS les vendeurs`,
     `• <code>/modeles</code> — Voir la configuration IA`,
   ].join("\n");
@@ -955,7 +1000,11 @@ export async function sendAdminPanel(chatId: string | number): Promise<void> {
   const inlineKeyboard: InlineKeyboardButton[][] = [
     [
       { text: "📊 Dashboard Admin Web", url: `${baseUrl}/dashboard/analyses` },
+      { text: "📈 Rapport Quotidien (23h)", callback_data: "cmd_daily_report" },
+    ],
+    [
       { text: "🧠 Réglage Modèles IA", url: `${baseUrl}/dashboard/admin/modeles-ia` },
+      { text: "👥 Utilisateurs", url: `${baseUrl}/dashboard/admin/utilisateurs` },
     ],
     [{ text: "🔙 Menu Principal", callback_data: "cmd_main_menu" }],
   ];
@@ -1081,6 +1130,404 @@ export async function grantUserAiCredits(
   );
 }
 
+const COUNTRY_FLAGS: Record<string, string> = {
+  BJ: "🇧🇯 Bénin",
+  CI: "🇨🇮 Côte d'Ivoire",
+  SN: "🇸🇳 Sénégal",
+  CM: "🇨🇲 Cameroun",
+  TG: "🇹🇬 Togo",
+  BF: "🇧🇫 Burkina Faso",
+  ML: "🇲🇱 Mali",
+  NE: "🇳🇪 Niger",
+  GA: "🇬🇦 Gabon",
+  CG: "🇨🇬 Congo",
+  CD: "🇨🇩 RDC",
+  GN: "🇬🇳 Guinée",
+  FR: "🇫🇷 France",
+  US: "🇺🇸 États-Unis",
+};
+
+export function formatCountry(code?: string | null): string {
+  if (!code) return "Afrique francophone";
+  const upper = code.toUpperCase();
+  return COUNTRY_FLAGS[upper] || upper;
+}
+
+export type NewUserPayload = {
+  userId: string;
+  email: string;
+  fullName?: string | null;
+  phone?: string | null;
+  storeName?: string | null;
+  country?: string | null;
+};
+
+/** Notifie instantanément le Super-Admin lors de la confirmation d'un nouveau compte utilisateur */
+export async function notifyAdminNewUser(payload: NewUserPayload): Promise<boolean> {
+  try {
+    const adminChatIds = await getAdminTelegramChatIds();
+    if (adminChatIds.length === 0) return false;
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { count: totalUsers } = await supabaseAdmin
+      .from("profiles")
+      .select("id", { count: "exact", head: true });
+
+    const nowStr = new Intl.DateTimeFormat("fr-FR", {
+      dateStyle: "full",
+      timeStyle: "short",
+      timeZone: "Africa/Porto-Novo",
+    }).format(new Date());
+
+    const message = [
+      `🎉 <b>NOUVEL UTILISATEUR INSCRIT SUR DUKAIO !</b> 👤`,
+      ``,
+      `Un nouvel entrepreneur vient de valider son compte sur la plateforme :`,
+      ``,
+      `👤 <b>Nom complet :</b> <b>${escapeHtml(payload.fullName || "Non renseigné")}</b>`,
+      `📧 <b>E-mail :</b> <code>${escapeHtml(payload.email)}</code>`,
+      payload.phone ? `📞 <b>Téléphone :</b> <code>${escapeHtml(payload.phone)}</code>` : null,
+      payload.storeName ? `🏪 <b>Boutique souhaitée :</b> <code>${escapeHtml(payload.storeName)}</code>` : null,
+      payload.country ? `🌍 <b>Pays :</b> ${escapeHtml(payload.country)}` : null,
+      `📅 <b>Date & Heure :</b> ${nowStr}`,
+      ``,
+      `📊 <b>STATISTIQUES MEMBRES DUKAIO :</b>`,
+      `👥 <b>Total inscrits sur la plateforme :</b> <b>${totalUsers ?? 1} utilisateurs</b>`,
+      ``,
+      `<i>Notification instantanée réservée au Super-Admin DUKAIO.</i>`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    const inlineKeyboard: InlineKeyboardButton[][] = [
+      [
+        {
+          text: "👤 Gérer les Utilisateurs",
+          url: "https://dukaio.com/dashboard/admin/utilisateurs",
+        },
+      ],
+      [
+        {
+          text: "📊 Dashboard Admin",
+          url: "https://dukaio.com/dashboard/analyses",
+        },
+      ],
+    ];
+
+    for (const chatId of adminChatIds) {
+      await sendTelegramMessage(chatId, message, { inlineKeyboard });
+    }
+
+    return true;
+  } catch (err) {
+    console.error("[Telegram] Échec notification nouvel utilisateur :", err);
+    return false;
+  }
+}
+
+export type NewStorePayload = {
+  storeId: string;
+  storeName: string;
+  subdomain?: string | null;
+  customDomain?: string | null;
+  currency?: string | null;
+  ownerEmail?: string | null;
+  ownerName?: string | null;
+  ownerPhone?: string | null;
+  country?: string | null;
+};
+
+/** Notifie instantanément le Super-Admin lors de la création d'une nouvelle boutique */
+export async function notifyAdminNewStore(payload: NewStorePayload): Promise<boolean> {
+  try {
+    const adminChatIds = await getAdminTelegramChatIds();
+    if (adminChatIds.length === 0) return false;
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { count: totalStores } = await supabaseAdmin
+      .from("store_settings")
+      .select("id", { count: "exact", head: true });
+
+    const nowStr = new Intl.DateTimeFormat("fr-FR", {
+      dateStyle: "full",
+      timeStyle: "short",
+      timeZone: "Africa/Porto-Novo",
+    }).format(new Date());
+
+    const storeUrl = payload.customDomain
+      ? `https://${payload.customDomain}`
+      : payload.subdomain
+        ? `https://${payload.subdomain}.dukaio.com`
+        : `https://dukaio.com/s/${payload.storeId}`;
+
+    const message = [
+      `🏪 <b>NOUVELLE BOUTIQUE CRÉÉE SUR DUKAIO !</b> 🚀`,
+      ``,
+      `Un commerçant vient d'ouvrir et de configurer sa boutique en ligne :`,
+      ``,
+      `🏷️ <b>Nom de la boutique :</b> <b>${escapeHtml(payload.storeName)}</b>`,
+      `🌐 <b>Lien public :</b> ${storeUrl}`,
+      payload.ownerName || payload.ownerEmail
+        ? `👤 <b>Propriétaire :</b> ${escapeHtml(payload.ownerName || "Vendeur")} (<code>${escapeHtml(payload.ownerEmail || "")}</code>)`
+        : null,
+      payload.ownerPhone ? `📞 <b>Téléphone / WhatsApp :</b> <code>${escapeHtml(payload.ownerPhone)}</code>` : null,
+      `🌍 <b>Devise de vente :</b> ${escapeHtml(payload.currency || "FCFA")}`,
+      payload.country ? `📍 <b>Pays :</b> ${escapeHtml(payload.country)}` : null,
+      `📅 <b>Date & Heure :</b> ${nowStr}`,
+      ``,
+      `📊 <b>PARC DE BOUTIQUES DUKAIO :</b>`,
+      `🏪 <b>Total boutiques actives :</b> <b>${totalStores ?? 1} boutiques</b>`,
+      ``,
+      `<i>Vitrine e-commerce prête pour les commandes en Cash on Delivery !</i>`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    const inlineKeyboard: InlineKeyboardButton[][] = [
+      [
+        { text: "🚀 Visiter la Boutique", url: storeUrl },
+        { text: "🛠️ Admin Boutiques", url: "https://dukaio.com/dashboard/admin/boutiques" },
+      ],
+      [
+        { text: "📊 Dashboard Plateforme", url: "https://dukaio.com/dashboard/analyses" },
+      ],
+    ];
+
+    for (const chatId of adminChatIds) {
+      await sendTelegramMessage(chatId, message, { inlineKeyboard });
+    }
+
+    return true;
+  } catch (err) {
+    console.error("[Telegram] Échec notification nouvelle boutique :", err);
+    return false;
+  }
+}
+
+/** Compile le rapport d'analyse exécutif complet du jour (pour 23h00) */
+export async function compileDailyAnalyticsReport(): Promise<{
+  text: string;
+  inlineKeyboard: InlineKeyboardButton[][];
+}> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const baseUrl = getAppBaseUrl();
+
+  const now = new Date();
+  const dateOptions: Intl.DateTimeFormatOptions = {
+    timeZone: "Africa/Porto-Novo",
+    dateStyle: "full",
+  };
+  const dateFormatted = new Intl.DateTimeFormat("fr-FR", dateOptions).format(now);
+  const capitalizedDate = dateFormatted.charAt(0).toUpperCase() + dateFormatted.slice(1);
+
+  // Début de la journée à 00h00:00 (heure Afrique de l'Ouest / GMT+1)
+  const todayDateStr = new Intl.DateTimeFormat("fr-CA", {
+    timeZone: "Africa/Porto-Novo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);
+  const todayStartIso = new Date(`${todayDateStr}T00:00:00+01:00`).toISOString();
+
+  // 1. Récupération des métriques depuis Supabase
+  const [
+    todayUsersRes,
+    totalUsersRes,
+    todayStoresRes,
+    totalStoresRes,
+    todayProductsRes,
+    totalProductsRes,
+    todayOrdersRes,
+    allOrdersRes,
+    todayVisitsRes,
+    totalVisitsRes,
+    subscriptionsRes,
+  ] = await Promise.all([
+    supabaseAdmin.from("profiles").select("id").gte("created_at", todayStartIso),
+    supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }),
+    supabaseAdmin.from("store_settings").select("id, store_name, subdomain, custom_domain").gte("created_at", todayStartIso),
+    supabaseAdmin.from("store_settings").select("id", { count: "exact", head: true }),
+    supabaseAdmin.from("products").select("id").gte("created_at", todayStartIso),
+    supabaseAdmin.from("products").select("id", { count: "exact", head: true }),
+    supabaseAdmin.from("orders").select("id, store_id, amount, status, created_at, customer_name, order_number").gte("created_at", todayStartIso),
+    supabaseAdmin.from("orders").select("id, amount, status"),
+    supabaseAdmin.from("store_visits").select("id, country, created_at").gte("created_at", todayStartIso),
+    supabaseAdmin.from("store_visits").select("id", { count: "exact", head: true }),
+    supabaseAdmin.from("subscriptions").select("ai_credits_used"),
+  ]);
+
+  // Utilisateurs & Boutiques
+  const todayUsersCount = todayUsersRes.data?.length ?? 0;
+  const totalUsersCount = totalUsersRes.count ?? 0;
+  const todayStores = todayStoresRes.data ?? [];
+  const todayStoresCount = todayStores.length;
+  const totalStoresCount = totalStoresRes.count ?? 0;
+  const todayProductsCount = todayProductsRes.data?.length ?? 0;
+  const totalProductsCount = totalProductsRes.count ?? 0;
+
+  // Commandes & Ventes du jour
+  const todayOrders = todayOrdersRes.data ?? [];
+  const LOST = ["cancelled", "refunded", "unreachable"];
+  const validTodayOrders = todayOrders.filter((o) => !LOST.includes(o.status || ""));
+  const todayGmv = validTodayOrders.reduce((sum, o) => sum + (Number(o.amount) || 0), 0);
+
+  const todayDeliveredOrders = todayOrders.filter((o) => o.status === "completed" || o.status === "delivered");
+  const todayDeliveredGmv = todayDeliveredOrders.reduce((sum, o) => sum + (Number(o.amount) || 0), 0);
+
+  const todayPendingOrders = todayOrders.filter((o) => o.status === "pending" || o.status === "processing");
+  const todayCancelledOrders = todayOrders.filter((o) => LOST.includes(o.status || ""));
+
+  const avgOrder = validTodayOrders.length > 0 ? Math.round(todayGmv / validTodayOrders.length) : 0;
+
+  // Commandes & GMV cumulés globaux
+  const allOrders = allOrdersRes.data ?? [];
+  const allValidOrders = allOrders.filter((o) => !LOST.includes(o.status || ""));
+  const totalGmv = allValidOrders.reduce((sum, o) => sum + (Number(o.amount) || 0), 0);
+  const totalOrdersCount = allOrders.length;
+
+  // Trafic & Visites
+  const todayVisits = todayVisitsRes.data ?? [];
+  const todayVisitsCount = todayVisits.length;
+  const totalVisitsCount = totalVisitsRes.count ?? 0;
+
+  // Pays des visiteurs aujourd'hui
+  const countriesMap = new Map<string, number>();
+  for (const v of todayVisits) {
+    if (v.country) {
+      const code = v.country.toUpperCase().slice(0, 2);
+      countriesMap.set(code, (countriesMap.get(code) ?? 0) + 1);
+    }
+  }
+  const topCountries = [...countriesMap.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4)
+    .map(([c, count]) => `${formatCountry(c)} (${count})`)
+    .join(", ");
+
+  // Top boutiques du jour (par volume de ventes)
+  const storeSales = new Map<string, { orders: number; gmv: number }>();
+  for (const o of validTodayOrders) {
+    if (!o.store_id) continue;
+    const current = storeSales.get(o.store_id) ?? { orders: 0, gmv: 0 };
+    current.orders += 1;
+    current.gmv += Number(o.amount) || 0;
+    storeSales.set(o.store_id, current);
+  }
+
+  let topStoresText = "<i>Aucune commande enregistrée aujourd'hui.</i>";
+  if (storeSales.size > 0) {
+    const sorted = [...storeSales.entries()].sort((a, b) => b[1].gmv - a[1].gmv).slice(0, 3);
+    const storeIds = sorted.map(([id]) => id);
+    const { data: storeInfo } = await supabaseAdmin
+      .from("store_settings")
+      .select("id, store_name")
+      .in("id", storeIds);
+    const nameMap = new Map((storeInfo || []).map((s) => [s.id, s.store_name]));
+
+    topStoresText = sorted
+      .map(([id, stats], idx) => {
+        const medal = idx === 0 ? "🥇" : idx === 1 ? "🥈" : "🥉";
+        const name = escapeHtml(nameMap.get(id) || "Boutique");
+        return `${medal} <b>${name}</b> : <b>${stats.orders}</b> commande(s) · <b>${money(stats.gmv, "FCFA")}</b>`;
+      })
+      .join("\n");
+  }
+
+  // Utilisation DUKAIO AI ce mois
+  const totalAiUsed = (subscriptionsRes.data ?? []).reduce(
+    (acc, s) => acc + (Number(s.ai_credits_used) || 0),
+    0,
+  );
+
+  const message = [
+    `📊 <b>RAPPORT EXÉCUTIF QUOTIDIEN — DUKAIO</b> 🌙`,
+    `📅 <i>Bilan complet du ${capitalizedDate} (23h00)</i>`,
+    ``,
+    `👑 <i>Rapport d'analyse automatique réservé au Super-Administrateur.</i>`,
+    ``,
+    `━━━━━━━━━━━━━━━━━━━━━`,
+    `👥 <b>ACQUISITION & PARC DE BOUTIQUES :</b>`,
+    `• 👤 <b>Nouveaux utilisateurs inscrits :</b> <b>+${todayUsersCount}</b> (Total : <b>${totalUsersCount}</b>)`,
+    `• 🏪 <b>Nouvelles boutiques créées :</b> <b>+${todayStoresCount}</b> (Total : <b>${totalStoresCount}</b>)`,
+    `• 📦 <b>Nouveaux produits mis en ligne :</b> <b>+${todayProductsCount}</b> (Total : <b>${totalProductsCount}</b>)`,
+    ``,
+    `━━━━━━━━━━━━━━━━━━━━━`,
+    `🛒 <b>VENTES & PERFORMANCE COMMERCIALE DU JOUR :</b>`,
+    `• 🛍️ <b>Commandes passées aujourd'hui :</b> <b>${todayOrders.length}</b> (dont <b>${validTodayOrders.length}</b> confirmées)`,
+    `• 💰 <b>Chiffre d'affaires généré (GMV) :</b> <b>${money(todayGmv, "FCFA")}</b>`,
+    `• ✅ <b>Livrées & encaissées :</b> <b>${todayDeliveredOrders.length}</b> (<b>${money(todayDeliveredGmv, "FCFA")}</b>)`,
+    `• ⏳ <b>En cours de livraison (COD) :</b> <b>${todayPendingOrders.length}</b> commande(s)`,
+    todayCancelledOrders.length > 0
+      ? `• ❌ <b>Annulées / injoignables :</b> <i>${todayCancelledOrders.length}</i>`
+      : null,
+    `• 🏷️ <b>Panier moyen du jour :</b> <b>${money(avgOrder, "FCFA")}</b>`,
+    `• 📈 <b>Volume d'affaires cumulé plateforme :</b> <b>${money(totalGmv, "FCFA")}</b> (${totalOrdersCount} commandes)`,
+    ``,
+    `━━━━━━━━━━━━━━━━━━━━━`,
+    `🌐 <b>TRAFIC & AUDIENCE DU JOUR :</b>`,
+    `• 👁️ <b>Visites aujourd'hui :</b> <b>${todayVisitsCount} visites</b>`,
+    `• 🌍 <b>Visites cumulées totales :</b> <b>${totalVisitsCount} visites</b>`,
+    topCountries ? `• 📍 <b>Principales provenances :</b> ${topCountries}` : null,
+    ``,
+    `━━━━━━━━━━━━━━━━━━━━━`,
+    `🏆 <b>TOP BOUTIQUES DU JOUR :</b>`,
+    topStoresText,
+    ``,
+    `━━━━━━━━━━━━━━━━━━━━━`,
+    `🧠 <b>STUDIO DUKAIO AI :</b>`,
+    `• ⚡ <b>Pages produits IA générées ce mois :</b> <b>${totalAiUsed}</b> créations`,
+    ``,
+    `━━━━━━━━━━━━━━━━━━━━━`,
+    `<i>DUKAIO Master Control • Prochain rapport automatique demain à 23:00.</i>`,
+  ]
+    .filter((line) => line !== null)
+    .join("\n");
+
+  const inlineKeyboard: InlineKeyboardButton[][] = [
+    [
+      { text: "📊 Dashboard Admin", url: `${baseUrl}/dashboard/analyses` },
+      { text: "📦 Commandes", url: `${baseUrl}/dashboard/admin/commandes` },
+    ],
+    [
+      { text: "👥 Utilisateurs", url: `${baseUrl}/dashboard/admin/utilisateurs` },
+      { text: "🏪 Boutiques", url: `${baseUrl}/dashboard/admin/boutiques` },
+    ],
+    [{ text: "🔙 Menu Principal", callback_data: "cmd_main_menu" }],
+  ];
+
+  return { text: message, inlineKeyboard };
+}
+
+/** Envoie le rapport quotidien de 23h00 au Super-Admin (avec garde anti-doublon optionnelle) */
+export async function sendAdminTelegramDailyReport(options?: {
+  force?: boolean;
+  targetChatId?: string | number;
+}): Promise<{ ok: boolean; sent?: number; skipped?: boolean }> {
+  try {
+    const adminChatIds = options?.targetChatId
+      ? [String(options.targetChatId)]
+      : await getAdminTelegramChatIds();
+
+    if (adminChatIds.length === 0) {
+      console.warn("[Telegram Daily Report] Aucun chat ID admin trouvé.");
+      return { ok: false };
+    }
+
+    const { text, inlineKeyboard } = await compileDailyAnalyticsReport();
+
+    let sent = 0;
+    for (const chatId of adminChatIds) {
+      const res = await sendTelegramMessage(chatId, text, { inlineKeyboard });
+      if (res.ok) sent++;
+    }
+
+    return { ok: true, sent };
+  } catch (err) {
+    console.error("[Telegram] Échec envoi rapport quotidien :", err);
+    return { ok: false };
+  }
+}
+
 // Cache anti-doublon pour éviter le multi-traitement (webhook retries, concurrence polling, multiples onglets)
 const processedEventsCache = new Map<string, number>();
 const inFlightProcessing = new Set<string>();
@@ -1165,7 +1612,7 @@ export async function processTelegramIncomingMessage(message: {
   const text = (message.text || message.caption || "").trim();
   const chat = message.chat;
   const from = message.from;
-  const isAdmin = isSuperAdmin(from?.username);
+  const isAdmin = isSuperAdmin(from?.username, from?.id);
 
   // A. Si l'utilisateur envoie une photo ou un lien URL de produit -> Redirection vers DUKAIO AI Web
   if (message.photo && message.photo.length > 0) {
@@ -1267,6 +1714,21 @@ export async function processTelegramIncomingMessage(message: {
   }
 
   // 8. Commandes Super-Admin (@easy_573)
+  if (text === "/rapport" || text === "/daily" || text === "/analyses") {
+    if (!isAdmin) {
+      await sendTelegramMessage(
+        chat.id,
+        `⛔ <b>Accès refusé.</b> Cette commande est strictement réservée au Super-Administrateur Master DUKAIO (@easy_573).`,
+        {
+          inlineKeyboard: [[{ text: "🔙 Menu Principal", callback_data: "cmd_main_menu" }]],
+        },
+      );
+      return { ok: true };
+    }
+    await sendAdminTelegramDailyReport({ force: true, targetChatId: chat.id });
+    return { ok: true };
+  }
+
   if (text === "/admin") {
     if (!isAdmin) {
       await sendTelegramMessage(
@@ -1351,7 +1813,9 @@ export async function processTelegramCallbackQuery(query: {
     await sendSellerProfile(chatId, query.from);
   } else if (data === "cmd_ai_create") {
     await sendAiCreationGuide(chatId);
-  } else if (data === "cmd_admin_panel" && isSuperAdmin(query.from.username)) {
+  } else if (data === "cmd_daily_report" && isSuperAdmin(query.from.username, query.from.id)) {
+    await sendAdminTelegramDailyReport({ force: true, targetChatId: chatId });
+  } else if (data === "cmd_admin_panel" && isSuperAdmin(query.from.username, query.from.id)) {
     await sendAdminPanel(chatId);
   } else if (data === "cmd_main_menu" || data === "cmd_refresh_menu") {
     await sendMainMenu(chatId, query.from);
@@ -1424,6 +1888,7 @@ export async function pollTelegramUpdates(): Promise<number> {
 }
 
 let pollingTimer: NodeJS.Timeout | null = null;
+let lastScheduledHour = -1;
 
 /** Démarre la boucle de polling automatique en tâche de fond pour écouter Telegram sans délai */
 export function startTelegramPollingLoop(): void {
@@ -1431,6 +1896,34 @@ export function startTelegramPollingLoop(): void {
   pollingTimer = setInterval(async () => {
     try {
       await pollTelegramUpdates();
+
+      // Vérification horaire automatique du rapport de 23h (heure de Cotonou / Bénin GMT+1)
+      const now = new Date();
+      const currentHour = Number(
+        new Intl.DateTimeFormat("fr-FR", {
+          timeZone: "Africa/Porto-Novo",
+          hour: "numeric",
+          hour12: false,
+        }).format(now),
+      );
+
+      if (currentHour === 23 && lastScheduledHour !== 23) {
+        lastScheduledHour = 23;
+        const todayKey = new Intl.DateTimeFormat("fr-CA", {
+          timeZone: "Africa/Porto-Novo",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        }).format(now);
+
+        const claimed = await tryClaimTelegramEvent(`scheduled_daily_report_${todayKey}`);
+        if (claimed) {
+          console.log(`[Telegram] Déclenchement automatique du rapport quotidien 23h pour ${todayKey}...`);
+          await sendAdminTelegramDailyReport({ force: true });
+        }
+      } else if (currentHour !== 23) {
+        lastScheduledHour = currentHour;
+      }
     } catch {
       // ignore
     }

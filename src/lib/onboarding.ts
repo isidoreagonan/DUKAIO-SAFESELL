@@ -126,6 +126,7 @@ export function useCompleteOnboarding() {
         .limit(1)
         .maybeSingle();
 
+      let storeId = existing?.id;
       if (existing) {
         const { error } = await supabase
           .from("store_settings")
@@ -133,11 +134,16 @@ export function useCompleteOnboarding() {
           .eq("id", existing.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("store_settings").insert({
-          ...values,
-          user_id: user.id,
-        });
+        const { data: inserted, error } = await supabase
+          .from("store_settings")
+          .insert({
+            ...values,
+            user_id: user.id,
+          })
+          .select("id")
+          .single();
         if (error) throw error;
+        storeId = inserted?.id;
       }
 
       const { error: profileError } = await supabase
@@ -156,6 +162,17 @@ export function useCompleteOnboarding() {
       if (profileError) throw profileError;
 
       await supabase.auth.updateUser({ data: { onboarding_completed: true, store_name: storeName } });
+
+      /* Notification instantanée Telegram Super-Admin (non bloquante) */
+      if (storeId) {
+        try {
+          const { notifyAdminStoreCreated } = await import("@/lib/stores.functions");
+          await notifyAdminStoreCreated({ data: { storeId } });
+        } catch {
+          // non-bloquant
+        }
+      }
+
       return true;
     },
     onSuccess: () => {

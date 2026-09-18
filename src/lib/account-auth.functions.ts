@@ -251,6 +251,22 @@ export const confirmSignup = createServerFn({ method: "POST" })
     } catch (e) {
       console.error("welcome email", e);
     }
+
+    /* Notification instantanée Telegram Super-Admin (non bloquante) */
+    try {
+      const { notifyAdminNewUser } = await import("@/lib/telegram.server");
+      const meta = (user.raw_user_meta_data ?? user.user_metadata ?? {}) as Record<string, unknown>;
+      await notifyAdminNewUser({
+        userId: user.id,
+        email: data.email,
+        fullName: typeof meta["full_name"] === "string" ? meta["full_name"] : undefined,
+        storeName: typeof meta["store_name"] === "string" ? meta["store_name"] : undefined,
+        phone: typeof meta["phone"] === "string" ? meta["phone"] : undefined,
+      });
+    } catch (e) {
+      console.error("[Telegram Admin Notify User Error]", e);
+    }
+
     return { ok: true as const };
   });
 

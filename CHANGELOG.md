@@ -4,6 +4,31 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 > **Note d'environnement :** Ce projet a été initialement généré avec Lovable, mais a été entièrement migré sur Antigravity. Il n'est plus synchronisé avec Lovable Cloud et utilise désormais exclusivement la propre instance Supabase de l'utilisateur.
 
+## [18/09/2026] - Notifications Telegram Super-Admin Exclusives & Rapport Analytique Quotidien (23h00)
+
+### Nouveautés & Fonctionnalités Super-Admin
+- **Alertes Instantanées Telegram (Super-Admin @easy_573) :**
+  - **Nouvelle Inscription Utilisateur :** Dès confirmation du code OTP par un nouvel entrepreneur, envoi automatique d'une fiche Telegram détaillée (nom complet, email, téléphone, boutique souhaitée, date/heure, pays, et total des membres inscrits sur DUKAIO) avec boutons directs d'accès à l'administration des utilisateurs.
+  - **Création / Ouverture de Boutique :** Dès finalisation de l'onboarding ou ajout d'une boutique supplémentaire, envoi instantané d'une alerte avec nom de boutique, lien public officiel, identité du commerçant, téléphone, devise et total du parc de boutiques actives avec boutons d'accès rapide.
+- **Rapport Exécutif Quotidien Automatique à 23h00 :**
+  - Bilan complet et soigné généré chaque soir à 23h00 (heure du Bénin / Afrique de l'Ouest) synthétisant :
+    - Nouveaux inscrits du jour & total plateforme.
+    - Nouvelles boutiques créées aujourd'hui & total parc.
+    - Nouveaux produits mis en ligne.
+    - Commandes passées aujourd'hui, commandes confirmées, commandes livrées/encaissées, commandes en attente (COD).
+    - Chiffre d'affaires / GMV du jour (en FCFA) et panier moyen.
+    - Volume d'affaires cumulé global et total de commandes historiques.
+    - Trafic & visites du jour sur le site / plateformes et cumul global, avec répartition des principaux pays de provenance.
+    - Podium des meilleures boutiques du jour (top 3 par chiffre d'affaires et commandes).
+    - Utilisation des crédits DUKAIO AI du mois.
+- **Accès & Commandes Telegram à la Demande :**
+  - Commande `/rapport` ou `/daily` : Permet au Super-Admin de recevoir immédiatement le rapport du jour à tout moment.
+  - Bouton interactif `📈 Rapport Quotidien (23h)` intégré directement au menu `/admin`.
+  - Protection stricte : réservé exclusivement à `@easy_573` (ID Telegram `7593951919`).
+- **Infrastructure & Automatisation Robuste :**
+  - Nouvelle route API planifiée `/api/public/cron/daily-report` (GET/POST) sécurisée par Bearer token et clé secrète CRON.
+  - Démon de vérification horaire automatique à 23h00 intégré dans `telegram-worker.ts` et dans la boucle de polling avec verrou atomique anti-doublon distribué (`tryClaimTelegramEvent`).
+
 ## [18/09/2026] - Optimisation & Réduction Drastique de la Longueur de la Page d'Accueil (Mobile & Desktop)
 
 ### Corrigé & Amélioré
