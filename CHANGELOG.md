@@ -4,6 +4,23 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 > **Note d'environnement :** Ce projet a été initialement généré avec Lovable, mais a été entièrement migré sur Antigravity. Il n'est plus synchronisé avec Lovable Cloud et utilise désormais exclusivement la propre instance Supabase de l'utilisateur.
 
+## [18/09/2026] - Optimisation & Réduction Drastique de la Longueur de la Page d'Accueil (Mobile & Desktop)
+
+### Corrigé & Amélioré
+- **Réduction de 67% de la Hauteur Totale & Aération de l'En-tête (Mobile & PC) :**
+  - Fin de l'empilement vertical infini qui nécessitait 8 balayages sur mobile et un long défilement sur PC.
+  - **Aération Supérieure Équilibrée :** Ajustement du padding supérieur (`pt-6 sm:pt-10`) pour détacher harmonieusement la section héros ("Trouvons votre prochain produit gagnant") de la barre de navigation du haut, offrant une respiration visuelle élégante et professionnelle sans effet de collage.
+  - **Carrousel Découverte Horizontal Tactile sur Mobile :** Les 6 cartes de catégories ne s'empilent plus sur 3 rangées verticales géantes (750px), mais défilent horizontalement avec fluidité sur une seule ligne compacte (110px) avec barre de défilement masquée.
+  - **Démarrage Rapide Consolidé :** Fusion des actions majeures (*Créer avec l'IA DUKAIO* et *Ajouter ses propres stocks*) en 2 cartes horizontales compactes et percutantes.
+  - **Suppression du Bandeau Supérieur Doublon :** Retrait de la barre d'état de boutique (*Votre boutique · Prête pour la vente*, *Copier*, *Voir boutique*, *Centre d'aide*) pour éliminer toute duplication avec le menu de navigation supérieur et offrir un accès direct au cœur de l'espace de vente.
+- **Harmonisation de la Charte Graphique des Cartes (Design System DUKAIO) :**
+  - Correction des angles excessifs (`rounded-2xl`, `rounded-xl`, `rounded-full`) qui ne correspondaient pas à l'identité visuelle de DUKAIO.
+  - Application stricte des rayons de courbure originaux du projet :
+    - Cartes, conteneurs et sections : **`rounded-[6px]`** (angles précis, nets et professionnels).
+    - Boutons d'action et champs de recherche : **`rounded-[6px]`** / **`rounded-[4px]`**.
+    - Badges et étiquettes techniques : **`rounded-[4px]`**.
+  - Rendu visuel net, structuré et cohérent avec l'ensemble du tableau de bord (sidebar, cartes d'annonces, réglages).
+
 ## [17/09/2026] - Refonte En-tête Découverte (Logo Officiel Meta & Design "Bibliothèque" fidèle à la Capture 2)
 
 ### Corrigé & Amélioré
