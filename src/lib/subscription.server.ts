@@ -56,8 +56,8 @@ export async function primaryStore(userId: string) {
 }
 
 /**
- * Lit l'abonnement de la boutique et le crée en formule Découverte (gratuite,
- * sans essai) au premier accès. L'IA reste fermée jusqu'au passage en payant.
+ * Lit l'abonnement de la boutique et le crée en Essai Gratuit 14 jours
+ * au premier accès. Accorde 1 crédit IA d'accueil offert.
  */
 export async function ensureSubscription(userId: string, storeId: string) {
   const db = await adminDb();
@@ -70,17 +70,18 @@ export async function ensureSubscription(userId: string, storeId: string) {
   if (data) return data as unknown as SubscriptionRow;
 
   const now = new Date();
+  const trialEnds = new Date(now.getTime() + 14 * 86400000);
   const { data: created, error: insertError } = await db
     .from("store_subscriptions")
     .insert({
       store_id: storeId,
       user_id: userId,
       plan: "free",
-      status: "free",
+      status: "trialing",
       amount: 0,
       currency: "XOF",
       billing_period: "monthly",
-      trial_ends_at: null,
+      trial_ends_at: trialEnds.toISOString(),
       period_start: now.toISOString(),
       period_end: null,
       ai_period_start: now.toISOString(),
@@ -147,11 +148,13 @@ export async function consumeAiCredit(userId: string, cost = 1) {
   if (state.unlimited) return { left: Number.MAX_SAFE_INTEGER, plan: state.plan.key };
   if (state.limits.aiCredits === 0)
     throw new Error(
-      "La création par IA est réservée aux formules Starter et Pro. Passez à une formule payante ou créez votre page manuellement.",
+      "Votre essai gratuit est expiré. Passez à Starter (7 900 FCFA) ou Pro (14 900 FCFA) pour débloquer l'IA.",
     );
   if (state.aiLeft < cost)
     throw new Error(
-      `Quota IA épuisé (${state.limits.aiCredits} créations / mois sur la formule ${state.plan.name}). Passez à une formule supérieure ou attendez le renouvellement.`,
+      state.trialing
+        ? "Votre création IA d'essai gratuit a été utilisée ! Passez à Starter (20 créations/mois) ou Pro (40 créations/mois) pour continuer."
+        : `Quota IA épuisé (${state.limits.aiCredits} créations / mois sur la formule ${state.plan.name}). Passez à une formule supérieure ou attendez le renouvellement.`,
     );
 
   const db = await adminDb();

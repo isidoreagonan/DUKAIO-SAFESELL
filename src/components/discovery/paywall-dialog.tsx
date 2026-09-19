@@ -12,9 +12,9 @@ export function DiscoveryPaywall({
   title = "Abonnez-vous pour débloquer la recherche et les filtres",
   description = "Filtrez par pays, niche, durée de diffusion, traction et variantes, et trouvez les produits gagnants en quelques minutes.",
   features = ["Boutiques", "Produits", "Publicités", "Créations IA"],
-  price = "À partir de 4 900 FCFA/mois",
+  price = "À partir de 7 900 FCFA/mois",
   cta = "S'abonner maintenant",
-  footnote = "Formule Découverte : 15 publicités beauté de France, sans recherche ni filtre.",
+  footnote = "Formule Découverte : 15 publicités sans recherche ni filtre.",
 }: {
   open: boolean;
   onClose: () => void;

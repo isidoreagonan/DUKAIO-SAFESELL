@@ -811,6 +811,10 @@ function ProduitIaPage() {
             description: "DUKAIO AI reprend au dernier visuel enregistré.",
           });
           void followJob(resumed.id);
+        } else if (state.status === "done") {
+          toast.success("Votre page de vente est prête !", {
+            description: "Vérifiez vos textes et visuels, puis validez pour ouvrir dans l'éditeur.",
+          });
         }
       } catch {
         /* aucune création à reprendre */

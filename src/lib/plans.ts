@@ -38,71 +38,72 @@ export type Plan = {
   missing: string[];
 };
 
-/** Plus d'essai gratuit : la formule Découverte est gratuite pour toujours. */
-export const TRIAL_DAYS = 0;
+/** Durée de l'essai gratuit en jours lors de la création d'un compte. */
+export const TRIAL_DAYS = 14;
 
 
 export const PLAN_CATALOG: Record<PlanKey, Plan> = {
   free: {
     key: "free",
-    name: "Découverte",
-    tagline: "Lancez votre boutique gratuitement, à la main.",
+    name: "Essai Gratuit",
+    tagline: "14 jours pour lancer votre boutique et tester l'IA DUKAIO.",
     monthly: 0,
     yearly: 0,
     popular: false,
     limits: {
       stores: 1,
       products: 20,
-      aiCredits: 0,
+      aiCredits: 1,
       team: 0,
       customDomain: false,
       removeBadge: false,
       prioritySupport: false,
     },
     features: [
-      "1 boutique en ligne + lien partageable",
-      "Jusqu'à 20 produits",
+      "14 jours d'essai gratuit complet",
+      "1 création de produit par IA offerte",
+      "1 boutique en ligne publiable + lien partageable",
+      "Jusqu'à 20 produits manuels",
       "Commandes illimitées (paiement à la livraison)",
-      "Panier, codes promo et offres",
-      "Suivi des commandes et e-mails clients",
+      "Formulaire COD & contact WhatsApp",
+      "Suivi des commandes et clients",
     ],
     missing: [
-      "Pas de relance des paniers abandonnés",
-      "Accès aux publicités limité (15 aperçus sans recherche ni filtre)",
-      "Aucune création par IA — tout se fait manuellement",
-      "Pas de domaine personnalisé",
+      "Catalogue publicités limité (15 aperçus sans filtres)",
       "Badge DUKAIO affiché sur la boutique",
+      "Pas de domaine personnalisé",
+      "Pas de relance des paniers abandonnés",
     ],
   },
   starter: {
     key: "starter",
     name: "Starter",
-    tagline: "Pour vendre sérieusement avec l'IA à vos côtés.",
-    monthly: 4900,
-    yearly: 49000,
+    tagline: "Pour vendre sérieusement en marque blanche avec l'IA.",
+    monthly: 7900,
+    yearly: 79000,
     popular: false,
     limits: {
       stores: 1,
       products: 200,
-      aiCredits: 10,
+      aiCredits: 20,
       team: 1,
       customDomain: false,
-      removeBadge: false,
+      removeBadge: true,
       prioritySupport: false,
     },
     features: [
+      "Sans badge DUKAIO (Boutique 100% à votre marque)",
       "Accès illimité aux publicités (espace Découverte)",
       "Recherche et filtres avancés (Publicités, Produits, Boutiques)",
-      "10 créations IA par mois (page produit complète)",
+      "20 créations IA par mois (page produit complète)",
       "Jusqu'à 200 produits",
       "Relance automatique des paniers abandonnés par e-mail",
       "Analyses et visites en temps réel",
       "Support e-mail sous 24 h",
     ],
     missing: [
-      "Pas de domaine personnalisé",
+      "Pas de domaine personnalisé (.com)",
       "1 seule boutique",
-      "Badge DUKAIO affiché sur la boutique",
     ],
   },
   pro: {
@@ -115,22 +116,22 @@ export const PLAN_CATALOG: Record<PlanKey, Plan> = {
     limits: {
       stores: 5,
       products: Number.POSITIVE_INFINITY,
-      aiCredits: 30,
+      aiCredits: 40,
       team: 5,
       customDomain: true,
       removeBadge: true,
       prioritySupport: true,
     },
     features: [
+      "Sans badge DUKAIO (Marque blanche totale)",
       "Accès illimité et prioritaire aux publicités (espace Découverte)",
       "Recherche et filtres avancés (Publicités, Produits, Boutiques)",
       "Accès prioritaire à toutes les nouvelles tendances et analyses",
-      "30 créations IA par mois",
+      "40 créations IA par mois",
       "Produits illimités",
       "Jusqu'à 5 boutiques",
       "Relance automatique des paniers abandonnés par e-mail",
       "Domaine personnalisé (votre-marque.com)",
-      "Sans badge DUKAIO",
       "Robot de commande WhatsApp (à venir)",
       "Support prioritaire 24/7 (WhatsApp)",
     ],
@@ -165,6 +166,7 @@ export type SubscriptionLike = {
   status: string;
   billing_period?: string | null;
   trial_ends_at?: string | null;
+  period_start?: string | null;
   period_end?: string | null;
   ai_used?: number | null;
   ai_period_start?: string | null;
@@ -185,8 +187,10 @@ export type Entitlements = {
 };
 
 /**
- * Calcule les droits effectifs. Il n'existe plus d'essai gratuit :
- * seule une formule payée et non expirée débloque l'IA et les limites élargies.
+ * Calcule les droits effectifs avec gestion de l'essai gratuit 14 jours :
+ * - Durant l'essai (14 jours) : 1 crédit IA d'accueil, boutique publiable.
+ * - Après l'essai sans abonnement : boutique suspendue, 0 crédit IA.
+ * - Formule payée (Starter / Pro) : limites débloquées, 20 ou 40 crédits IA.
  */
 export function entitlementsOf(sub: SubscriptionLike, now = new Date()): Entitlements {
   const periodEnd = sub?.period_end ? new Date(sub.period_end) : null;
@@ -196,6 +200,28 @@ export function entitlementsOf(sub: SubscriptionLike, now = new Date()): Entitle
     isPlanKey(sub.plan) &&
     sub.plan !== "free";
 
+  // Gestion de l'essai gratuit 14 jours pour les nouveaux inscrits :
+  // Un utilisateur est en essai s'il a un trial_ends_at défini ou le statut "trialing".
+  // Les anciens comptes Free (trial_ends_at === null) restent sur l'ancien modèle Free :
+  // boutique active sans limite de temps, 0 crédit IA, badge DUKAIO obligatoire.
+  const isTrialSubject = Boolean(sub?.trial_ends_at || sub?.status === "trialing");
+  const trialEnds = sub?.trial_ends_at ? new Date(sub.trial_ends_at) : null;
+
+  const isTrialActive =
+    !paidActive &&
+    isTrialSubject &&
+    trialEnds !== null &&
+    trialEnds > now;
+
+  const trialDaysLeft = isTrialActive && trialEnds
+    ? Math.max(1, Math.ceil((trialEnds.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
+    : 0;
+
+  const isTrialExpired = !paidActive && isTrialSubject && trialEnds !== null && trialEnds <= now;
+
+  // Ancien compte Free conservé (boutique active, 0 IA)
+  const isLegacyFree = !paidActive && !isTrialSubject;
+
   const effective: PlanKey = paidActive && isPlanKey(sub?.plan) ? sub.plan : "free";
   const plan = PLAN_CATALOG[effective];
 
@@ -204,16 +230,23 @@ export function entitlementsOf(sub: SubscriptionLike, now = new Date()): Entitle
     aiStart && aiStart.getFullYear() === now.getFullYear() && aiStart.getMonth() === now.getMonth();
   const aiUsed = sameMonth ? Number(sub?.ai_used ?? 0) : 0;
 
+  const aiTotalCredits = paidActive ? plan.limits.aiCredits : isTrialActive ? 1 : 0;
+  const aiLeft = Math.max(0, aiTotalCredits - aiUsed);
+  const active = paidActive || isTrialActive || isLegacyFree;
+
   return {
     plan,
-    status: sub?.status ?? "none",
-    active: paidActive,
-    trialing: false,
-    trialDaysLeft: 0,
+    status: paidActive ? "active" : isTrialActive ? "trialing" : isTrialExpired ? "expired" : "free",
+    active,
+    trialing: isTrialActive,
+    trialDaysLeft,
     renewsAt: paidActive ? (sub?.period_end ?? null) : null,
-    limits: plan.limits,
+    limits: {
+      ...plan.limits,
+      aiCredits: aiTotalCredits,
+    },
     aiUsed,
-    aiLeft: Math.max(0, plan.limits.aiCredits - aiUsed),
+    aiLeft,
   };
 }
 

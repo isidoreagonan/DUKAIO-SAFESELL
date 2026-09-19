@@ -147,16 +147,28 @@ export function SubscriptionPanel() {
             <p className="text-sm text-muted-foreground">
               {current?.active && current.renewsAt
                 ? `Renouvellement le ${new Date(current.renewsAt).toLocaleDateString("fr-FR")}.`
-                : "Formule gratuite pour toujours : création par IA désactivée, 20 produits maximum, tout se fait à la main."}
+                : current?.trialing
+                  ? `Essai gratuit de 14 jours : il vous reste ${current.trialDaysLeft} jour(s). Profitez de votre création IA offerte et publiez votre boutique !`
+                  : current?.status === "expired"
+                    ? "Votre essai gratuit de 14 jours est arrivé à terme. Choisissez Starter (7 900 FCFA) ou Pro (14 900 FCFA) pour réactiver votre boutique et continuer à vendre."
+                    : "Formule Découverte : passez à Starter ou Pro pour débloquer l'IA et vendre en marque blanche."}
             </p>
           </div>
           <span
             className={cn(
               "rounded-[4px] px-2 py-1 text-xs font-bold uppercase tracking-wider",
-              current?.active ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground",
+              current?.active
+                ? current?.trialing
+                  ? "border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                  : "bg-accent text-accent-foreground"
+                : "border border-destructive/30 bg-destructive/10 text-destructive",
             )}
           >
-            {current?.active ? "Actif" : "Gratuit"}
+            {current?.active
+              ? current?.trialing
+                ? `Essai (${current.trialDaysLeft}j)`
+                : "Actif"
+              : "Expiré"}
           </span>
         </div>
 
@@ -260,9 +272,8 @@ export function SubscriptionPanel() {
 
               {key === "free" ? (
                 <p className="mt-4 text-xs text-muted-foreground">
-                  Formule gratuite, sans limite de durée.
+                  Essai gratuit 14 jours avec 1 création IA offerte, sans carte bancaire.
                 </p>
-
               ) : (
                 <Button
                   className="mt-4"

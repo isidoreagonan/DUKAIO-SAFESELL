@@ -21,6 +21,8 @@ export type StorefrontData = {
   offers: ShopOffer[];
   /** Formule active de la boutique (free/starter/pro) — pilote le badge DUKAIO. */
   plan: string;
+  /** Si true, l'essai gratuit de 14 jours est expiré sans abonnement payant. */
+  isExpired?: boolean;
   /** Identifiants publics des pixels publicitaires (jamais les jetons). */
   tracking: PublicTracking | null;
 } | null;
@@ -137,13 +139,31 @@ export const getStorefront = createServerFn({ method: "GET" })
     ]);
 
     const tracking = readPublicTracking(trackingRaw);
+    const effectivePlan = typeof planKey === "string" ? planKey : "free";
+    const isPaid = effectivePlan === "starter" || effectivePlan === "pro";
+    let isTrialExpired = false;
+    if (!isPaid) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: subRow } = await supabaseAdmin
+        .from("store_subscriptions")
+        .select("trial_ends_at, status")
+        .eq("store_id", store.id)
+        .maybeSingle();
+      // Seuls les nouveaux comptes avec essai programmé (trial_ends_at) sont soumis à expiration.
+      // Les anciens comptes Free (trial_ends_at === null) restent actifs sans limite de temps.
+      if (subRow?.trial_ends_at && new Date(subRow.trial_ends_at).getTime() <= Date.now()) {
+        isTrialExpired = true;
+      }
+    }
+    const isExpired = isTrialExpired || store.is_suspended === true;
 
     return {
       store,
       products: productsRes.data ?? [],
       collections,
       offers: toOffers(offersRes.data ?? []),
-      plan: typeof planKey === "string" ? planKey : "free",
+      plan: effectivePlan,
+      isExpired,
       tracking,
     };
 
@@ -247,6 +267,21 @@ export const submitOrder = createServerFn({ method: "POST" })
       .limit(1);
     const store = stores?.[0];
     if (!store) return { ok: false, reason: "Boutique introuvable." };
+    if (store.is_suspended) return { ok: false, reason: "Boutique temporairement indisponible." };
+
+    const { data: planKey } = await sb.rpc("effective_plan_key", { _store_id: store.id });
+    const isPaid = planKey === "starter" || planKey === "pro";
+    if (!isPaid) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: subRow } = await supabaseAdmin
+        .from("store_subscriptions")
+        .select("trial_ends_at")
+        .eq("store_id", store.id)
+        .maybeSingle();
+      if (subRow?.trial_ends_at && new Date(subRow.trial_ends_at).getTime() <= Date.now()) {
+        return { ok: false, reason: "Cette boutique est en pause (période d'essai terminée)." };
+      }
+    }
 
     const ids = [...new Set(data.items.map((item) => item.productId))];
     const { data: products } = await sb

@@ -195,7 +195,7 @@ function AbandonedPage() {
           "Relance manuelle en un clic depuis cette page",
           "Suivi des paniers récupérés et du montant en attente",
         ]}
-        price="À partir de 4 900 FCFA/mois"
+        price="À partir de 7 900 FCFA/mois"
         cta="Voir les formules"
         footnote="Sans engagement, changement de formule à tout moment."
       />

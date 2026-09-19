@@ -93,7 +93,6 @@ export function AiJobBanner() {
             aria-label="Masquer la notification"
             onClick={() => {
               setHidden(job.id);
-              void aiJobAck({ data: { id: job.id } });
             }}
             className="grid h-7 w-7 shrink-0 place-items-center rounded-[6px] text-muted-foreground hover:bg-accent"
           >

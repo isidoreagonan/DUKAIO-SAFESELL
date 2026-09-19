@@ -16,14 +16,13 @@ export function Pricing() {
       <div className="mx-auto max-w-6xl px-5">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-3xl font-extrabold leading-tight sm:text-4xl md:text-[2.75rem]">
-            Deux formules,{" "}
-            <span className="font-display font-normal text-primary">zéro complication.</span>
+            Des tarifs transparents,{" "}
+            <span className="font-display font-normal text-primary">pensés pour vos résultats.</span>
           </h2>
           <p className="mt-4 text-muted-foreground">
-            La formule Découverte est gratuite pour toujours. Passez à
-            Starter ou Pro pour débloquer l'IA, les automatisations et les fonctionnalités avancées, sans engagement.
+            Profitez de 14 jours d'essai gratuit avec 1 création IA offerte. Passez à
+            Starter ou Pro pour débloquer l'IA, retirer le badge DUKAIO et faire décoller vos ventes sans engagement.
           </p>
-
 
           <div className="mt-7 inline-flex rounded-full border border-border bg-card p-1">
             {(["monthly", "yearly"] as BillingPeriod[]).map((p) => (
@@ -85,7 +84,7 @@ export function Pricing() {
                   </div>
                   <p className="mt-1.5 text-sm text-muted-foreground">
                     {price === 0
-                      ? "Gratuit à vie, sans engagement."
+                      ? "14 jours offerts, sans carte bancaire requise."
                       : period === "yearly"
                         ? `Vous économisez ${formatFcfa(yearlySaving(key))} FCFA par an.`
                         : "Sans engagement, annulable à tout moment."}
@@ -103,7 +102,7 @@ export function Pricing() {
                       plan.popular ? "btn-pill" : "btn-white-3d"
                     }`}
                   >
-                    {price === 0 ? "Commencer gratuitement" : `Choisir ${plan.name}`}
+                    {price === 0 ? "Démarrer l'essai 14 jours" : `Choisir ${plan.name}`}
                   </a>
                 </div>
 

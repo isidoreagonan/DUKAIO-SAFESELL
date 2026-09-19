@@ -138,26 +138,30 @@ function tourSlug(title: string) {
 
 
 
-function planLabel(plan: string) {
+function planLabel(plan: string, trialing?: boolean, trialDaysLeft?: number) {
   if (plan === "pro") return "Pro";
   if (plan === "starter") return "Starter";
+  if (trialing) return trialDaysLeft ? `Essai ${trialDaysLeft}j` : "Essai";
   return "Free";
 }
 
 function PlanBadge({ compact = false, className }: { compact?: boolean; className?: string }) {
-  const { loading, plan } = useAiAccess();
+  const { loading, plan, trialing, trialDaysLeft } = useAiAccess();
   if (loading) return null;
-  const label = planLabel(plan);
+  const label = planLabel(plan, trialing, trialDaysLeft);
   return (
     <span
-      title={`Formule ${label}`}
+      title={trialing ? `Essai gratuit 14 jours (${trialDaysLeft} jour(s) restant(s))` : `Formule ${label}`}
       className={cn(
-        "inline-flex shrink-0 items-center justify-center rounded-[4px] border border-chrome-border bg-chrome-panel font-black uppercase text-chrome-warning",
-        compact ? "h-6 min-w-6 px-1 text-[10px]" : "px-2 py-1 text-[10px]",
+        "inline-flex shrink-0 items-center justify-center rounded-[4px] border font-black uppercase tracking-wider",
+        trialing
+          ? "border-amber-500/40 bg-amber-500/15 text-amber-500"
+          : "border-chrome-border bg-chrome-panel text-chrome-warning",
+        compact ? "h-6 min-w-6 px-1 text-[9px]" : "px-1.5 py-0.5 text-[9.5px]",
         className,
       )}
     >
-      {compact ? label.slice(0, 1) : label}
+      {compact && trialing ? `${trialDaysLeft}J` : label}
     </span>
   );
 }
@@ -167,8 +171,9 @@ function TopUserMenu() {
   const navigate = useNavigate();
   const name = displayName(user);
   const { data: isAdmin } = useIsAdmin();
-  const { plan } = useAiAccess();
+  const { plan, trialing, trialDaysLeft } = useAiAccess();
   const startTour = useTourLauncher();
+  const label = planLabel(plan, trialing, trialDaysLeft);
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -191,8 +196,15 @@ function TopUserMenu() {
             <span className="block truncate text-xs font-semibold leading-tight">{name}</span>
             <span className="block truncate text-[10px] text-muted-foreground">{user?.email ?? "—"}</span>
           </span>
-          <span className="hidden rounded-[4px] bg-primary/10 px-1.5 py-0.5 text-[10px] font-black uppercase text-primary sm:inline-flex">
-            {planLabel(plan)}
+          <span
+            className={cn(
+              "hidden rounded-[4px] px-1.5 py-0.5 text-[10px] font-black uppercase sm:inline-flex",
+              trialing
+                ? "border border-amber-500/40 bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                : "bg-primary/10 text-primary",
+            )}
+          >
+            {label}
           </span>
           <ChevronDown className="hidden h-3.5 w-3.5 shrink-0 text-muted-foreground sm:block" />
         </button>
@@ -201,8 +213,15 @@ function TopUserMenu() {
         <div className="px-2 py-1.5">
           <div className="flex items-center gap-2">
             <p className="min-w-0 flex-1 truncate text-sm font-semibold">{name}</p>
-            <span className="rounded-[4px] bg-primary/10 px-1.5 py-0.5 text-[10px] font-black uppercase text-primary">
-              {planLabel(plan)}
+            <span
+              className={cn(
+                "rounded-[4px] px-1.5 py-0.5 text-[10px] font-black uppercase",
+                trialing
+                  ? "border border-amber-500/40 bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                  : "bg-primary/10 text-primary",
+              )}
+            >
+              {label}
             </span>
           </div>
           <p className="truncate text-xs text-muted-foreground">{user?.email ?? "—"}</p>
@@ -664,6 +683,38 @@ export function NavContent({
   );
 }
 
+function TrialBanner() {
+  const { loading, trialing, trialDaysLeft, aiLeft } = useAiAccess();
+  if (loading || !trialing) return null;
+
+  return (
+    <div className="border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-xs text-amber-900 dark:text-amber-200">
+      <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className="flex h-5 items-center rounded bg-amber-500/25 px-1.5 text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-300">
+            Essai gratuit
+          </span>
+          <span>
+            Il vous reste <strong>{trialDaysLeft} jour{trialDaysLeft > 1 ? "s" : ""}</strong> d'essai gratuit.{" "}
+            {aiLeft > 0 ? (
+              <span>Vous disposez de <strong>1 création IA offerte</strong> pour créer votre page produit !</span>
+            ) : (
+              <span>Votre création IA offerte a été utilisée.</span>
+            )}
+          </span>
+        </div>
+        <Link
+          to="/dashboard/parametres"
+          search={{ tab: "abonnement" }}
+          className="inline-flex items-center gap-1 font-bold text-amber-700 underline underline-offset-4 transition-colors hover:text-amber-900 dark:text-amber-300 dark:hover:text-amber-100"
+        >
+          Passer à Starter (7 900 F) ou Pro →
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 export function DashboardShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
@@ -749,10 +800,10 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           </div>
         </header>
 
+        <TrialBanner />
+
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           <main className="mx-auto w-full max-w-[1400px] px-4 py-5 sm:px-5">{children}</main>
-
-
         </div>
         <AiJobBanner />
       </div>

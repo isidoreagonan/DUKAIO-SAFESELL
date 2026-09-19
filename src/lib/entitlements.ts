@@ -25,12 +25,14 @@ export function useEntitlements() {
   });
 }
 
-/** L'IA (fiche produit, analyse d'un lien, visuels) est réservée aux formules payantes. */
+/** L'IA (fiche produit, analyse d'un lien, visuels) : 1 offerte en essai 14j, puis réservée aux formules payantes. */
 export function useAiAccess() {
   const query = useEntitlements();
   const plan = query.data?.plan ?? "free";
   const credits = query.data?.limits.aiCredits ?? 0;
   const unlimited = query.data?.unlimited === true;
+  const trialing = query.data?.trialing === true;
+  const trialDaysLeft = query.data?.trialDaysLeft ?? 0;
   return {
     loading: query.isLoading,
     unlimited,
@@ -40,6 +42,8 @@ export function useAiAccess() {
     credits,
     aiUsed: query.data?.aiUsed ?? 0,
     aiLeft: query.data?.aiLeft ?? 0,
+    trialing,
+    trialDaysLeft,
   };
 }
 

@@ -116,6 +116,54 @@ export function Storefront({ handle, page, productId }: StorefrontProps) {
   }, [faviconUrl]);
 
 
+  if (data?.isExpired) {
+    return (
+      <main className="relative flex min-h-screen flex-col items-center justify-center bg-[#050505] px-6 text-center font-sans">
+        <div className="absolute top-10 sm:top-14">
+          <a
+            href="https://dukaio.com"
+            className="inline-flex items-center gap-2 text-sm font-medium text-zinc-400 transition-colors hover:text-white"
+          >
+            ← DUKAIO
+          </a>
+        </div>
+        <div className="w-full max-w-2xl">
+          <div className="mx-auto mb-6 flex justify-center">
+            <div className="grid h-16 w-16 place-items-center rounded-2xl bg-white/95 p-3 shadow-2xl ring-1 ring-white/20">
+              <img
+                src="/dukaio-icon.png"
+                alt="DUKAIO"
+                className="h-full w-full object-contain select-none"
+              />
+            </div>
+          </div>
+          <h1 className="mb-3 text-3xl font-normal tracking-tight text-white sm:text-[40px] sm:leading-tight">
+            Cette boutique est temporairement en pause.
+          </h1>
+          <p className="mx-auto mb-8 max-w-lg text-sm text-zinc-400">
+            La période d'essai de cette boutique est terminée. Si vous êtes le propriétaire, vous pouvez la réactiver instantanément.
+          </p>
+          <div className="mx-auto max-w-xl rounded-2xl border border-zinc-800/80 bg-[#0a0a0a] p-8 sm:p-10">
+            <h2 className="mb-3 text-lg font-medium text-white sm:text-xl">
+              Êtes-vous le propriétaire de {data.store.store_name} ?
+            </h2>
+            <p className="text-sm leading-relaxed text-zinc-400">
+              Activez votre formule Starter (7 900 FCFA/mois) ou Pro (14 900 FCFA/mois) pour rouvrir instantanément vos ventes et continuer à recevoir des commandes.
+            </p>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <a
+                href="https://dukaio.com/dashboard/parametres?tab=abonnement"
+                className="inline-flex items-center justify-center rounded-[6px] bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+              >
+                Réactiver ma boutique
+              </a>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   if (!data || !theme) {
     return (
       <main className="relative flex min-h-screen flex-col items-center justify-center bg-[#050505] px-6 text-center font-sans">
@@ -240,7 +288,7 @@ export function Storefront({ handle, page, productId }: StorefrontProps) {
             )}
           </main>
           {render(theme.chrome.filter((section) => section.type === "footer"))}
-          {data.plan !== "pro" && (
+          {data.plan === "free" && (
             <a
               href="https://dukaio.com"
               target="_blank"
