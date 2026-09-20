@@ -49,7 +49,7 @@ export function StoreSwitcher() {
   return (
     <>
       <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger className="inline-flex items-center gap-2 rounded-[6px] border border-border px-3 py-2 text-sm font-semibold transition-colors hover:bg-muted">
+        <PopoverTrigger className="inline-flex items-center gap-2 rounded-[6px] border border-border bg-white px-3 py-2 text-sm font-semibold transition-colors hover:bg-muted">
           <Store className="h-4 w-4 text-primary" />
           <span className="max-w-[160px] truncate">{store?.store_name ?? "Ma boutique"}</span>
           <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted-foreground" />

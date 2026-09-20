@@ -188,7 +188,7 @@ export function NotificationsBell() {
     <Popover open={open} onOpenChange={markSeen}>
       <PopoverTrigger
         aria-label="Notifications"
-        className="relative hidden h-10 w-10 place-items-center rounded-[6px] border border-border transition-colors hover:bg-muted sm:grid cursor-pointer"
+        className="relative hidden h-10 w-10 place-items-center rounded-[6px] border border-border bg-white transition-colors hover:bg-muted sm:grid cursor-pointer"
       >
         <Bell className="h-4 w-4" />
         {unread > 0 ? (

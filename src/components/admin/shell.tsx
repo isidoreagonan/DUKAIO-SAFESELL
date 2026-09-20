@@ -470,7 +470,7 @@ export function AdminShell({
     <div
       className={cn(
         "dashboard-ui h-dvh overflow-hidden",
-        dark ? "bg-[#090d16] text-slate-100 dark" : "bg-surface-tint",
+        dark ? "bg-[#090d16] text-slate-100 dark" : "bg-white",
       )}
     >
       <aside
@@ -548,7 +548,7 @@ export function AdminShell({
           </div>
         </header>
 
-        <div className={cn("min-h-0 flex-1 overflow-y-auto overscroll-contain", dark ? "bg-[#090d16]" : "")}>
+        <div className={cn("min-h-0 flex-1 overflow-y-auto overscroll-contain", dark ? "bg-[#090d16]" : "bg-white")}>
           <main className="mx-auto w-full max-w-[1400px] space-y-6 px-4 py-5 sm:px-5">{children}</main>
         </div>
       </div>
