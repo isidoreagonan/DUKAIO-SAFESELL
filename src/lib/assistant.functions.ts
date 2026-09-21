@@ -34,11 +34,15 @@ async function callGoogleGemini(
   userMessage: string,
   history: { role: "user" | "assistant"; content: string }[] = [],
 ): Promise<string> {
-  const geminiKey = process.env["GEMINI_API_KEY"];
+  const rawKey =
+    process.env["GEMINI_API_KEY"] ||
+    // @ts-ignore
+    (typeof import.meta !== "undefined" && import.meta.env?.["GEMINI_API_KEY"]) ||
+    "";
+  const geminiKey = String(rawKey).trim().replace(/^["']|["']$/g, "");
 
-  if (!geminiKey) {
-    // Si la clé Google AI Studio n'est pas encore saisie
-    const lower = userMessage.toLowerCase();
+  const getKeywordFallback = (msg: string): string | null => {
+    const lower = msg.toLowerCase();
     if (lower.includes("prix") || lower.includes("tarif") || lower.includes("combien") || lower.includes("cout")) {
       return "DUKAIO propose une formule Découverte à 0 FCFA par mois (jusqu'à 20 produits, sans carte bancaire requise). Pour les boutiques en pleine croissance, nos formules avancées avec DUKAIO AI sont disponibles sans engagement à partir de 15 000 FCFA/mois.";
     }
@@ -51,34 +55,44 @@ async function callGoogleGemini(
     if (lower.includes("whatsapp") || lower.includes("contact") || lower.includes("aide") || lower.includes("support")) {
       return "Notre équipe est à votre disposition pour vous assister. Vous pouvez échanger directement avec nous via le bouton WhatsApp situé juste en haut de cette discussion.";
     }
-    return "Bonjour ! Pour activer l'analyse IA complète, ajoutez votre clé GEMINI_API_KEY de Google AI Studio dans votre fichier .env. En attendant, vous pouvez cliquer sur les questions fréquentes ci-dessus ou nous contacter sur WhatsApp !";
+    return null;
+  };
+
+  if (!geminiKey) {
+    const fallback = getKeywordFallback(userMessage);
+    if (fallback) return fallback;
+    return "Bonjour ! Pour activer l'analyse IA complète, ajoutez votre clé GEMINI_API_KEY de Google AI Studio dans vos variables d'environnement Vercel. En attendant, vous pouvez cliquer sur les questions fréquentes ci-dessus ou nous contacter sur WhatsApp !";
   }
 
-  // Modèles testés par ordre de préférence sur Google AI Studio
-  const models = ["gemini-2.5-flash", "gemini-1.5-flash"];
-
-  const contents = [
-    {
-      role: "user",
-      parts: [{ text: DUKAIO_SYSTEM_PROMPT }],
-    },
-    {
-      role: "model",
-      parts: [
-        {
-          text: "Compris ! Je suis l'assistant officiel de DUKAIO. Je réponds de manière concise, chaleureuse et orientée résultats pour les commerçants.",
-        },
-      ],
-    },
-    ...history.map((h) => ({
-      role: h.role === "assistant" ? "model" : "user",
-      parts: [{ text: h.content }],
-    })),
-    {
-      role: "user",
-      parts: [{ text: userMessage }],
-    },
+  // Modèles récents et actifs supportés par l'API Google AI Studio v1beta
+  const models = [
+    "gemini-3.5-flash-lite",
+    "gemini-3.5-flash",
+    "gemini-3.6-flash",
+    "gemini-flash-latest",
   ];
+
+  // Construction d'un historique alterné valide (user -> model -> user)
+  const cleanContents: { role: "user" | "model"; parts: { text: string }[] }[] = [];
+  for (const h of history.slice(-6)) {
+    const role = h.role === "assistant" ? "model" : "user";
+    if (cleanContents.length === 0 && role !== "user") {
+      continue;
+    }
+    const last = cleanContents[cleanContents.length - 1];
+    if (last && last.role === role) {
+      last.parts[0].text += `\n${h.content}`;
+    } else {
+      cleanContents.push({ role, parts: [{ text: h.content }] });
+    }
+  }
+
+  const lastRole = cleanContents.length > 0 ? cleanContents[cleanContents.length - 1].role : null;
+  if (lastRole === "user") {
+    cleanContents[cleanContents.length - 1].parts[0].text += `\n${userMessage}`;
+  } else {
+    cleanContents.push({ role: "user", parts: [{ text: userMessage }] });
+  }
 
   for (const model of models) {
     try {
@@ -88,7 +102,10 @@ async function callGoogleGemini(
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            contents,
+            system_instruction: {
+              parts: [{ text: DUKAIO_SYSTEM_PROMPT }],
+            },
+            contents: cleanContents,
             generationConfig: {
               maxOutputTokens: 400,
               temperature: 0.7,
@@ -105,9 +122,12 @@ async function callGoogleGemini(
         if (reply?.trim()) return reply.trim();
       }
     } catch {
-      // Modèle suivant
+      // Passer au modèle suivant
     }
   }
+
+  const keywordFallback = getKeywordFallback(userMessage);
+  if (keywordFallback) return keywordFallback;
 
   return "Je rencontre une courte indisponibilité temporaire de connexion à Gemini. Vous pouvez utiliser les questions rapides ci-dessus ou échanger directement avec notre équipe sur WhatsApp !";
 }
