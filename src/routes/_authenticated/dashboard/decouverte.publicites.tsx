@@ -128,7 +128,9 @@ function DiscoveryAdsPage() {
   useEffect(() => {
     if (access.loading) return;
 
-    if (locked) {
+    if (!locked) {
+      setPaywall(false);
+    } else {
       setFilters({
         sort: "traction",
         media: "all",

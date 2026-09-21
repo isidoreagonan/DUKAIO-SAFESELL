@@ -75,17 +75,15 @@ function Page() {
       });
 
       if (!result.ok) {
-        toast.error("Impossible de créer le compte", { description: result.error });
+        toast.error("Impossible de créer le compte", { description: result.reason });
         return;
       }
 
-      if (result.status === "code_sent") {
-        setDraft({ email, password, masked: result.maskedEmail });
-        toast.success("Code de confirmation envoyé", {
-          description: `Vérifiez votre boîte mail à l'adresse ${result.maskedEmail}`,
-        });
-        return;
-      }
+      setDraft({ email, password, masked: result.maskedEmail });
+      toast.success("Code de confirmation envoyé", {
+        description: `Vérifiez votre boîte mail à l'adresse ${result.maskedEmail}`,
+      });
+      return;
 
       const { error: signinErr } = await supabase.auth.signInWithPassword({ email, password });
       if (signinErr) {
@@ -120,7 +118,7 @@ function Page() {
     try {
       const res = await confirm({ data: { email: draft.email, code: clean } });
       if (!res.ok) {
-        toast.error("Code invalide", { description: res.error });
+        toast.error("Code invalide", { description: "reason" in res ? res.reason : "Veuillez réessayer." });
         return;
       }
 
@@ -214,8 +212,11 @@ function Page() {
               type="button"
               onClick={async () => {
                 const r = await resend({ data: { email: draft.email } });
-                if (r.ok) toast.success("Nouveau code envoyé");
-                else toast.error("Échec du renvoi", { description: r.error });
+                if (r.throttled) {
+                  toast.error("Veuillez patienter quelques secondes avant de renvoyer un code.");
+                } else {
+                  toast.success("Nouveau code envoyé");
+                }
               }}
               className="font-bold text-signal hover:underline"
             >

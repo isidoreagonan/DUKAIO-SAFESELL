@@ -140,7 +140,9 @@ function DiscoveryProductsPage() {
   useEffect(() => {
     if (access.loading) return;
 
-    if (locked) {
+    if (!locked) {
+      setPaywall(false);
+    } else {
       setFilters({ sort: "traction" });
       setTerm("");
       if (urlSearch.search || (urlSearch.category && urlSearch.category !== access.rules.category)) {

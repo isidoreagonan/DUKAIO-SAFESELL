@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute, useRouter, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, MailCheck, ShieldCheck } from "lucide-react";
+import { ArrowRight, Loader2, MailCheck, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
-import { DukaioLogo } from "@/components/brand/logo";
+import { Button } from "@/components/ui/button";
+import { AuthShell } from "@/components/auth-shell";
 import { supabase } from "@/integrations/supabase/client";
 import { sendEmailCode, verifyEmailCode } from "@/lib/security.functions";
 
@@ -46,11 +47,10 @@ function VerificationPage() {
 
   async function request() {
     setSending(true);
-    // Attendre l'hydratation de la session, sinon aucun jeton n'est attaché.
     const { data } = await supabase.auth.getSession();
     if (!data.session) {
       setSending(false);
-      await router.navigate({ to: "/login" });
+      await router.navigate({ to: "/connexion" });
       return;
     }
     try {
@@ -64,11 +64,16 @@ function VerificationPage() {
     }
   }
 
-  async function submit() {
+  async function submit(e?: React.FormEvent) {
+    if (e) e.preventDefault();
+    if (code.length !== 6) return;
     setChecking(true);
     try {
       const res = await verify({ data: { purpose: "login", code } });
-      if (!res.ok) return toast.error(res.reason);
+      if (!res.ok) {
+        toast.error(res.reason);
+        return;
+      }
       await router.navigate({ to: "/dashboard" });
       return;
     } catch (e) {
@@ -80,54 +85,77 @@ function VerificationPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-muted/30 px-4 py-12">
-      <div className="w-full max-w-md rounded-[6px] border border-border bg-background p-6 sm:p-8">
-        <DukaioLogo className="h-8" />
-        <div className="mt-6 inline-flex items-center gap-2 rounded-[4px] bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
-          <ShieldCheck className="h-3.5 w-3.5" /> Sécurité renforcée
-        </div>
-        <h1 className="mt-3 text-xl font-bold">Vérification en deux étapes</h1>
-        <p className="mt-1.5 text-sm text-muted-foreground">
-          Saisissez le code à 6 chiffres envoyé à {masked || "votre adresse e-mail"}.
-        </p>
-
-        <input
-          value={code}
-          onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-          inputMode="numeric"
-          autoComplete="one-time-code"
-          placeholder="000000"
-          className="mt-5 h-14 w-full rounded-[6px] border border-border bg-muted/30 text-center text-2xl font-bold tracking-[0.5em] outline-none focus:border-primary/50 focus:bg-background"
-        />
-
-        <button
-          disabled={code.length !== 6 || checking}
-          onClick={() => void submit()}
-          className="btn-3d mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-[6px] text-sm font-semibold disabled:opacity-60"
-        >
-          {checking ? <Loader2 className="h-4 w-4 animate-spin" /> : <MailCheck className="h-4 w-4" />}
-          Confirmer
-        </button>
-
-        <div className="mt-4 flex items-center justify-between text-xs">
+    <AuthShell
+      eyebrow="Sécurité Renforcée"
+      panelTitle={<>Protégez l'accès à vos ventes et fonds.</>}
+      panelSubtitle="La double confirmation par e-mail garantit que vous seul pouvez accéder à votre tableau de bord et à vos commandes."
+      steps={[
+        { title: "Code confidentiel", text: "Envoyé instantanément sur votre boîte de messagerie." },
+        { title: "Chiffrement 256-bit", text: "Votre session est protégée contre tout accès non autorisé." },
+        { title: "Accès vendeur direct", text: "Déverrouille votre boutique et vos statistiques en 1 clic." },
+      ]}
+      title={<>Double <span className="text-signal">authentification</span></>}
+      subtitle={`Saisissez le code à 6 chiffres envoyé à ${masked || "votre adresse e-mail"}.`}
+      footer={
+        <div className="flex items-center justify-between text-xs pt-1">
           <button
+            type="button"
             disabled={sending}
             onClick={() => void request()}
-            className="font-semibold text-primary disabled:opacity-60"
+            className="font-bold text-signal underline-offset-4 hover:underline disabled:opacity-50 cursor-pointer"
           >
-            {sending ? "Envoi…" : "Renvoyer le code"}
+            {sending ? "Envoi du code…" : "Renvoyer le code"}
           </button>
           <button
+            type="button"
             onClick={async () => {
               await supabase.auth.signOut();
-              await router.navigate({ to: "/login" });
+              await router.navigate({ to: "/connexion" });
             }}
-            className="text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
           >
             Se déconnecter
           </button>
         </div>
-      </div>
-    </main>
+      }
+    >
+      <form onSubmit={submit} className="space-y-4">
+        <div className="auth-field-wrap">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-bold" htmlFor="verification-code">
+              Code de sécurité
+            </label>
+            <span className="text-[11px] font-medium text-muted-foreground">
+              Expire dans 15 minutes
+            </span>
+          </div>
+          <input
+            id="verification-code"
+            value={code}
+            onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            placeholder="000000"
+            className="auth-field mt-1.5 h-14 w-full rounded-lg border border-foreground/15 bg-muted/40 text-center font-mono text-2xl font-black tracking-[0.45em] outline-none transition-[background-color,border-color,box-shadow] focus-visible:border-signal focus-visible:bg-card focus-visible:ring-2 focus-visible:ring-signal/20"
+          />
+        </div>
+
+        <Button
+          type="submit"
+          variant="tunnel"
+          size="lg"
+          disabled={code.length !== 6 || checking}
+          className="mt-5 h-11 min-h-0 w-full text-sm sm:h-12"
+        >
+          {checking ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <>
+              Confirmer l'accès <ArrowRight className="size-4" />
+            </>
+          )}
+        </Button>
+      </form>
+    </AuthShell>
   );
 }

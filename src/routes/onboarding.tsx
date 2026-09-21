@@ -1,15 +1,27 @@
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { acceptTeamInvite, listMyInvites } from "@/lib/team.functions";
-import { ensureWelcomeEmail } from "@/lib/lifecycle.functions";
-
-
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, Check, Globe2, Loader2, Palette, ShoppingBag, X } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  Globe2,
+  Loader2,
+  Palette,
+  ShieldCheck,
+  ShoppingBag,
+  Sparkles,
+  X,
+} from "lucide-react";
+
+import { BrandLogo } from "@/components/brand";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { slugify } from "@/lib/store";
 import { RESERVED_SUBDOMAINS } from "@/lib/storefront";
+import { acceptTeamInvite, listMyInvites } from "@/lib/team.functions";
+import { ensureWelcomeEmail } from "@/lib/lifecycle.functions";
 import {
   COLOR_PALETTES,
   COUNTRIES,
@@ -25,7 +37,7 @@ export const Route = createFileRoute("/onboarding")({
   ssr: false,
   beforeLoad: async () => {
     const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) throw redirect({ to: "/login" });
+    if (error || !data.user) throw redirect({ to: "/connexion" });
 
     const { data: profile } = await supabase
       .from("profiles")
@@ -38,16 +50,16 @@ export const Route = createFileRoute("/onboarding")({
   },
   head: () => ({
     meta: [
-      { title: "Mise en route de ta boutique | DUKAIO" },
+      { title: "Mise en route de votre boutique | DUKAIO" },
       {
         name: "description",
         content:
-          "Configure ta boutique DUKAIO en quelques étapes : nom, adresse, pays, devise, livraison et couleurs de ton site.",
+          "Configurez votre boutique DUKAIO en quelques étapes simples : nom, adresse, pays, devise, livraison et couleurs.",
       },
-      { property: "og:title", content: "Mise en route de ta boutique | DUKAIO" },
+      { property: "og:title", content: "Mise en route de votre boutique | DUKAIO" },
       {
         property: "og:description",
-        content: "Crée ta boutique en ligne DUKAIO en quelques minutes et commence à vendre.",
+        content: "Créez votre boutique en ligne DUKAIO en quelques minutes et commencez à vendre.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -59,10 +71,10 @@ export const Route = createFileRoute("/onboarding")({
 const TOTAL_STEPS = 10;
 
 const SETUP_PHASES = [
-  "Enregistrement de tes réponses",
-  "Réservation de ton adresse boutique",
+  "Enregistrement de vos informations",
+  "Réservation de l'adresse de votre boutique",
   "Configuration du thème et de la devise",
-  "Préparation de ton tableau de bord",
+  "Préparation de votre tableau de bord",
 ];
 
 function PrimaryButton({
@@ -75,14 +87,16 @@ function PrimaryButton({
   disabled?: boolean;
 }) {
   return (
-    <button
+    <Button
       type="button"
+      variant="tunnel"
+      size="lg"
       onClick={onClick}
       disabled={disabled}
-      className="btn-3d group inline-flex w-full items-center justify-center gap-2 rounded-full px-7 py-3.5 text-sm font-semibold disabled:opacity-60"
+      className="h-11 w-full text-sm font-bold sm:h-12"
     >
       {children}
-    </button>
+    </Button>
   );
 }
 
@@ -103,35 +117,49 @@ function SelectionCard({
     <button
       type="button"
       onClick={onClick}
-      className={`w-full rounded-xl border bg-card text-left transition-all duration-200 ${
+      className={`group w-full cursor-pointer rounded-lg border text-left transition-all duration-150 ${
         grid
           ? "flex aspect-square flex-col items-center justify-center p-4 text-center"
-          : "flex items-center gap-4 p-4"
-      } ${selected ? "border-primary ring-1 ring-primary" : "border-border hover:border-foreground/25"}`}
+          : "flex items-center gap-3.5 p-3.5 sm:p-4"
+      } ${
+        selected
+          ? "border-signal bg-signal/10 ring-2 ring-signal/30 font-bold text-foreground"
+          : "border-foreground/15 bg-muted/40 hover:border-foreground/30 hover:bg-muted/70 text-foreground"
+      }`}
     >
-      <span className={`text-2xl ${grid ? "mb-3" : ""}`}>{icon}</span>
-      <span className="font-medium text-foreground">{label}</span>
+      <span className={`text-2xl transition-transform group-hover:scale-110 ${grid ? "mb-2.5" : ""}`}>
+        {icon}
+      </span>
+      <span className="text-sm font-medium leading-tight text-foreground flex-1">{label}</span>
+      {!grid && (
+        <span
+          className={`size-4 shrink-0 rounded-full border flex items-center justify-center transition-colors ${
+            selected ? "border-signal bg-signal text-signal-foreground" : "border-foreground/25"
+          }`}
+        >
+          {selected && <Check className="size-2.5 stroke-[3]" />}
+        </span>
+      )}
     </button>
   );
 }
 
 function StepHeader({ title, subtitle }: { title: string; subtitle: string }) {
   return (
-    <div className="mb-8 text-center">
-      <h2 className="mb-2 font-display text-2xl font-bold text-foreground">{title}</h2>
-      <p className="text-muted-foreground">{subtitle}</p>
+    <div className="mb-6 text-center">
+      <h2 className="text-balance font-display text-xl font-bold leading-tight sm:text-2xl text-foreground">
+        {title}
+      </h2>
+      <p className="mt-1.5 text-xs text-muted-foreground sm:text-sm leading-relaxed">{subtitle}</p>
     </div>
   );
 }
 
-/** Un invité n'a pas de boutique à créer : on lui propose de rejoindre l'équipe. */
 function PendingInvites() {
   const navigate = useNavigate();
   const fetchInvites = useServerFn(listMyInvites);
   const accept = useServerFn(acceptTeamInvite);
-  const [invites, setInvites] = useState<
-    { id: string; token: string; storeName: string }[]
-  >([]);
+  const [invites, setInvites] = useState<{ id: string; token: string; storeName: string }[]>([]);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -164,42 +192,39 @@ function PendingInvites() {
   };
 
   return (
-    <div className="mb-8 rounded-2xl border border-primary/30 bg-primary/5 p-5">
-      <p className="text-sm font-semibold text-foreground">Vous êtes invité dans une équipe</p>
+    <div className="mb-6 rounded-xl border border-signal/30 bg-signal/5 p-4 sm:p-5">
+      <p className="text-xs font-bold text-foreground">Vous avez été invité dans une équipe</p>
       <div className="mt-3 space-y-2">
         {invites.map((invite) => (
           <div key={invite.id} className="flex items-center justify-between gap-3">
-            <span className="truncate text-sm text-muted-foreground">{invite.storeName}</span>
-            <button
+            <span className="truncate text-xs text-muted-foreground">{invite.storeName}</span>
+            <Button
               type="button"
+              variant="tunnel"
+              size="sm"
               disabled={busy}
               onClick={() => void join(invite.token)}
-              className="btn-3d rounded-full px-4 py-2 text-xs font-semibold disabled:opacity-60"
+              className="h-8 px-3 text-xs"
             >
               Rejoindre
-            </button>
+            </Button>
           </div>
         ))}
       </div>
-      <p className="mt-3 text-xs text-muted-foreground">
-        Ou continuez ci-dessous pour créer votre propre boutique.
+      <p className="mt-2 text-[11px] text-muted-foreground">
+        Ou configurez ci-dessous votre propre boutique DUKAIO.
       </p>
     </div>
   );
 }
 
 function OnboardingFlow() {
-
-  const navigate = useNavigate();
   const complete = useCompleteOnboarding();
   const welcome = useServerFn(ensureWelcomeEmail);
 
-  /* E-mail de bienvenue pour les comptes Google (pas de code à 6 chiffres). */
   useEffect(() => {
     void welcome().catch(() => null);
   }, [welcome]);
-
-
 
   const [step, setStep] = useState(1);
   const [setupPhase, setSetupPhase] = useState(0);
@@ -277,7 +302,7 @@ function OnboardingFlow() {
   const prev = () => setStep((s) => Math.max(s - 1, 1));
   const pick = (patch: Partial<OnboardingAnswers>) => {
     set(patch);
-    window.setTimeout(next, 220);
+    window.setTimeout(next, 200);
   };
 
   const country = COUNTRIES.find((c) => c.code === answers.country) ?? COUNTRIES[0];
@@ -288,81 +313,202 @@ function OnboardingFlow() {
     try {
       await complete.mutateAsync(answers);
       for (let i = 1; i <= SETUP_PHASES.length; i += 1) {
-        await new Promise((r) => window.setTimeout(r, 700));
+        await new Promise((r) => window.setTimeout(r, 600));
         setSetupPhase(i);
       }
-      toast.success("Ta boutique est prête !");
+      toast.success("Votre boutique est prête !");
       window.location.href = "/dashboard";
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Impossible d'enregistrer ta boutique",
+        error instanceof Error ? error.message : "Impossible d'enregistrer votre boutique",
       );
       setStep(TOTAL_STEPS);
     }
   };
 
   return (
-    <main className="relative min-h-screen overflow-x-hidden bg-background font-sans">
-      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[460px] grid-lines opacity-60" />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute left-1/2 -top-24 size-[560px] -translate-x-1/2 rounded-full bg-primary/12 blur-[130px]"
-      />
-
-      {step > 1 && step <= TOTAL_STEPS && (
-        <div className="fixed left-0 top-0 z-50 h-1 w-full bg-muted">
-          <div
-            className="h-full bg-primary transition-all duration-500 ease-out"
-            style={{ width: `${((step - 1) / TOTAL_STEPS) * 100}%` }}
-          />
-        </div>
-      )}
-
-      <div className="relative z-10 flex min-h-screen flex-col items-center justify-center p-4">
-        <div className="w-full max-w-md">
-          <PendingInvites />
-
-          {step > 1 && step <= TOTAL_STEPS && (
-            <button
-              type="button"
-              onClick={prev}
-              aria-label="Étape précédente"
-              className="mb-8 text-muted-foreground transition-colors hover:text-foreground"
+    <main className="auth-page relative flex min-h-dvh items-center justify-center bg-background sm:bg-muted/40 sm:p-6">
+      <div className="auth-shell mx-auto w-full overflow-hidden bg-card sm:max-w-[32rem] sm:rounded-[1.5rem] sm:border sm:border-foreground/10 sm:shadow-[0_30px_70px_-45px_color-mix(in_oklab,var(--foreground)_30%,transparent)] lg:grid lg:h-[46rem] lg:max-w-[74rem] lg:grid-cols-2 lg:grid-rows-[minmax(0,1fr)] lg:rounded-[1.6rem] lg:shadow-[0_40px_90px_-50px_color-mix(in_oklab,var(--foreground)_34%,transparent)]">
+        {/* Panneau de marque Desktop (identique à Inscription et Connexion) */}
+        <aside className="auth-brand relative hidden min-h-0 self-stretch overflow-hidden text-signal-foreground lg:flex lg:flex-col lg:justify-between lg:rounded-[1.15rem] lg:p-9 lg:m-3 lg:mr-0">
+          <div className="relative flex items-center justify-between gap-3">
+            <a
+              href="/"
+              aria-label="Accueil DUKAIO"
+              className="inline-flex rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal-foreground/50"
             >
-              <ArrowLeft className="size-5" />
-            </button>
-          )}
+              <BrandLogo className="h-6 brightness-0 invert sm:h-7" />
+            </a>
+            <span className="inline-flex items-center rounded-md bg-signal-foreground/15 px-2.5 py-1 text-[0.62rem] font-extrabold uppercase tracking-[0.16em]">
+              Mise en route boutique
+            </span>
+          </div>
+
+          <div className="relative mt-4 lg:mt-6">
+            <h2 className="text-balance font-display text-[1.45rem] font-bold leading-[1.08] sm:text-[1.7rem] lg:text-[2.2rem]">
+              Votre boutique prête à vendre en 2 minutes.
+            </h2>
+            <p className="mt-2 max-w-sm text-[0.72rem] leading-relaxed text-signal-foreground/80 sm:text-xs lg:text-sm">
+              DUKAIO configure votre catalogue, votre devise et votre système de commande par paiement à la livraison (COD).
+            </p>
+
+            {/* Carte de prévisualisation vivante */}
+            <div className="mt-5 rounded-xl border border-signal-foreground/20 bg-signal-foreground/10 p-4 backdrop-blur-md">
+              <div className="flex items-center justify-between text-[11px] font-bold text-signal-foreground/90 pb-2 border-b border-signal-foreground/15">
+                <span className="flex items-center gap-1.5">
+                  <Sparkles className="size-3.5 text-signal-foreground" /> Aperçu de votre vitrine
+                </span>
+                <span className="rounded bg-signal-foreground/20 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-signal-foreground">
+                  {country.name}
+                </span>
+              </div>
+              <div className="mt-3 space-y-1">
+                <p className="text-base font-extrabold text-signal-foreground truncate">
+                  {answers.storeName.trim() || "Ma Boutique"}
+                </p>
+                <p className="font-mono text-xs text-signal-foreground/85 truncate">
+                  https://{subdomainInput.trim() || "ma-boutique"}.dukaio.com
+                </p>
+              </div>
+              <div className="mt-3 pt-2.5 border-t border-signal-foreground/15 flex items-center justify-between text-[11px] text-signal-foreground/85">
+                <span>Devise : <strong>{country.currency}</strong></span>
+                <span>•</span>
+                <span>
+                  {answers.delivery
+                    ? DELIVERY_OPTIONS.find((d) => d.id === answers.delivery)?.label || "Expédition standard"
+                    : "Paiement à la livraison"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <ol className="relative mt-4 grid grid-cols-3 gap-2 lg:mt-6 lg:gap-2.5">
+            {[
+              { stepNum: 1, title: "Identité", text: "Nom & domaine", active: step <= 3 },
+              { stepNum: 2, title: "Marché", text: "Expédition & devise", active: step >= 4 && step <= 8 },
+              { stepNum: 3, title: "Vitrine", text: "Thème & WhatsApp", active: step >= 9 },
+            ].map((s) => (
+              <li
+                key={s.title}
+                className={`rounded-xl border p-2.5 backdrop-blur-sm lg:p-3 transition-all duration-200 ${
+                  s.active
+                    ? "border-signal-foreground bg-signal-foreground/25 shadow-sm scale-[1.02]"
+                    : "border-signal-foreground/15 bg-signal-foreground/10 opacity-70"
+                }`}
+              >
+                <span
+                  className={`inline-flex size-5 items-center justify-center rounded-md text-[0.65rem] font-extrabold lg:size-6 lg:text-[0.7rem] ${
+                    s.active ? "bg-signal-foreground text-signal" : "bg-signal-foreground/30 text-signal-foreground"
+                  }`}
+                >
+                  {s.stepNum}
+                </span>
+                <p className="mt-1.5 text-[0.68rem] font-bold leading-snug lg:mt-2 lg:text-xs text-signal-foreground">
+                  {s.title}
+                </p>
+                <p className="mt-0.5 hidden text-[0.68rem] leading-relaxed text-signal-foreground/75 lg:block">
+                  {s.text}
+                </p>
+              </li>
+            ))}
+          </ol>
+        </aside>
+
+        {/* Panneau interactif Onboarding */}
+        <section className="relative flex w-full flex-col justify-between overflow-y-auto px-5 py-7 sm:px-8 sm:py-8 lg:px-10 lg:py-9 [scrollbar-width:thin]">
+          {/* Header Mobile / Navigation */}
+          <div>
+            <div className="mb-5 flex items-center justify-between lg:hidden">
+              <a
+                href="/"
+                aria-label="Accueil DUKAIO"
+                className="inline-flex rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal/40"
+              >
+                <BrandLogo className="h-7" />
+              </a>
+              {step <= TOTAL_STEPS && (
+                <span className="rounded-md border border-foreground/15 bg-muted/60 px-2.5 py-1 text-[0.68rem] font-extrabold uppercase tracking-wider text-muted-foreground">
+                  Étape {step} / {TOTAL_STEPS}
+                </span>
+              )}
+            </div>
+
+            {/* Stepper bar desktop & navigation */}
+            <div className="flex items-center justify-between gap-3">
+              {step > 1 && step <= TOTAL_STEPS ? (
+                <button
+                  type="button"
+                  onClick={prev}
+                  aria-label="Étape précédente"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                >
+                  <ArrowLeft className="size-3.5" />
+                  Retour
+                </button>
+              ) : (
+                <span className="hidden lg:inline-block text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                  Configuration DUKAIO
+                </span>
+              )}
+              {step <= TOTAL_STEPS && (
+                <span className="hidden lg:inline-block rounded-md border border-foreground/15 bg-muted/50 px-2.5 py-1 text-[0.68rem] font-extrabold uppercase tracking-wider text-muted-foreground">
+                  Étape {step} sur {TOTAL_STEPS}
+                </span>
+              )}
+            </div>
+
+            {step <= TOTAL_STEPS && (
+              <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-foreground/10">
+                <div
+                  className="h-full bg-signal transition-all duration-300 ease-out"
+                  style={{ width: `${(Math.max(step - 1, 0.4) / TOTAL_STEPS) * 100}%` }}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Form Content */}
+          <div className="my-auto py-4">
+            <PendingInvites />
 
           {step === 1 && (
             <div className="text-center">
-              <div className="mx-auto mb-6 flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+              <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-xl bg-signal/10 text-signal">
                 <ShoppingBag className="size-7" />
               </div>
-              <h1 className="mb-2 font-display text-3xl font-bold text-foreground">
-                Bienvenue sur DUKAIO
+              <h1 className="text-balance font-display text-2xl font-bold leading-tight sm:text-3xl text-foreground">
+                Bienvenue sur <span className="text-signal">DUKAIO</span>
               </h1>
-              <p className="mb-10 text-muted-foreground">
-                Crée ta boutique en ligne et commence à vendre en quelques minutes.
+              <p className="mx-auto mt-2 max-w-sm text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                Créez votre boutique en ligne clé en main avec paiement à la livraison (COD) et Mobile Money en quelques minutes.
               </p>
-              <PrimaryButton onClick={next}>
-                Commencer <ArrowRight className="size-4" />
-              </PrimaryButton>
+              <div className="mt-8">
+                <PrimaryButton onClick={next}>
+                  Commencer la configuration <ArrowRight className="size-4" />
+                </PrimaryButton>
+              </div>
             </div>
           )}
 
           {step === 2 && (
             <div>
               <StepHeader
-                title="Comment s'appelle ta boutique ?"
-                subtitle="Tu pourras le changer plus tard"
+                title="Comment s'appelle votre boutique ?"
+                subtitle="Vous pourrez modifier ce nom à tout moment dans vos paramètres."
               />
-              <input
-                autoFocus
-                value={answers.storeName}
-                onChange={(e) => set({ storeName: e.target.value })}
-                placeholder="Ex : TECHNOVA"
-                className="mb-6 w-full rounded-lg border border-border bg-card px-4 py-4 text-lg outline-none transition focus:border-primary focus:ring-1 focus:ring-primary"
-              />
+              <div className="auth-field-wrap mb-5">
+                <label className="text-xs font-bold" htmlFor="store-name">
+                  Nom de la boutique
+                </label>
+                <input
+                  id="store-name"
+                  autoFocus
+                  value={answers.storeName}
+                  onChange={(e) => set({ storeName: e.target.value })}
+                  placeholder="Ex : TECHNOVA, LUMIA SHOP, BIO SOURCING..."
+                  className="auth-field mt-1.5 h-12 w-full rounded-lg border border-foreground/15 bg-muted/40 px-4 text-base font-semibold outline-none transition-[background-color,border-color,box-shadow] focus-visible:border-signal focus-visible:bg-card focus-visible:ring-2 focus-visible:ring-signal/20"
+                />
+              </div>
               <PrimaryButton onClick={handleStoreNameNext} disabled={!answers.storeName.trim()}>
                 Continuer <ArrowRight className="size-4" />
               </PrimaryButton>
@@ -372,12 +518,12 @@ function OnboardingFlow() {
           {step === 3 && (
             <div>
               <StepHeader
-                title="Quelle sera l'adresse de ta boutique ?"
-                subtitle="Tes clients l'utiliseront pour visiter et commander"
+                title="Quelle sera l'adresse web de votre boutique ?"
+                subtitle="Vos clients l'utiliseront pour visiter votre catalogue et commander."
               />
               <div className="mb-4">
-                <div className="flex items-center rounded-xl border border-border bg-card overflow-hidden transition focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
-                  <span className="bg-muted/60 px-3.5 py-4 text-xs sm:text-sm font-medium text-muted-foreground border-r border-border select-none shrink-0">
+                <div className="flex items-center rounded-lg border border-foreground/15 bg-muted/40 overflow-hidden focus-within:border-signal focus-within:ring-2 focus-within:ring-signal/20 transition-all">
+                  <span className="bg-muted/70 px-3 py-3 text-xs font-semibold text-muted-foreground border-r border-foreground/10 select-none shrink-0">
                     https://
                   </span>
                   <input
@@ -390,16 +536,16 @@ function OnboardingFlow() {
                       void verifySubdomain(val);
                     }}
                     placeholder="technova"
-                    className="w-full bg-transparent px-3 py-4 text-base font-semibold text-foreground outline-none lowercase min-w-0"
+                    className="w-full bg-transparent px-3 py-3 text-sm font-bold text-foreground outline-none lowercase min-w-0"
                   />
-                  <span className="bg-muted/60 px-3.5 py-4 text-xs sm:text-sm font-bold text-primary border-l border-border select-none whitespace-nowrap shrink-0">
+                  <span className="bg-muted/70 px-3 py-3 text-xs font-extrabold text-signal border-l border-foreground/10 select-none whitespace-nowrap shrink-0">
                     .dukaio.com
                   </span>
                 </div>
 
                 {subdomainStatus === "checking" && (
                   <p className="mt-2.5 flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                    <Loader2 className="size-3.5 animate-spin text-primary" /> Vérification de la disponibilité…
+                    <Loader2 className="size-3.5 animate-spin text-signal" /> Vérification de la disponibilité…
                   </p>
                 )}
                 {subdomainStatus === "free" && (
@@ -414,7 +560,7 @@ function OnboardingFlow() {
                       <X className="size-4 shrink-0" /> {subdomainError || `${subdomainInput}.dukaio.com est déjà pris`}
                     </p>
                     <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                      <span className="text-xs text-muted-foreground">Suggestions disponibles :</span>
+                      <span className="text-[11px] text-muted-foreground">Suggestions disponibles :</span>
                       {[
                         `${subdomainInput}-boutique`,
                         `${subdomainInput}-shop`,
@@ -428,7 +574,7 @@ function OnboardingFlow() {
                             setAnswers((a) => ({ ...a, subdomain: sug }));
                             void verifySubdomain(sug);
                           }}
-                          className="rounded-full border border-border bg-muted/50 px-2.5 py-1 text-xs font-medium text-foreground hover:border-primary hover:text-primary transition-colors"
+                          className="rounded-md border border-foreground/15 bg-muted/60 px-2 py-0.5 text-[11px] font-bold text-foreground hover:border-signal hover:text-signal transition-colors cursor-pointer"
                         >
                           {sug}
                         </button>
@@ -443,8 +589,8 @@ function OnboardingFlow() {
                 )}
               </div>
 
-              <p className="mb-6 text-xs text-muted-foreground">
-                Cette adresse sera le lien direct de ta vitrine. Tu pourras également associer ton propre nom de domaine personnalisé plus tard dans tes paramètres.
+              <p className="mb-6 text-[11px] text-muted-foreground leading-relaxed">
+                Vous pourrez également connecter votre propre nom de domaine personnalisé (ex: <strong>votreboutique.com</strong>) plus tard.
               </p>
 
               <PrimaryButton onClick={next} disabled={subdomainStatus !== "free"}>
@@ -455,8 +601,11 @@ function OnboardingFlow() {
 
           {step === 4 && (
             <div>
-              <StepHeader title="Où en es-tu aujourd'hui ?" subtitle="Pour adapter ton accompagnement" />
-              <div className="space-y-3">
+              <StepHeader
+                title="Quelle est votre expérience en e-commerce ?"
+                subtitle="Nous adaptons nos conseils et outils à votre profil."
+              />
+              <div className="space-y-2.5">
                 {EXPERIENCE_OPTIONS.map((opt) => (
                   <SelectionCard
                     key={opt.id}
@@ -473,10 +622,10 @@ function OnboardingFlow() {
           {step === 5 && (
             <div>
               <StepHeader
-                title="Ton chiffre d'affaires mensuel ?"
-                subtitle="Ça reste confidentiel"
+                title="Quel est votre volume de ventes mensuel ?"
+                subtitle="Pour dimensionner les relances et le serveur de votre boutique."
               />
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {REVENUE_OPTIONS.map((opt) => (
                   <SelectionCard
                     key={opt.id}
@@ -492,8 +641,11 @@ function OnboardingFlow() {
 
           {step === 6 && (
             <div>
-              <StepHeader title="Combien êtes-vous ?" subtitle="Pour préparer ton espace de travail" />
-              <div className="grid grid-cols-2 gap-4">
+              <StepHeader
+                title="Combien êtes-vous dans votre équipe ?"
+                subtitle="Closers, livreurs, gestionnaires de stock ou solo."
+              />
+              <div className="grid grid-cols-2 gap-2.5">
                 {TEAM_OPTIONS.map((opt) => (
                   <SelectionCard
                     key={opt.id}
@@ -511,10 +663,10 @@ function OnboardingFlow() {
           {step === 7 && (
             <div>
               <StepHeader
-                title="Comment gères-tu la livraison ?"
-                subtitle="On adapte les options à ta situation"
+                title="Comment gérez-vous la livraison ?"
+                subtitle="DUKAIO s'adapte à votre méthode d'expédition habituelle."
               />
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {DELIVERY_OPTIONS.map((opt) => (
                   <SelectionCard
                     key={opt.id}
@@ -530,67 +682,73 @@ function OnboardingFlow() {
 
           {step === 8 && (
             <div>
-              <div className="mx-auto mb-6 flex size-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+              <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-xl bg-signal/10 text-signal">
                 <Globe2 className="size-6" />
               </div>
-              <StepHeader title="Tu es basé où ?" subtitle="Pour la devise et le format du numéro" />
+              <StepHeader
+                title="Où est basée votre activité principale ?"
+                subtitle="Pour adapter la devise (FCFA, etc.) et l'indicatif téléphonique."
+              />
               <div className="relative">
-                <div className="max-h-[320px] space-y-3 overflow-y-auto pb-8 pr-2">
+                <div className="max-h-[300px] space-y-2 overflow-y-auto pb-4 pr-1 [scrollbar-width:thin]">
                   {COUNTRIES.map((c) => (
                     <button
                       key={c.code}
                       type="button"
                       onClick={() => pick({ country: c.code })}
-                      className={`flex w-full shrink-0 items-center gap-4 rounded-xl border bg-card p-4 text-left transition-all ${
+                      className={`flex w-full cursor-pointer items-center gap-3.5 rounded-lg border p-3 text-left transition-all ${
                         answers.country === c.code
-                          ? "border-primary ring-1 ring-primary"
-                          : "border-border hover:border-foreground/25"
+                          ? "border-signal bg-signal/10 ring-2 ring-signal/30 font-bold"
+                          : "border-foreground/15 bg-muted/40 hover:border-foreground/30 hover:bg-muted/70"
                       }`}
                     >
                       <img
                         src={`https://flagcdn.com/w40/${c.code.toLowerCase()}.png`}
                         alt={`Drapeau ${c.name}`}
                         loading="lazy"
-                        className="h-auto w-6 rounded-[2px] border border-border"
+                        className="h-auto w-5 rounded-[2px] border border-border shrink-0"
                       />
-                      <span className="font-medium text-foreground">{c.name}</span>
-                      <span className="ml-auto text-xs font-semibold text-muted-foreground">
+                      <span className="text-xs sm:text-sm font-semibold text-foreground flex-1">
+                        {c.name}
+                      </span>
+                      <span className="text-xs font-bold text-muted-foreground">
                         {c.currency}
                       </span>
                     </button>
                   ))}
                 </div>
-                <div className="pointer-events-none absolute bottom-0 left-0 right-2 h-16 bg-gradient-to-t from-background to-transparent" />
               </div>
             </div>
           )}
 
           {step === 9 && (
             <div>
-              <div className="mx-auto mb-6 flex size-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+              <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-xl bg-signal/10 text-signal">
                 <Palette className="size-6" />
               </div>
               <StepHeader
-                title="Couleur de ta boutique"
-                subtitle="Modifiable à tout moment dans l'éditeur de thème"
+                title="Couleur d'accentuation de votre vitrine"
+                subtitle="Personnalisable à l'infini dans l'éditeur de thème."
               />
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2.5">
                 {COLOR_PALETTES.map((palette) => (
                   <button
                     key={palette.id}
                     type="button"
                     onClick={() => pick({ palette: palette.id })}
-                    className={`flex items-center gap-3 rounded-xl border bg-card p-3 transition-all ${
+                    className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-all ${
                       answers.palette === palette.id
-                        ? "border-primary ring-1 ring-primary"
-                        : "border-border hover:border-foreground/25"
+                        ? "border-signal bg-signal/10 ring-2 ring-signal/30 font-bold"
+                        : "border-foreground/15 bg-muted/40 hover:border-foreground/30 hover:bg-muted/70"
                     }`}
                   >
                     <span
-                      className="size-7 shrink-0 rounded-full border border-border"
+                      className="size-6 shrink-0 rounded-full border border-border shadow-xs"
                       style={{ backgroundColor: palette.primaryColor }}
                     />
-                    <span className="text-sm font-medium text-foreground">{palette.name}</span>
+                    <span className="text-xs sm:text-sm font-semibold text-foreground">
+                      {palette.name}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -600,11 +758,11 @@ function OnboardingFlow() {
           {step === 10 && (
             <div>
               <StepHeader
-                title="Ton numéro WhatsApp"
-                subtitle="Il servira de contact sur ta boutique"
+                title="Votre numéro WhatsApp de contact"
+                subtitle="Il permettra à vos clients de vous contacter directement en 1 clic."
               />
-              <div className="mb-6 flex overflow-hidden rounded-lg border border-border bg-card transition focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
-                <span className="flex items-center justify-center border-r border-border bg-muted px-4 py-4 font-medium text-muted-foreground">
+              <div className="mb-6 flex overflow-hidden rounded-lg border border-foreground/15 bg-muted/40 focus-within:border-signal focus-within:ring-2 focus-within:ring-signal/20 transition-all">
+                <span className="flex items-center justify-center border-r border-foreground/10 bg-muted/70 px-4 py-3 text-xs font-bold text-foreground shrink-0">
                   {country.prefix}
                 </span>
                 <input
@@ -612,54 +770,70 @@ function OnboardingFlow() {
                   type="tel"
                   value={answers.whatsapp}
                   onChange={(e) => set({ whatsapp: e.target.value })}
-                  placeholder="Numéro"
-                  className="w-full bg-transparent px-4 py-4 text-lg outline-none"
+                  placeholder="Numéro sans l'indicatif"
+                  className="w-full bg-transparent px-4 py-3 text-sm font-semibold text-foreground outline-none"
                 />
               </div>
               <PrimaryButton
                 onClick={() => void handleFinish()}
                 disabled={answers.whatsapp.replace(/\D/g, "").length < 6 || complete.isPending}
               >
-                Créer ma boutique <ArrowRight className="size-4" />
+                Créer ma boutique maintenant <ArrowRight className="size-4" />
               </PrimaryButton>
             </div>
           )}
 
           {step === TOTAL_STEPS + 1 && (
-            <div className="mx-auto max-w-sm">
-              <div className="mb-10 text-center">
-                <h2 className="mb-2 font-display text-2xl font-bold text-foreground">
-                  Création en cours…
+            <div className="mx-auto max-w-sm text-center py-2">
+              <div className="mb-6">
+                <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-xl bg-signal/10 text-signal">
+                  <Sparkles className="size-6" />
+                </div>
+                <h2 className="font-display text-2xl font-bold text-foreground">
+                  Création de votre boutique…
                 </h2>
-                <p className="text-muted-foreground">On met tout en place pour toi.</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Nous configurons votre catalogue et vos accès.
+                </p>
               </div>
-              <div className="space-y-4">
+
+              <div className="space-y-2.5 text-left">
                 {SETUP_PHASES.map((text, idx) => {
                   const isActive = setupPhase === idx;
                   const isDone = setupPhase > idx;
                   return (
                     <div
                       key={text}
-                      className={`flex items-center gap-4 rounded-lg border bg-card p-4 transition-all ${
-                        isActive ? "border-primary ring-1 ring-primary" : "border-border"
+                      className={`flex items-center gap-3 rounded-lg border p-3 text-xs transition-all ${
+                        isActive
+                          ? "border-signal bg-signal/10 text-foreground font-bold"
+                          : "border-foreground/10 bg-muted/30"
                       } ${!isActive && !isDone ? "opacity-40" : ""}`}
                     >
                       <span
-                        className={`flex size-6 shrink-0 items-center justify-center ${
-                          isDone ? "text-emerald-500" : isActive ? "text-primary" : "text-muted-foreground"
+                        className={`flex size-5 shrink-0 items-center justify-center ${
+                          isDone
+                            ? "text-emerald-600 dark:text-emerald-400"
+                            : isActive
+                              ? "text-signal"
+                              : "text-muted-foreground"
                         }`}
                       >
                         {isDone ? (
-                          <Check className="size-5" />
+                          <Check className="size-4 stroke-[3]" />
                         ) : isActive ? (
-                          <Loader2 className="size-5 animate-spin" />
+                          <Loader2 className="size-4 animate-spin" />
                         ) : (
-                          <span className="size-4 rounded-full border-2 border-current" />
+                          <span className="size-3 rounded-full border-2 border-current" />
                         )}
                       </span>
                       <span
-                        className={`font-medium ${
-                          isDone ? "text-foreground" : isActive ? "text-primary" : "text-muted-foreground"
+                        className={`font-semibold ${
+                          isDone
+                            ? "text-foreground"
+                            : isActive
+                              ? "text-signal"
+                              : "text-muted-foreground"
                         }`}
                       >
                         {text}
@@ -668,16 +842,29 @@ function OnboardingFlow() {
                   );
                 })}
               </div>
+
               {setupPhase >= SETUP_PHASES.length && (
-                <div className="mt-8 text-center animate-in fade-in">
-                  <PrimaryButton onClick={() => { window.location.href = "/dashboard"; }}>
+                <div className="mt-6 text-center animate-in fade-in">
+                  <PrimaryButton
+                    onClick={() => {
+                      window.location.href = "/dashboard";
+                    }}
+                  >
                     Accéder à mon tableau de bord <ArrowRight className="size-4" />
                   </PrimaryButton>
                 </div>
               )}
             </div>
           )}
-        </div>
+          </div>
+
+          {/* Pied de page confidentiel */}
+          <div className="pt-4 text-center">
+            <p className="flex items-center justify-center gap-2 text-[0.7rem] text-muted-foreground">
+              <ShieldCheck className="size-3.5" /> Données protégées & configuration sécurisée.
+            </p>
+          </div>
+        </section>
       </div>
     </main>
   );

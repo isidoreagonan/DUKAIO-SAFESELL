@@ -11,6 +11,9 @@ import { PLAN_CATALOG } from "@/lib/plans";
 import { discoveryRules } from "@/lib/discovery-plan";
 
 
+import { useIsAdmin } from "@/lib/admin";
+import { DISCOVERY_RULES } from "@/lib/discovery-plan";
+
 export function useEntitlements() {
   const fetchSub = useServerFn(getSubscription);
   /* Sans session (déconnexion, onglet expiré) l'appel protégé renvoie 401 :
@@ -28,20 +31,26 @@ export function useEntitlements() {
 /** L'IA (fiche produit, analyse d'un lien, visuels) : 1 offerte en essai 14j, puis réservée aux formules payantes. */
 export function useAiAccess() {
   const query = useEntitlements();
-  const plan = query.data?.plan ?? "free";
-  const credits = query.data?.limits.aiCredits ?? 0;
-  const unlimited = query.data?.unlimited === true;
-  const trialing = query.data?.trialing === true;
+  const { session, user, loading: authLoading } = useAuth();
+  const { data: isAdmin, isLoading: adminLoading } = useIsAdmin();
+  const email = (user?.email || session?.user?.email || "").toLowerCase().trim();
+  const isOwnerOrAdmin = isAdmin === true || email === "isidoreagonan@gmail.com";
+
+  const rawPlan = query.data?.plan ?? "free";
+  const plan = isOwnerOrAdmin ? "pro" : rawPlan;
+  const credits = isOwnerOrAdmin ? 9999 : (query.data?.limits.aiCredits ?? 0);
+  const unlimited = isOwnerOrAdmin || query.data?.unlimited === true;
+  const trialing = !isOwnerOrAdmin && query.data?.trialing === true;
   const trialDaysLeft = query.data?.trialDaysLeft ?? 0;
   return {
-    loading: query.isLoading,
+    loading: (query.isLoading && !isOwnerOrAdmin) || (authLoading && !email),
     unlimited,
     allowed: unlimited || credits > 0,
     plan,
     planName: PLAN_CATALOG[plan].name,
     credits,
     aiUsed: query.data?.aiUsed ?? 0,
-    aiLeft: query.data?.aiLeft ?? 0,
+    aiLeft: isOwnerOrAdmin ? 9999 : (query.data?.aiLeft ?? 0),
     trialing,
     trialDaysLeft,
   };
@@ -50,26 +59,40 @@ export function useAiAccess() {
 /** Relance des paniers abandonnés : réservée aux formules Starter et Pro. */
 export function useRecoveryAccess() {
   const query = useEntitlements();
-  const plan = query.data?.plan ?? "free";
+  const { session, user, loading: authLoading } = useAuth();
+  const { data: isAdmin } = useIsAdmin();
+  const email = (user?.email || session?.user?.email || "").toLowerCase().trim();
+  const isOwnerOrAdmin = isAdmin === true || email === "isidoreagonan@gmail.com";
+
+  const rawPlan = query.data?.plan ?? "free";
+  const plan = isOwnerOrAdmin ? "pro" : rawPlan;
   return {
-    loading: query.isLoading,
+    loading: (query.isLoading && !isOwnerOrAdmin) || (authLoading && !email),
     plan,
     planName: PLAN_CATALOG[plan].name,
-    allowed: plan === "starter" || plan === "pro",
+    allowed: isOwnerOrAdmin || plan === "starter" || plan === "pro",
   };
 }
 /** Découverte : recherche et filtres réservés aux formules payantes. */
 export function useDiscoveryAccess() {
   const query = useEntitlements();
-  const plan = query.data?.plan ?? "free";
-  const rules = discoveryRules(plan);
+  const { session, user, loading: authLoading } = useAuth();
+  const { data: isAdmin, isLoading: adminLoading } = useIsAdmin();
+  const email = (user?.email || session?.user?.email || "").toLowerCase().trim();
+  const isOwnerOrAdmin = isAdmin === true || email === "isidoreagonan@gmail.com";
+
+  const rawPlan = query.data?.plan ?? "free";
+  const plan = isOwnerOrAdmin ? "pro" : rawPlan;
+  const rules = isOwnerOrAdmin ? DISCOVERY_RULES.pro : discoveryRules(plan);
+  const loading = (query.isLoading && !isOwnerOrAdmin) || (authLoading && !email) || (adminLoading && !email);
+
   return {
-    loading: query.isLoading,
+    loading,
     plan,
     planName: PLAN_CATALOG[plan].name,
     rules,
     /** Recherche, filtres et tri autorisés ? */
-    allowed: rules.filters,
+    allowed: isOwnerOrAdmin || rules.filters,
   };
 }
 
@@ -77,11 +100,17 @@ export function useDiscoveryAccess() {
 /** Membres d'équipe autorisés par la formule (0 en Découverte). */
 export function useTeamAccess() {
   const query = useEntitlements();
-  const plan = query.data?.plan ?? "free";
-  const seats = query.data?.limits.team ?? 0;
+  const { session, user, loading: authLoading } = useAuth();
+  const { data: isAdmin } = useIsAdmin();
+  const email = (user?.email || session?.user?.email || "").toLowerCase().trim();
+  const isOwnerOrAdmin = isAdmin === true || email === "isidoreagonan@gmail.com";
+
+  const rawPlan = query.data?.plan ?? "free";
+  const plan = isOwnerOrAdmin ? "pro" : rawPlan;
+  const seats = isOwnerOrAdmin ? 999 : (query.data?.limits.team ?? 0);
   return {
-    loading: query.isLoading,
-    allowed: seats > 0,
+    loading: (query.isLoading && !isOwnerOrAdmin) || (authLoading && !email),
+    allowed: isOwnerOrAdmin || seats > 0,
     seats,
     plan,
     planName: PLAN_CATALOG[plan].name,
