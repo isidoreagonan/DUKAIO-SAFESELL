@@ -24,7 +24,7 @@ const PRESET_FAQS = [
     label: "Tarifs & Formules",
     question: "Quels sont les tarifs de DUKAIO ?",
     answer:
-      "Vous pouvez commencer 100% gratuitement avec la formule Découverte (0 FCFA/mois, jusqu'à 20 produits). Nos formules avancées sans engagement sont disponibles à partir de 15 000 FCFA/mois pour vendre en illimité et profiter de l'IA.",
+      "Vous pouvez commencer gratuitement avec l'essai Découverte (0 FCFA, 14 jours, jusqu'à 20 produits). Nos formules sans engagement sont Starter à 7 900 FCFA/mois (200 produits, 20 crédits IA, sans badge DUKAIO) et Pro à 14 900 FCFA/mois (produits illimités, 40 crédits IA, 5 boutiques, domaine personnalisé).",
   },
   {
     id: "boutique",

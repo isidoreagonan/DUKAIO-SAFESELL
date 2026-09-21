@@ -25,7 +25,7 @@ Voici tes consignes strictes :
    - DUKAIO est la plateforme e-commerce tout-en-un pour vendre des produits physiques avec paiement à la livraison (Cash on Delivery - COD) et Mobile Money.
    - Les clients commandent en quelques secondes sans carte bancaire, et paient en liquide ou Mobile Money à la réception du colis.
    - Création de boutique ultra-rapide en moins de 5 minutes, sans coder.
-   - Tarifs : Formule Découverte gratuite à 0 FCFA/mois (jusqu'à 20 produits). Formules avancées sans engagement (autour de 15 000 FCFA/mois) avec produits illimités, DUKAIO AI et relances automatiques.
+   - Tarifs : Formule Découverte gratuite à 0 FCFA/mois (14 jours, jusqu'à 20 produits). Formule Starter à 7 900 FCFA/mois (200 produits, 20 crédits IA, sans badge) et Formule Pro à 14 900 FCFA/mois (produits illimités, 40 crédits IA, 5 boutiques, domaine personnalisé). Sans engagement.
    - DUKAIO AI permet de créer une fiche produit complète et prête à vendre en 10 secondes.
    - Support et contact direct sur WhatsApp disponible pour accompagner chaque commerçant.
 5. Si l'utilisateur demande une assistance humaine ou un partenariat, invite-le cordialement à cliquer sur le bouton WhatsApp dans la fenêtre de discussion.`;
@@ -44,7 +44,7 @@ async function callGoogleGemini(
   const getKeywordFallback = (msg: string): string | null => {
     const lower = msg.toLowerCase();
     if (lower.includes("prix") || lower.includes("tarif") || lower.includes("combien") || lower.includes("cout")) {
-      return "DUKAIO propose une formule Découverte à 0 FCFA par mois (jusqu'à 20 produits, sans carte bancaire requise). Pour les boutiques en pleine croissance, nos formules avancées avec DUKAIO AI sont disponibles sans engagement à partir de 15 000 FCFA/mois.";
+      return "DUKAIO propose une formule Découverte à 0 FCFA (14 jours, jusqu'à 20 produits, sans carte bancaire requise). Pour accélérer vos ventes, nos formules sans engagement sont Starter à 7 900 FCFA/mois (200 produits, 20 crédits IA, boutique 100% à votre marque) et Pro à 14 900 FCFA/mois (produits illimités, 40 crédits IA, 5 boutiques, domaine personnalisé).";
     }
     if (lower.includes("livraison") || lower.includes("cod") || lower.includes("paiement") || lower.includes("encaiss")) {
       return "Avec DUKAIO, vos clients commandent en quelques clics sans payer en ligne. Vous leur livrez le colis et ils vous règlent en espèces ou via Mobile Money directement à la réception.";

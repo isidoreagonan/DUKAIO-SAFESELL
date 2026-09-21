@@ -6,7 +6,7 @@ export const Route = createFileRoute("/tarifs")({
   head: () =>
     pageMeta(
       "Tarifs DUKAIO — Découverte, Starter et Pro",
-      "Comparez les formules DUKAIO à 0, 4 900 et 14 900 FCFA par mois selon vos besoins.",
+      "Comparez les formules DUKAIO à 0, 7 900 et 14 900 FCFA par mois selon vos besoins.",
       "/tarifs"
     ),
   component: Page,
