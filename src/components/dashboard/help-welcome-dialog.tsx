@@ -65,7 +65,7 @@ export function HelpWelcomeDialog({ open, onClose }: { open: boolean; onClose: (
           </Link>
 
           <a
-            href="https://wa.me/22600000000"
+            href="https://wa.me/2290157385885"
             target="_blank"
             rel="noreferrer"
             className="flex w-full cursor-pointer items-start gap-3 rounded-[6px] border border-border bg-background p-3.5 text-left transition-colors hover:border-primary/40"

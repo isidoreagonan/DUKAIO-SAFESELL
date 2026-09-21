@@ -135,7 +135,7 @@ function WelcomeDialog({ open, onClose }: { open: boolean; onClose: () => void }
           </button>
 
           <a
-            href="https://wa.me/22600000000"
+            href="https://wa.me/2290157385885"
             target="_blank"
             rel="noreferrer"
             className="flex w-full cursor-pointer items-start gap-3 rounded-[6px] border border-border bg-background p-3.5 text-left transition-colors hover:border-primary/40"
@@ -470,7 +470,7 @@ function AidePage() {
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             <a
-              href="https://wa.me/22600000000"
+              href="https://wa.me/2290157385885"
               target="_blank"
               rel="noreferrer"
               className="btn-3d inline-flex cursor-pointer items-center gap-2 px-4 py-2.5 text-sm"

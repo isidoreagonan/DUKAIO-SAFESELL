@@ -704,7 +704,7 @@ export async function sendMainMenu(
   }
 
   inlineKeyboard.push([
-    { text: "🤝 Support & Aide", url: "https://wa.me/22900000000" },
+    { text: "🤝 Support & Aide", url: "https://wa.me/2290157385885" },
     { text: "📢 Canal Officiel", url: "https://t.me/DukaioOfficial" },
   ]);
 

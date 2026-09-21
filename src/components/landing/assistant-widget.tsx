@@ -40,11 +40,11 @@ const PRESET_FAQS = [
     label: "Parler à l'équipe",
     question: "Comment contacter un conseiller DUKAIO ?",
     answer:
-      "Notre équipe est disponible 7j/7 pour vous accompagner par WhatsApp. Cliquez simplement sur le bouton « Discuter sur WhatsApp » en haut de cette fenêtre !",
+      "Notre équipe est disponible 7j/7 par WhatsApp au +229 01 57 38 58 85 pour vous accompagner. Cliquez simplement sur le bouton « WhatsApp » en haut de cette fenêtre !",
   },
 ];
 
-const WHATSAPP_URL = "https://wa.me/22600000000?text=Bonjour%20DUKAIO,%20je%20souhaite%20en%20savoir%20plus%20sur%20la%20plateforme.";
+const WHATSAPP_URL = "https://wa.me/2290157385885?text=Bonjour%20DUKAIO,%20je%20souhaite%20en%20savoir%20plus%20sur%20la%20plateforme.";
 
 export function DukaioAssistantWidget() {
   const [isOpen, setIsOpen] = useState(false);
