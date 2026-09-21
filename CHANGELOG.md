@@ -4,6 +4,22 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 > **Note d'environnement :** Ce projet a été initialement généré avec Lovable, mais a été entièrement migré sur Antigravity. Il n'est plus synchronisé avec Lovable Cloud et utilise désormais exclusivement la propre instance Supabase de l'utilisateur.
 
+## [21/09/2026] - Rétablissement de l'Identité Orange & Blanc du Dashboard & Nettoyage des Loaders
+
+### Branding & Tableau de Bord
+- **Élimination complète du vert dans le Dashboard :**
+  - Remplacement de toutes les variables vertes héritées de la maquette par les teintes officielles DUKAIO : Orange vibrant (`oklch(0.672 0.204 42.5)` / `#ea580c`) et Blanc pur (`oklch(1 0 0)`).
+  - Boutons, badges (PRO, NEW), icônes d'action, onglets actifs, barres de recherche et notifications Toaster 100% alignés sur la charte Orange & Blanc.
+  - Préservation intégrale et sans retouche des styles de bordure et d'arrondis (`--radius: 0.5rem`, `rounded-lg`) de la landing page.
+
+### Navigation & Système de Chargement
+- **Suppression du trait de chargement supérieur (`GlobalRouteProgressBar`) :**
+  - Retrait complet du composant de barre orange en haut de l'écran (dans `__root.tsx` et `PageLoader.tsx`).
+- **Suppression des loaders sur les pages publiques :**
+  - Le clic sur le logo ou les liens de navigation sur la landing page ou les pages publiques n'affiche plus aucun écran ni spinner de chargement.
+- **Maintien du loader circulaire officiel sur le Dashboard :**
+  - Seul le spinner rotatif orange centré avec mention « Chargement… » (`DukaioPageLoader`) s'affiche lors du chargement des données dans le tableau de bord.
+
 ## [21/09/2026] - Intégration Complète de la Nouvelle Landing Page & Pages d'Authentification (Launchpad)
 
 ### Design & Identité Visuelle

@@ -17,11 +17,19 @@ export const getRouter = () => {
     defaultPreload: "intent",
     defaultPreloadDelay: 40,
     defaultPreloadStaleTime: 30_000,
-    defaultPendingComponent: () => (
-      <div className="fixed inset-0 z-40 flex h-dvh w-screen flex-col items-center justify-center bg-background p-6">
-        <DukaioPageLoader label="Chargement…" />
-      </div>
-    ),
+    defaultPendingComponent: () => {
+      if (typeof window !== "undefined") {
+        const path = window.location.pathname;
+        if (path.startsWith("/dashboard") || path.startsWith("/admin")) {
+          return (
+            <div className="fixed inset-0 z-40 flex h-dvh w-screen flex-col items-center justify-center bg-background p-6">
+              <DukaioPageLoader label="Chargement…" />
+            </div>
+          );
+        }
+      }
+      return null;
+    },
   });
 
   /* Les données chargées côté serveur sont réutilisées à l'hydratation :
