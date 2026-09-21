@@ -4,6 +4,74 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 > **Note d'environnement :** Ce projet a été initialement généré avec Lovable, mais a été entièrement migré sur Antigravity. Il n'est plus synchronisé avec Lovable Cloud et utilise désormais exclusivement la propre instance Supabase de l'utilisateur.
 
+## [21/09/2026] - Intégration Complète de la Nouvelle Landing Page & Pages d'Authentification (Launchpad)
+
+### Design & Identité Visuelle
+- **Plaquage 1:1 du Design System Launchpad :**
+  - Restauration des tokens exacts du design system (`--radius: 0.5rem`, polices officielles `Sora` pour les titres et `Manrope` pour le corps de texte).
+  - Élimination des polices parasites (suppression d'Instrument Serif et des styles italiques automatiques).
+  - Normalisation des variantes de boutons (`Button` avec `rounded-lg`, hauteurs précises, ombres et transitions exactes).
+  - Style blueprint restauré (`blueprint-cross`, `blueprint-cross-light`, `blueprint-frame`, `glass-nav`, `glass-media`).
+- **Landing Page Complète (`src/routes/index.tsx`) :**
+  - Intégration exacte du code du launchpad avec lecteur vidéo dynamique (`MotionPlayer`), démonstrations interactives, grille de tarifs compacte, bandeau défilant (`marquee-track`) et FAQ.
+  - Tous les médias stockés et servis localement depuis `public/landing/` (vidéo MP4, GIFs, captures HD, logo vectoriel).
+- **Pages Connexion & Inscription (`/connexion` et `/inscription`) :**
+  - Implémentation du gabarit split desktop avec panneau de marque (`auth-brand`), dégradé signal, rappel des 3 étapes, boutons Google OAuth stylisés et formulaires dédiés.
+  - Raccordement complet à Supabase (connexion par mot de passe, vérification OTP par code mail, et redirections automatiques vers `/dashboard`).
+  - Redirections transparentes de `/login` vers `/connexion` et `/signup` vers `/inscription`.
+- **Pied de Page & Navigation :**
+  - Liens rapides épurés dans le footer (conservation des sections essentielles : Fonctionnalités, Comment ça marche, Tarifs, À propos, Connexion, Créer un compte).
+  - Titre "Restez informé" rendu dans la typographie Sora officielle sans altération.
+
+## [21/09/2026] - Séparation Stricte de l'Expéditeur & Signature des E-mails (Boutiques vs Plateforme)
+
+### Expérience E-mail & Image de Marque
+- **Sécurisation par Défaut des Gabarits E-mail (`renderBrandEmail`) :**
+  - Paramètre `includeFounderSignature` passé à `false` par défaut : aucun e-mail ne peut désormais afficher par mégarde la signature ou le portrait du fondateur.
+  - La signature officielle (photo d'Isidore Agonan, titre Fondateur & CEO, et mot personnel) est réservée exclusivement aux communications officielles de la plateforme DUKAIO.
+- **E-mails Clients & Boutiques 100% Dédiés à la Marque du Vendeur :**
+  - **Confirmations & Suivis de Commande (`order-emails.server.ts`) :**
+    - Suppression totale du portrait et de la signature du fondateur sur les e-mails de commande, confirmation, expédition, livraison ("Commande livrée"), remboursement et annulation.
+    - Expéditeur personnalisé au nom de la boutique : `${NomBoutique} <commandes@dukaio.com>` (au lieu d'`AGONAN ISIDORE`).
+    - L'e-mail de notification de commande envoyé au vendeur provient de `DUKAIO Commandes <commandes@dukaio.com>`.
+  - **Relances de Paniers Abandonnés (`abandoned.server.ts`) :**
+    - L'e-mail de relance est envoyé sous le nom propre de la boutique : `${NomBoutique} <commandes@dukaio.com>`.
+  - **Campagnes Marketing des Vendeurs (`email-marketing.server.ts` & `email-marketing.functions.ts`) :**
+    - Les campagnes marketing envoyées par les marchands à leurs clients partent avec l'en-tête de leur boutique : `${NomBoutique} <contact@dukaio.com>`.
+- **E-mails Officiels Plateforme DUKAIO Conservant la Signature du Fondateur :**
+  - **E-mail de Bienvenue & Cycle de Vie (`lifecycle-emails.server.ts`) :** Accueil personnalisé des nouveaux marchands par le fondateur Isidore Agonan.
+  - **Campagnes Marketing Super-Admin (`admin.functions.ts`) :** Newsletters et annonces globales de la plateforme transmises avec la signature officielle.
+  - **Facturation & Abonnements (`billing.server.ts`) :** Reçus officiels et justificatifs de paiement envoyés par `DUKAIO Facturation <facturation@dukaio.com>`.
+
+## [20/09/2026] - Dashboard Blanc Épuré ("Blanc bien fait") & Recherche Haute Interactive
+
+### Amélioration de l'Expérience Visuelle & Navigation
+- **Arrière-plan Dashboard Blanc Pur :**
+  - Élimination complète de la teinte pêche/orangée (`oklch(0.983 0.014 70)`) sur `--surface-tint`, remplacée par un blanc pur `oklch(1 0 0)`.
+  - Neutralisation des reflets chauds sur `--muted`, `--secondary`, `--border`, et `--input` pour une palette gris ardoise moderne, nette et haut de gamme.
+  - Conteneur global du dashboard (`shell.tsx`) et de l'administration (`admin/shell.tsx`) passés en fond blanc pur (`bg-white`), mettant en valeur les cartes UI avec des bordures fines et élégantes.
+  - En-tête de navigation, sélecteur de boutique (`store-switcher.tsx`), cloche de notifications et bouton profil configurés avec fond blanc immaculé.
+- **Barre de Recherche Haute Interactive :**
+  - Remplacement du champ statique grisé par un composant actif `HeaderSearch` avec intérieur blanc pur (`bg-white`).
+  - Suggestions intelligentes en direct lors de la saisie (recherche dans les *Produits gagnants*, dans les *Commandes* ou dans les *Clients* avec validation directe via touche `Entrée ↵`).
+  - Menu d'accès rapide au clic (raccourcis directs vers *Produits gagnants*, *Créer avec IA*, *Mes commandes*, *Mes clients*).
+  - Bouton d'effacement rapide (`X`) et détection automatique des numéros de commande.
+
+## [19/09/2026] - Favicon SEO Officiel Haute Résolution (Google Search) & Résilience DUKAIO AI
+
+### Identité Visuelle & Référencement Google (SEO)
+- **Nouveau Favicon Officiel & Optimisation Google Search (SERP) :**
+  - Remplacement de l'ancien pictogramme temporaire par le logo officiel DUKAIO haute résolution (carré orange arrondi avec swoosh signature noir & blanc).
+  - Génération complète de la suite d'assets aux normes Google Search Central : `/favicon.ico` (multi-résolution 16x16, 32x32, 48x48), `/favicon-48x48.png` (standard Googlebot), `/favicon-32x32.png`, `/favicon-16x16.png`, `/apple-touch-icon.png` (180x180), `/android-chrome-192x192.png` et `512x512.png`.
+  - Création du fichier PWA `/site.webmanifest` avec nom DUKAIO et couleur de marque `#ea580c`.
+  - Enrichissement de la balise `<head>` dans `__root.tsx` (`sizes="48x48"`, manifeste et balise `theme-color`).
+
+### IA & Fiabilisation
+- **Résilience & Correction du Pipeline DUKAIO AI :**
+  - Analyse et confirmation de la boucle de retry automatique Kie.ai (`KIE_TEXT_ATTEMPTS = 4`) : les refus réseau passagers (0s) ne consomment aucun crédit et évitent les crashs.
+  - Correction de l'archivage prématuré : fermer la notification flottante ne clôture plus la génération en base (`acknowledged: false`), seule la validation vers l'éditeur le fait.
+  - Ajout de la reprise directe et de l'aperçu automatique des travaux terminés (`status: "done"`) sur l'écran `/dashboard/produits/ia`.
+
 ## [18/09/2026] - Notifications Telegram Super-Admin Exclusives & Rapport Analytique Quotidien (23h00)
 
 ### Nouveautés & Fonctionnalités Super-Admin

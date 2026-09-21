@@ -4,8 +4,27 @@
  * Server-only : la clé API n'est jamais exposée au client.
  */
 
-export const FROM =
-  process.env["DUKAIO_FROM_EMAIL"] || "AGONAN ISIDORE <agonan@dukaio.com>";
+export const DEFAULT_FROM =
+  process.env["DUKAIO_FROM_EMAIL"] || "DUKAIO <contact@dukaio.com>";
+
+export const FROM = DEFAULT_FROM;
+
+export const FOUNDER_FROM = "AGONAN ISIDORE <agonan@dukaio.com>";
+export const ORDERS_FROM = "DUKAIO Commandes <commandes@dukaio.com>";
+
+/**
+ * Formate l'adresse d'expédition d'un e-mail d'une boutique pour ses clients.
+ * Exemples :
+ * - "Lumezia <commandes@dukaio.com>"
+ * - "Lumezia <contact@dukaio.com>"
+ */
+export function formatStoreSender(
+  storeName: string,
+  prefix: "commandes" | "contact" = "commandes",
+): string {
+  const clean = (storeName || "Boutique").replace(/["<>\r\n]/g, "").trim();
+  return `${clean} <${prefix}@dukaio.com>`;
+}
 
 export const FOUNDER_NAME = "AGONAN ISIDORE";
 export const FOUNDER_TITLE = "Fondateur & CEO — DUKAIO";
@@ -79,7 +98,7 @@ export function renderBrandEmail({
   htmlBody,
   footNote,
   cta,
-  includeFounderSignature = true,
+  includeFounderSignature = false,
   founderNote,
   headerBrand = false,
 }: Block) {
@@ -331,15 +350,36 @@ export async function sendModerationNoticeEmail(input: {
   );
 }
 
+export type SendEmailOptions = {
+  from?: string;
+  replyTo?: string;
+};
+
 /** Envoi via l'API Resend avec gestion d'erreurs claire. */
-export async function sendEmail(to: string, subject: string, html: string) {
+export async function sendEmail(
+  to: string,
+  subject: string,
+  html: string,
+  options?: SendEmailOptions,
+) {
   const apiKey = process.env["RESEND_API_KEY"];
   if (!apiKey) throw new Error("Service e-mail indisponible (clé API manquante)");
+
+  const from = options?.from || FROM;
+  const payload: Record<string, unknown> = {
+    from,
+    to: [to],
+    subject,
+    html,
+  };
+  if (options?.replyTo) {
+    payload["reply_to"] = options.replyTo;
+  }
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: FROM, to: [to], subject, html }),
+    body: JSON.stringify(payload),
   });
 
   if (!res.ok) {

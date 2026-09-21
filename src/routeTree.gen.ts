@@ -11,11 +11,16 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AProposRouteImport } from './routes/a-propos'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AideRouteImport } from './routes/aide'
+import { Route as CguRouteImport } from './routes/cgu'
 import { Route as CommandeRouteImport } from './routes/commande'
 import { Route as ConfidentialiteRouteImport } from './routes/confidentialite'
+import { Route as ConnexionRouteImport } from './routes/connexion'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as DecouverteRouteImport } from './routes/decouverte'
+import { Route as InscriptionRouteImport } from './routes/inscription'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LogoPreviewRouteImport } from './routes/logo-preview'
 import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
@@ -23,7 +28,10 @@ import { Route as MotDePasseOublieRouteImport } from './routes/mot-de-passe-oubl
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as ProduitsRouteImport } from './routes/produits'
 import { Route as RejoindreRouteImport } from './routes/rejoindre'
+import { Route as RessourcesRouteImport } from './routes/ressources'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as SolutionsRouteImport } from './routes/solutions'
+import { Route as TarifsRouteImport } from './routes/tarifs'
 import { Route as TendancesRouteImport } from './routes/tendances'
 import { Route as VerificationRouteImport } from './routes/verification'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
@@ -95,6 +103,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AProposRoute = AProposRouteImport.update({
+  id: '/a-propos',
+  path: '/a-propos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
@@ -103,6 +116,11 @@ const AboutRoute = AboutRouteImport.update({
 const AideRoute = AideRouteImport.update({
   id: '/aide',
   path: '/aide',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CguRoute = CguRouteImport.update({
+  id: '/cgu',
+  path: '/cgu',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CommandeRoute = CommandeRouteImport.update({
@@ -115,9 +133,24 @@ const ConfidentialiteRoute = ConfidentialiteRouteImport.update({
   path: '/confidentialite',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConnexionRoute = ConnexionRouteImport.update({
+  id: '/connexion',
+  path: '/connexion',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DecouverteRoute = DecouverteRouteImport.update({
+  id: '/decouverte',
+  path: '/decouverte',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InscriptionRoute = InscriptionRouteImport.update({
+  id: '/inscription',
+  path: '/inscription',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -155,9 +188,24 @@ const RejoindreRoute = RejoindreRouteImport.update({
   path: '/rejoindre',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RessourcesRoute = RessourcesRouteImport.update({
+  id: '/ressources',
+  path: '/ressources',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SolutionsRoute = SolutionsRouteImport.update({
+  id: '/solutions',
+  path: '/solutions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TarifsRoute = TarifsRouteImport.update({
+  id: '/tarifs',
+  path: '/tarifs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TendancesRoute = TendancesRouteImport.update({
@@ -507,11 +555,16 @@ const ApiPublicEORidRoute = ApiPublicEORidRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/a-propos': typeof AProposRoute
   '/about': typeof AboutRoute
   '/aide': typeof AideRoute
+  '/cgu': typeof CguRoute
   '/commande': typeof CommandeRoute
   '/confidentialite': typeof ConfidentialiteRoute
+  '/connexion': typeof ConnexionRoute
   '/contact': typeof ContactRoute
+  '/decouverte': typeof DecouverteRoute
+  '/inscription': typeof InscriptionRoute
   '/login': typeof LoginRoute
   '/logo-preview': typeof LogoPreviewRoute
   '/mentions-legales': typeof MentionsLegalesRoute
@@ -519,7 +572,10 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/produits': typeof ProduitsRoute
   '/rejoindre': typeof RejoindreRoute
+  '/ressources': typeof RessourcesRoute
   '/signup': typeof SignupRoute
+  '/solutions': typeof SolutionsRoute
+  '/tarifs': typeof TarifsRoute
   '/tendances': typeof TendancesRouteWithChildren
   '/verification': typeof VerificationRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
@@ -584,11 +640,16 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/a-propos': typeof AProposRoute
   '/about': typeof AboutRoute
   '/aide': typeof AideRoute
+  '/cgu': typeof CguRoute
   '/commande': typeof CommandeRoute
   '/confidentialite': typeof ConfidentialiteRoute
+  '/connexion': typeof ConnexionRoute
   '/contact': typeof ContactRoute
+  '/decouverte': typeof DecouverteRoute
+  '/inscription': typeof InscriptionRoute
   '/login': typeof LoginRoute
   '/logo-preview': typeof LogoPreviewRoute
   '/mentions-legales': typeof MentionsLegalesRoute
@@ -596,7 +657,10 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/produits': typeof ProduitsRoute
   '/rejoindre': typeof RejoindreRoute
+  '/ressources': typeof RessourcesRoute
   '/signup': typeof SignupRoute
+  '/solutions': typeof SolutionsRoute
+  '/tarifs': typeof TarifsRoute
   '/verification': typeof VerificationRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/produit/$productId': typeof ProduitProductIdRoute
@@ -661,11 +725,16 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/a-propos': typeof AProposRoute
   '/about': typeof AboutRoute
   '/aide': typeof AideRoute
+  '/cgu': typeof CguRoute
   '/commande': typeof CommandeRoute
   '/confidentialite': typeof ConfidentialiteRoute
+  '/connexion': typeof ConnexionRoute
   '/contact': typeof ContactRoute
+  '/decouverte': typeof DecouverteRoute
+  '/inscription': typeof InscriptionRoute
   '/login': typeof LoginRoute
   '/logo-preview': typeof LogoPreviewRoute
   '/mentions-legales': typeof MentionsLegalesRoute
@@ -673,7 +742,10 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/produits': typeof ProduitsRoute
   '/rejoindre': typeof RejoindreRoute
+  '/ressources': typeof RessourcesRoute
   '/signup': typeof SignupRoute
+  '/solutions': typeof SolutionsRoute
+  '/tarifs': typeof TarifsRoute
   '/tendances': typeof TendancesRouteWithChildren
   '/verification': typeof VerificationRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
@@ -740,11 +812,16 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/a-propos'
     | '/about'
     | '/aide'
+    | '/cgu'
     | '/commande'
     | '/confidentialite'
+    | '/connexion'
     | '/contact'
+    | '/decouverte'
+    | '/inscription'
     | '/login'
     | '/logo-preview'
     | '/mentions-legales'
@@ -752,7 +829,10 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/produits'
     | '/rejoindre'
+    | '/ressources'
     | '/signup'
+    | '/solutions'
+    | '/tarifs'
     | '/tendances'
     | '/verification'
     | '/admin'
@@ -817,11 +897,16 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/a-propos'
     | '/about'
     | '/aide'
+    | '/cgu'
     | '/commande'
     | '/confidentialite'
+    | '/connexion'
     | '/contact'
+    | '/decouverte'
+    | '/inscription'
     | '/login'
     | '/logo-preview'
     | '/mentions-legales'
@@ -829,7 +914,10 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/produits'
     | '/rejoindre'
+    | '/ressources'
     | '/signup'
+    | '/solutions'
+    | '/tarifs'
     | '/verification'
     | '/auth/callback'
     | '/produit/$productId'
@@ -893,11 +981,16 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/a-propos'
     | '/about'
     | '/aide'
+    | '/cgu'
     | '/commande'
     | '/confidentialite'
+    | '/connexion'
     | '/contact'
+    | '/decouverte'
+    | '/inscription'
     | '/login'
     | '/logo-preview'
     | '/mentions-legales'
@@ -905,7 +998,10 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/produits'
     | '/rejoindre'
+    | '/ressources'
     | '/signup'
+    | '/solutions'
+    | '/tarifs'
     | '/tendances'
     | '/verification'
     | '/_authenticated/admin'
@@ -972,11 +1068,16 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AProposRoute: typeof AProposRoute
   AboutRoute: typeof AboutRoute
   AideRoute: typeof AideRoute
+  CguRoute: typeof CguRoute
   CommandeRoute: typeof CommandeRoute
   ConfidentialiteRoute: typeof ConfidentialiteRoute
+  ConnexionRoute: typeof ConnexionRoute
   ContactRoute: typeof ContactRoute
+  DecouverteRoute: typeof DecouverteRoute
+  InscriptionRoute: typeof InscriptionRoute
   LoginRoute: typeof LoginRoute
   LogoPreviewRoute: typeof LogoPreviewRoute
   MentionsLegalesRoute: typeof MentionsLegalesRoute
@@ -984,7 +1085,10 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   ProduitsRoute: typeof ProduitsRoute
   RejoindreRoute: typeof RejoindreRoute
+  RessourcesRoute: typeof RessourcesRoute
   SignupRoute: typeof SignupRoute
+  SolutionsRoute: typeof SolutionsRoute
+  TarifsRoute: typeof TarifsRoute
   TendancesRoute: typeof TendancesRouteWithChildren
   VerificationRoute: typeof VerificationRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
@@ -1024,6 +1128,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/a-propos': {
+      id: '/a-propos'
+      path: '/a-propos'
+      fullPath: '/a-propos'
+      preLoaderRoute: typeof AProposRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/about': {
       id: '/about'
       path: '/about'
@@ -1036,6 +1147,13 @@ declare module '@tanstack/react-router' {
       path: '/aide'
       fullPath: '/aide'
       preLoaderRoute: typeof AideRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cgu': {
+      id: '/cgu'
+      path: '/cgu'
+      fullPath: '/cgu'
+      preLoaderRoute: typeof CguRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/commande': {
@@ -1052,11 +1170,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConfidentialiteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/connexion': {
+      id: '/connexion'
+      path: '/connexion'
+      fullPath: '/connexion'
+      preLoaderRoute: typeof ConnexionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/contact': {
       id: '/contact'
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/decouverte': {
+      id: '/decouverte'
+      path: '/decouverte'
+      fullPath: '/decouverte'
+      preLoaderRoute: typeof DecouverteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inscription': {
+      id: '/inscription'
+      path: '/inscription'
+      fullPath: '/inscription'
+      preLoaderRoute: typeof InscriptionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -1108,11 +1247,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RejoindreRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ressources': {
+      id: '/ressources'
+      path: '/ressources'
+      fullPath: '/ressources'
+      preLoaderRoute: typeof RessourcesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/signup': {
       id: '/signup'
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/solutions': {
+      id: '/solutions'
+      path: '/solutions'
+      fullPath: '/solutions'
+      preLoaderRoute: typeof SolutionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tarifs': {
+      id: '/tarifs'
+      path: '/tarifs'
+      fullPath: '/tarifs'
+      preLoaderRoute: typeof TarifsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tendances': {
@@ -1675,11 +1835,16 @@ const TendancesRouteWithChildren = TendancesRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AProposRoute: AProposRoute,
   AboutRoute: AboutRoute,
   AideRoute: AideRoute,
+  CguRoute: CguRoute,
   CommandeRoute: CommandeRoute,
   ConfidentialiteRoute: ConfidentialiteRoute,
+  ConnexionRoute: ConnexionRoute,
   ContactRoute: ContactRoute,
+  DecouverteRoute: DecouverteRoute,
+  InscriptionRoute: InscriptionRoute,
   LoginRoute: LoginRoute,
   LogoPreviewRoute: LogoPreviewRoute,
   MentionsLegalesRoute: MentionsLegalesRoute,
@@ -1687,7 +1852,10 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   ProduitsRoute: ProduitsRoute,
   RejoindreRoute: RejoindreRoute,
+  RessourcesRoute: RessourcesRoute,
   SignupRoute: SignupRoute,
+  SolutionsRoute: SolutionsRoute,
+  TarifsRoute: TarifsRoute,
   TendancesRoute: TendancesRouteWithChildren,
   VerificationRoute: VerificationRoute,
   AuthCallbackRoute: AuthCallbackRoute,

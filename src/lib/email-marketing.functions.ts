@@ -145,7 +145,7 @@ export const sendCampaignTest = createServerFn({ method: "POST" })
     if (!to) return { ok: false as const, reason: "Aucune adresse e-mail sur votre compte." };
 
     const { renderEmailTemplate } = await import("@/lib/email-templates");
-    const { sendEmail } = await import("@/lib/email.server");
+    const { sendEmail, formatStoreSender } = await import("@/lib/email.server");
     const html = renderEmailTemplate(await campaignDesign(campaign, store), {
       storeName: store.store_name,
       subject: campaign.subject,
@@ -156,7 +156,9 @@ export const sendCampaignTest = createServerFn({ method: "POST" })
       firstName: null,
     });
     try {
-      await sendEmail(to, `[Test] ${campaign.subject}`, html);
+      await sendEmail(to, `[Test] ${campaign.subject}`, html, {
+        from: formatStoreSender(store.store_name, "contact"),
+      });
       return { ok: true as const, email: to };
     } catch (e) {
       console.error("[campaign:test]", e);

@@ -855,7 +855,7 @@ export const adminSendPlatformCampaign = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const actor = await assertAdmin(context);
     const db = await admin();
-    const { sendEmail, renderBrandEmail } = await import("@/lib/email.server");
+    const { sendEmail, renderBrandEmail, FOUNDER_FROM } = await import("@/lib/email.server");
 
     const [{ data: authUsers }, profilesRes, storesRes, subsRes] = await Promise.all([
       db.auth.admin.listUsers({ page: 1, perPage: 1000 }),
@@ -911,7 +911,12 @@ export const adminSendPlatformCampaign = createServerFn({ method: "POST" })
             : undefined,
         footNote: "[TEST ADMINISTRATEUR] Cet e-mail est un test de prévisualisation.",
       });
-      await sendEmail(actor.email, `[TEST] ${personalize(data.subject, adminFull, actor.email, "DUKAIO Demo") || data.subject}`, html);
+      await sendEmail(
+        actor.email,
+        `[TEST] ${personalize(data.subject, adminFull, actor.email, "DUKAIO Demo") || data.subject}`,
+        html,
+        { from: FOUNDER_FROM },
+      );
       return { ok: true, sent: 1, isTest: true };
     }
 
@@ -981,6 +986,7 @@ export const adminSendPlatformCampaign = createServerFn({ method: "POST" })
             contact.email,
             personalize(data.subject, uName, contact.email, uStore) || data.subject,
             userHtml,
+            { from: FOUNDER_FROM },
           );
           sentCount += 1;
         } catch (err) {
@@ -1067,7 +1073,12 @@ export const adminSendPlatformCampaign = createServerFn({ method: "POST" })
       });
 
       try {
-        await sendEmail(u.email, personalize(data.subject, uName, u.email, uStore) || data.subject, userHtml);
+        await sendEmail(
+          u.email,
+          personalize(data.subject, uName, u.email, uStore) || data.subject,
+          userHtml,
+          { from: FOUNDER_FROM },
+        );
         sentCount += 1;
       } catch (err) {
         console.error(`[campaign broadcast] failed for ${u.email}`, err);

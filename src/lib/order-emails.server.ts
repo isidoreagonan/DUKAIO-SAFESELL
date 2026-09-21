@@ -2,7 +2,7 @@
  * E-mails de commande DUKAIO (Resend, domaine dukaio.com).
  * Server-only : jamais importé depuis le navigateur.
  */
-import { renderBrandEmail, sendEmail } from "@/lib/email.server";
+import { formatStoreSender, ORDERS_FROM, renderBrandEmail, sendEmail } from "@/lib/email.server";
 
 export type OrderEmailLine = { name: string; qty: number; total: number };
 
@@ -54,9 +54,12 @@ export async function sendSellerOrderEmail(to: string, payload: OrderEmailPayloa
     ]
       .filter(Boolean)
       .join("\n"),
+    includeFounderSignature: false,
     footNote: "Connectez-vous à votre tableau de bord DUKAIO pour confirmer cette commande.",
   });
-  await sendEmail(to, `Nouvelle commande ${payload.orderNumber} — ${payload.storeName}`, html);
+  await sendEmail(to, `Nouvelle commande ${payload.orderNumber} — ${payload.storeName}`, html, {
+    from: ORDERS_FROM,
+  });
 }
 
 /** Confirmation client : commande enregistrée. */
@@ -65,9 +68,12 @@ export async function sendCustomerOrderEmail(to: string, payload: OrderEmailPayl
     title: "Votre commande est enregistrée",
     intro: `Merci ${payload.customerName} ! Votre commande ${payload.orderNumber} chez ${payload.storeName} est bien reçue.`,
     body: recap(payload),
+    includeFounderSignature: false,
     footNote: `${payload.storeName} vous contactera au ${payload.customerPhone} pour confirmer la livraison.`,
   });
-  await sendEmail(to, `Commande ${payload.orderNumber} confirmée — ${payload.storeName}`, html);
+  await sendEmail(to, `Commande ${payload.orderNumber} confirmée — ${payload.storeName}`, html, {
+    from: formatStoreSender(payload.storeName, "commandes"),
+  });
 }
 
 const STATUS_MAIL: Record<string, { title: string; intro: string; body: string } | undefined> = {
@@ -125,8 +131,11 @@ export async function sendStatusEmail(
     title: mail.title,
     intro: `${mail.intro} (Commande ${info.orderNumber} — ${info.storeName})`,
     body: mail.body,
+    includeFounderSignature: false,
     footNote: `Suivi assuré par ${info.storeName} via DUKAIO.`,
   });
-  await sendEmail(to, `${mail.title} — commande ${info.orderNumber}`, html);
+  await sendEmail(to, `${mail.title} — commande ${info.orderNumber}`, html, {
+    from: formatStoreSender(info.storeName, "commandes"),
+  });
   return true;
 }

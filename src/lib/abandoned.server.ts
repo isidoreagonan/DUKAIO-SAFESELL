@@ -59,7 +59,7 @@ export async function sendRecoveryEmail(cartId: string) {
   const global = theme?.["global"] as Record<string, unknown> | undefined;
 
   const { renderEmailTemplate, defaultDesign } = await import("@/lib/email-templates");
-  const { sendEmail } = await import("@/lib/email.server");
+  const { sendEmail, formatStoreSender } = await import("@/lib/email.server");
   const design = defaultDesign("relance", store.logo_url);
   if (typeof global?.["primaryColor"] === "string") {
     design.brandColor = global["primaryColor"] as string;
@@ -79,7 +79,9 @@ export async function sendRecoveryEmail(cartId: string) {
 
 
   try {
-    await sendEmail(cart.email, `Votre panier chez ${store.store_name}`, html);
+    await sendEmail(cart.email, `Votre panier chez ${store.store_name}`, html, {
+      from: formatStoreSender(store.store_name, "commandes"),
+    });
   } catch (e) {
     console.error("[panier:relance]", e);
     return { ok: false as const, reason: "L'e-mail n'a pas pu être envoyé." };

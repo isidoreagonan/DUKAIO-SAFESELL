@@ -91,7 +91,7 @@ export async function deliverCampaign(params: {
   recipients: Recipient[];
 }) {
   const db = await admin();
-  const { sendEmail } = await import("@/lib/email.server");
+  const { sendEmail, formatStoreSender } = await import("@/lib/email.server");
   let sent = 0;
   let failed = 0;
 
@@ -117,7 +117,9 @@ export async function deliverCampaign(params: {
     let status: "sent" | "failed" = "sent";
     let error: string | null = null;
     try {
-      await sendEmail(person.email, params.subject, html);
+      await sendEmail(person.email, params.subject, html, {
+        from: formatStoreSender(params.storeName, "contact"),
+      });
       sent += 1;
     } catch (e) {
       status = "failed";

@@ -70,8 +70,16 @@ type Block = {
 };
 
 async function send(to: string, subject: string, block: Block) {
-  const { renderBrandEmail, sendEmail } = await import("@/lib/email.server");
-  await sendEmail(to, subject, renderBrandEmail(block));
+  const { renderBrandEmail, sendEmail, FOUNDER_FROM } = await import("@/lib/email.server");
+  await sendEmail(
+    to,
+    subject,
+    renderBrandEmail({
+      ...block,
+      includeFounderSignature: block.includeFounderSignature ?? true,
+    }),
+    { from: FOUNDER_FROM },
+  );
 }
 
 /** E-mail de bienvenue, une seule fois par compte, juste après la confirmation. */

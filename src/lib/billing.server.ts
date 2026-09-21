@@ -427,7 +427,9 @@ export async function reconcilePayment(payment: PaymentRow) {
           footNote:
             "Aucun montant n'a été prélevé. Vous pouvez relancer la demande depuis Paramètres › Abonnement.",
         });
-        await sendEmail(to, "DUKAIO — paiement non abouti", html);
+        await sendEmail(to, "DUKAIO — paiement non abouti", html, {
+          from: "DUKAIO Facturation <facturation@dukaio.com>",
+        });
       }
     } catch (e) {
       console.error("subscription failure email", e);
@@ -494,7 +496,9 @@ export async function reconcilePayment(payment: PaymentRow) {
             "Conservez ce reçu comme justificatif. Vous retrouvez votre abonnement dans Abonnement › Formule actuelle.",
           cta: { label: "Ouvrir mon tableau de bord", url: "https://dukaio.com/dashboard" },
         });
-        await sendEmail(to, `DUKAIO — reçu ${receiptNumber} · formule ${label}`, html);
+        await sendEmail(to, `DUKAIO — reçu ${receiptNumber} · formule ${label}`, html, {
+          from: "DUKAIO Facturation <facturation@dukaio.com>",
+        });
       }
     } catch (e) {
       console.error("subscription receipt email", e);
