@@ -4,6 +4,18 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 > **Note d'environnement :** Ce projet a été initialement généré avec Lovable, mais a été entièrement migré sur Antigravity. Il n'est plus synchronisé avec Lovable Cloud et utilise désormais exclusivement la propre instance Supabase de l'utilisateur.
 
+## [21/09/2026] - Intégration de l'Assistant DUKAIO Hybride (Questions 0 Token + Google Gemini AI Studio)
+
+### Expérience Utilisateur & Assistance Commerciale
+- **Widget Assistant Flottant (`assistant-widget.tsx`) :**
+  - Ajout d'une bulle flottante moderne et discrète en bas à droite des pages publiques avec infobulle incitative automatique.
+  - Fenêtre de chat aux couleurs de DUKAIO (Orange `#ea580c`, Blanc et vert WhatsApp) avec en-tête soigné, statut "En ligne" et fermeture fluide.
+- **Mode Hybride Intelligent (0 Token + IA Gratuite) :**
+  - **4 Sujets Rapides Prédéfinis (0 token consommé)** : Réponses instantanées intégrées en local sur le Paiement à la livraison (COD), les Tarifs, la Création de boutique et le Support.
+  - **Moteur IA dédié Google Gemini AI Studio (`askAssistant`) :** Les questions libres sont traitées directement par l'API gratuite Google Gemini (`GEMINI_API_KEY`) avec un prompt système expert en e-commerce africain, sans aucune utilisation de l'API Kie.ai.
+  - **Bouton WhatsApp direct :** Accès en 1 clic pour discuter immédiatement avec l'équipe commerciale sur WhatsApp.
+- **Intégration propre :** Intégré dans le layout public (`PublicLayout`) sans affecter le dashboard ni altérer aucun composant existant.
+
 ## [21/09/2026] - Rétablissement de l'Identité Orange & Blanc du Dashboard & Nettoyage des Loaders
 
 ### Branding & Tableau de Bord

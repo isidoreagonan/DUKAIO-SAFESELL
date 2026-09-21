@@ -3,6 +3,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { ArrowRight, Facebook, Instagram, Send, Youtube } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/brand";
+import { DukaioAssistantWidget } from "./assistant-widget";
 
 export function PublicLayout({ children }: { children: ReactNode }) {
   useEffect(() => {
@@ -25,6 +26,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
       <SiteHeader />
       {children}
       <SiteFooter />
+      <DukaioAssistantWidget />
     </div>
   );
 }
