@@ -38,12 +38,12 @@ function getSecretKey(): string {
   return process.env["CRON_SECRET"] || process.env["SUPABASE_SERVICE_ROLE_KEY"] || "dukaio-telegram-secret";
 }
 
-/** Vérifie si l'utilisateur Telegram est le Super-Admin DUKAIO (Isidore Agonan) */
+/** Vérifie si l'utilisateur Telegram est le Super-Admin DUKAIO (Isidore Agonan, @easy_573 / 854297504) */
 export function isSuperAdmin(username?: string | null, userId?: number | string): boolean {
-  if (userId && (String(userId) === "7593951919" || String(userId) === "easy_573")) return true;
+  if (userId && String(userId) === "854297504") return true;
   if (!username) return false;
   const clean = username.replace(/^@/, "").toLowerCase();
-  return ADMIN_USERNAMES.includes(clean);
+  return clean === "easy_573" || clean === "easy573";
 }
 
 /** Récupère la liste des chat IDs Telegram du Super-Administrateur. */
@@ -51,7 +51,7 @@ export async function getAdminTelegramChatIds(): Promise<string[]> {
   const ids = new Set<string>();
 
   // 1. Chat ID fixe officiel et exclusif d'Isidore Agonan (@easy_573)
-  ids.add("7593951919");
+  ids.add("854297504");
 
   // 2. Variable d'environnement optionnelle
   const envId = process.env["ADMIN_TELEGRAM_CHAT_ID"] || process.env["TELEGRAM_ADMIN_CHAT_ID"];
@@ -384,10 +384,10 @@ export async function registerTelegramCommands(): Promise<boolean> {
   }
 }
 
-/** Configure les commandes enrichies avec /admin EXCLUSIVEMENT pour le compte du Super-Admin (@easy_573 / 7593951919). */
+/** Configure les commandes enrichies avec /admin EXCLUSIVEMENT pour le compte du Super-Admin (@easy_573 / 854297504). */
 export async function registerAdminTelegramCommands(chatId: string | number): Promise<boolean> {
   // Verrou de sécurité absolu : refuser immédiatement si différent du chat ID d'Isidore Agonan
-  if (String(chatId) !== "7593951919") {
+  if (String(chatId) !== "854297504") {
     console.warn("[Telegram Security] Tentative non autorisée d'enregistrement des commandes admin pour chatId:", chatId);
     await deleteTelegramChatCommands(chatId);
     return false;
@@ -412,7 +412,7 @@ export async function registerAdminTelegramCommands(chatId: string | number): Pr
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         commands,
-        scope: { type: "chat", chat_id: "7593951919" },
+        scope: { type: "chat", chat_id: "854297504" },
       }),
     });
 
@@ -1620,7 +1620,7 @@ export async function processTelegramIncomingMessage(message: {
   const isAdmin = isSuperAdmin(from?.username, from?.id);
 
   // Si ce n'est pas le Super-Admin, purger impérativement toute commande admin résiduelle
-  if (!isAdmin && String(chat.id) !== "7593951919") {
+  if (!isAdmin && String(chat.id) !== "854297504") {
     void deleteTelegramChatCommands(chat.id);
   }
 
