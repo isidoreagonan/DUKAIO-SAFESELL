@@ -333,7 +333,23 @@ export async function answerCallbackQuery(
   }
 }
 
-/** Configure les commandes par défaut visibles par tous les vendeurs dans le menu Telegram (sans /admin). */
+/** Supprime les commandes personnalisées d'un chat pour qu'il retombe sur le menu vendeur standard */
+export async function deleteTelegramChatCommands(chatId: string | number): Promise<boolean> {
+  try {
+    const token = getBotToken();
+    const response = await fetch(`${TELEGRAM_API}${token}/deleteMyCommands`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ scope: { type: "chat", chat_id: String(chatId) } }),
+    });
+    const data = (await response.json()) as { ok: boolean };
+    return data.ok;
+  } catch {
+    return false;
+  }
+}
+
+/** Configure les commandes par défaut visibles par TOUS les vendeurs (strictement sans /admin). */
 export async function registerTelegramCommands(): Promise<boolean> {
   try {
     const token = getBotToken();
@@ -347,10 +363,18 @@ export async function registerTelegramCommands(): Promise<boolean> {
       { command: "aide", description: "💬 Assistance & Guide d'utilisation" },
     ];
 
-    const response = await fetch(`${TELEGRAM_API}${token}/setMyCommands`, {
+    // 1. Portée par défaut (fallback universel)
+    await fetch(`${TELEGRAM_API}${token}/setMyCommands`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ commands, scope: { type: "default" } }),
+    });
+
+    // 2. Portée de tous les chats privés (1-on-1 pour tous les vendeurs sans exception)
+    const response = await fetch(`${TELEGRAM_API}${token}/setMyCommands`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ commands, scope: { type: "all_private_chats" } }),
     });
 
     const data = (await response.json()) as { ok: boolean };
@@ -360,8 +384,15 @@ export async function registerTelegramCommands(): Promise<boolean> {
   }
 }
 
-/** Configure les commandes enrichies avec /admin EXCLUSIVEMENT pour le compte du Super-Admin (@easy_573). */
+/** Configure les commandes enrichies avec /admin EXCLUSIVEMENT pour le compte du Super-Admin (@easy_573 / 7593951919). */
 export async function registerAdminTelegramCommands(chatId: string | number): Promise<boolean> {
+  // Verrou de sécurité absolu : refuser immédiatement si différent du chat ID d'Isidore Agonan
+  if (String(chatId) !== "7593951919") {
+    console.warn("[Telegram Security] Tentative non autorisée d'enregistrement des commandes admin pour chatId:", chatId);
+    await deleteTelegramChatCommands(chatId);
+    return false;
+  }
+
   try {
     const token = getBotToken();
     const commands = [
@@ -381,7 +412,7 @@ export async function registerAdminTelegramCommands(chatId: string | number): Pr
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         commands,
-        scope: { type: "chat", chat_id: String(chatId) },
+        scope: { type: "chat", chat_id: "7593951919" },
       }),
     });
 
@@ -1588,6 +1619,11 @@ export async function processTelegramIncomingMessage(message: {
   const from = message.from;
   const isAdmin = isSuperAdmin(from?.username, from?.id);
 
+  // Si ce n'est pas le Super-Admin, purger impérativement toute commande admin résiduelle
+  if (!isAdmin && String(chat.id) !== "7593951919") {
+    void deleteTelegramChatCommands(chat.id);
+  }
+
   // A. Si l'utilisateur envoie une photo ou un lien URL de produit -> Redirection vers DUKAIO AI Web
   if (message.photo && message.photo.length > 0) {
     await sendAiCreationGuide(chat.id);
@@ -1690,6 +1726,7 @@ export async function processTelegramIncomingMessage(message: {
   // 8. Commandes Super-Admin (@easy_573)
   if (text === "/rapport" || text === "/daily" || text === "/analyses") {
     if (!isAdmin) {
+      await deleteTelegramChatCommands(chat.id);
       await sendTelegramMessage(
         chat.id,
         `⛔ <b>Accès refusé.</b> Cette commande est strictement réservée au Super-Administrateur Master DUKAIO (@easy_573).`,
@@ -1705,6 +1742,7 @@ export async function processTelegramIncomingMessage(message: {
 
   if (text === "/admin") {
     if (!isAdmin) {
+      await deleteTelegramChatCommands(chat.id);
       await sendTelegramMessage(
         chat.id,
         `⛔ <b>Accès refusé.</b> Cette commande est strictement réservée au Super-Administrateur Master DUKAIO (@easy_573).`,
