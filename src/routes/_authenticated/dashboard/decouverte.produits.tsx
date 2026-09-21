@@ -138,6 +138,17 @@ function DiscoveryProductsPage() {
   const locked = !access.allowed;
 
   useEffect(() => {
+    if (access.loading) return;
+
+    if (locked) {
+      setFilters({ sort: "traction" });
+      setTerm("");
+      if (urlSearch.search || (urlSearch.category && urlSearch.category !== access.rules.category)) {
+        setPaywall(true);
+      }
+      return;
+    }
+
     setFilters((prev) => {
       const nextCategory = urlSearch.category !== undefined ? (urlSearch.category || undefined) : prev.category;
       const nextCountry = urlSearch.country !== undefined ? (urlSearch.country || undefined) : prev.country;
@@ -163,7 +174,7 @@ function DiscoveryProductsPage() {
     if (urlSearch.search !== undefined) {
       setTerm(urlSearch.search || "");
     }
-  }, [urlSearch.category, urlSearch.country, urlSearch.search, urlSearch.sort]);
+  }, [locked, access.rules.category, urlSearch.category, urlSearch.country, urlSearch.search, urlSearch.sort]);
 
   const { data: rows, isLoading } = useDiscoveryProducts(filters);
 

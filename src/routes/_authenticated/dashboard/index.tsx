@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import {
   ArrowRight,
+  Lock,
   Package,
   Palette,
   PhoneCall,
@@ -13,9 +14,11 @@ import {
 } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard/shell";
 import { OrderDialog } from "@/components/dashboard/order-dialog";
+import { DiscoveryPaywall } from "@/components/discovery/paywall-dialog";
 import { cn } from "@/lib/utils";
 import { useDashboardStats, useStore, type Order } from "@/lib/store";
 import { useAuth, displayName } from "@/hooks/use-auth";
+import { useDiscoveryAccess } from "@/lib/entitlements";
 
 export const Route = createFileRoute("/_authenticated/dashboard/")({
   head: () => ({
@@ -101,6 +104,8 @@ function DashboardHomePage() {
   const navigate = useNavigate();
   const { data: store } = useStore();
   const { data: stats } = useDashboardStats(7);
+  const discoveryAccess = useDiscoveryAccess();
+  const [paywallOpen, setPaywallOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
@@ -110,6 +115,14 @@ function DashboardHomePage() {
     e.preventDefault();
     const query = searchTerm.trim();
     if (!query) return;
+
+    if (discoveryAccess.loading) return;
+
+    if (!discoveryAccess.allowed) {
+      setPaywallOpen(true);
+      return;
+    }
+
     void navigate({
       to: "/dashboard/decouverte/produits",
       search: { search: query },
@@ -170,11 +183,25 @@ function DashboardHomePage() {
                 placeholder="ex : montre, sérum visage, écouteurs sans fil, masseur..."
                 className="w-full bg-transparent px-2.5 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
               />
+              {!discoveryAccess.loading && !discoveryAccess.allowed && (
+                <button
+                  type="button"
+                  onClick={() => setPaywallOpen(true)}
+                  className="mr-2 inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] font-bold text-amber-700 dark:text-amber-400 hover:bg-amber-500/20 transition-colors"
+                >
+                  <Lock className="h-3 w-3" />
+                  <span className="hidden sm:inline">Starter & Pro</span>
+                </button>
+              )}
               <button
                 type="submit"
-                className="inline-flex shrink-0 items-center gap-1 rounded-[4px] bg-foreground px-3 py-1 text-xs font-bold text-background transition-opacity hover:opacity-90"
+                className="inline-flex shrink-0 items-center gap-1 rounded-[4px] bg-foreground px-3 py-1 text-xs font-bold text-background transition-opacity hover:opacity-90 cursor-pointer"
               >
-                <Search className="h-3 w-3" />
+                {!discoveryAccess.loading && !discoveryAccess.allowed ? (
+                  <Lock className="h-3 w-3 text-amber-400" />
+                ) : (
+                  <Search className="h-3 w-3" />
+                )}
                 <span className="hidden sm:inline">Chercher</span>
               </button>
             </div>
@@ -210,6 +237,12 @@ function DashboardHomePage() {
                 key={item.title}
                 to={item.to}
                 search={item.search}
+                onClick={(e) => {
+                  if (!discoveryAccess.allowed && item.search && "category" in item.search) {
+                    e.preventDefault();
+                    setPaywallOpen(true);
+                  }
+                }}
                 className={cn(
                   "group flex w-[120px] shrink-0 flex-col overflow-hidden rounded-[6px] border bg-background transition-all duration-200 sm:w-auto",
                   item.featured
@@ -369,6 +402,14 @@ function DashboardHomePage() {
       <OrderDialog
         order={selectedOrder}
         onOpenChange={(open) => !open && setSelectedOrder(null)}
+      />
+
+      <DiscoveryPaywall
+        open={paywallOpen}
+        onClose={() => setPaywallOpen(false)}
+        title="Débloquez la recherche de produits gagnants"
+        description="La recherche par mots-clés et filtres avancés parmi 1 100+ publicités gagnantes est réservée aux formules Starter et Pro."
+        price="À partir de 7 900 FCFA/mois"
       />
     </DashboardShell>
   );
