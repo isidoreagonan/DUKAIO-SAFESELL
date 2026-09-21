@@ -55,14 +55,20 @@ export function SiteHeader() {
         }`}
       >
         <div className="nav-enter glass-nav grid h-16 w-full grid-cols-[minmax(0,1fr)_auto] items-center rounded-2xl px-5 sm:gap-6 sm:h-[4.5rem] sm:px-8">
-          <Link
-            to="/"
+          <a
+            href="/"
             aria-label="Accueil DUKAIO"
-            onClick={() => setMenuOpen(false)}
+            onClick={(e) => {
+              setMenuOpen(false);
+              if (typeof window !== "undefined" && window.location.pathname === "/") {
+                e.preventDefault();
+                window.location.reload();
+              }
+            }}
             className="flex min-w-0 items-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal/30"
           >
             <BrandLogo className="h-9 sm:h-10" />
-          </Link>
+          </a>
           <div className="hidden items-center justify-end gap-5 sm:flex">
             {scrolled ? (
               <Button asChild variant="tunnel" size="sm" className="h-9 px-3.5">
@@ -181,9 +187,19 @@ export function SiteFooter() {
     <footer className="border-t border-foreground/10 bg-card">
       <div className="section-shell grid gap-10 py-12 sm:grid-cols-2 sm:gap-x-8 sm:py-16 lg:grid-cols-[1.35fr_0.9fr_1fr_0.85fr]">
         <div>
-          <Link to="/" aria-label="Accueil DUKAIO" className="inline-flex">
+          <a
+            href="/"
+            aria-label="Accueil DUKAIO"
+            onClick={(e) => {
+              if (typeof window !== "undefined" && window.location.pathname === "/") {
+                e.preventDefault();
+                window.location.reload();
+              }
+            }}
+            className="inline-flex"
+          >
             <BrandLogo className="h-7" />
-          </Link>
+          </a>
           <h2 className="mt-6 font-display text-xl font-extrabold tracking-[-0.01em]">
             Restez informé
           </h2>

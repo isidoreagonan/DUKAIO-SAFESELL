@@ -17,6 +17,8 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
   - Retrait complet du composant de barre orange en haut de l'écran (dans `__root.tsx` et `PageLoader.tsx`).
 - **Suppression des loaders sur les pages publiques :**
   - Le clic sur le logo ou les liens de navigation sur la landing page ou les pages publiques n'affiche plus aucun écran ni spinner de chargement.
+- **Rechargement fluide au clic sur le logo :**
+  - Sur la landing page, le clic sur le logo DUKAIO (en en-tête comme en pied de page) recharge directement le site (`window.location.reload()`) et replace l'utilisateur à sa position exacte sans aucun effet indésirable ni trait de chargement.
 - **Maintien du loader circulaire officiel sur le Dashboard :**
   - Seul le spinner rotatif orange centré avec mention « Chargement… » (`DukaioPageLoader`) s'affiche lors du chargement des données dans le tableau de bord.
 
