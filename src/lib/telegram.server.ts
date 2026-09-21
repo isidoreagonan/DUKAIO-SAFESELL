@@ -13,7 +13,7 @@ import type { OrderEmailPayload } from "@/lib/order-emails.server";
 const TELEGRAM_API = "https://api.telegram.org/bot";
 
 /** Super-Administrateurs DUKAIO autorisés */
-export const ADMIN_USERNAMES = ["easy_573", "easy573", "dolapoecom"];
+export const ADMIN_USERNAMES = ["easy_573", "easy573"];
 export const ADMIN_EMAILS = ["isidoreagonan@gmail.com"];
 
 export type TelegramStoreConfig = {
@@ -38,7 +38,7 @@ function getSecretKey(): string {
   return process.env["CRON_SECRET"] || process.env["SUPABASE_SERVICE_ROLE_KEY"] || "dukaio-telegram-secret";
 }
 
-/** Vérifie si l'utilisateur Telegram est un Super-Admin DUKAIO */
+/** Vérifie si l'utilisateur Telegram est le Super-Admin DUKAIO (Isidore Agonan) */
 export function isSuperAdmin(username?: string | null, userId?: number | string): boolean {
   if (userId && (String(userId) === "7593951919" || String(userId) === "easy_573")) return true;
   if (!username) return false;
@@ -50,7 +50,7 @@ export function isSuperAdmin(username?: string | null, userId?: number | string)
 export async function getAdminTelegramChatIds(): Promise<string[]> {
   const ids = new Set<string>();
 
-  // 1. Chat ID fixe officiel d'Isidore Agonan (@easy_573)
+  // 1. Chat ID fixe officiel et exclusif d'Isidore Agonan (@easy_573)
   ids.add("7593951919");
 
   // 2. Variable d'environnement optionnelle
@@ -59,33 +59,7 @@ export async function getAdminTelegramChatIds(): Promise<string[]> {
     ids.add(envId.trim());
   }
 
-  // 3. Boutiques liées au compte admin isidoreagonan@gmail.com
-  try {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: users } = await supabaseAdmin
-      .from("users")
-      .select("id, email")
-      .in("email", ADMIN_EMAILS);
-
-    if (users && users.length > 0) {
-      const userIds = users.map((u) => u.id);
-      const { data: stores } = await supabaseAdmin
-        .from("store_settings")
-        .select("theme_config")
-        .in("user_id", userIds);
-
-      for (const store of stores || []) {
-        const theme = (store.theme_config as Record<string, unknown> | null) ?? {};
-        const tg = theme["telegram"] as TelegramStoreConfig | undefined;
-        if (tg?.chatId && tg.enabled !== false) {
-          ids.add(String(tg.chatId));
-        }
-      }
-    }
-  } catch (err) {
-    console.error("[Telegram] Erreur récupération chat IDs admin :", err);
-  }
-
+  // Ne JAMAIS ajouter automatiquement les chat IDs des boutiques pour éviter les fuites admin.
   return Array.from(ids);
 }
 
@@ -644,10 +618,10 @@ export function getAppBaseUrl(): string {
 /** Construit et envoie le Menu Principal Interactif (style E-commerce Pro conforme aux captures) */
 export async function sendMainMenu(
   chatId: string | number,
-  from?: { username?: string; first_name?: string },
+  from?: { id?: number | string; username?: string; first_name?: string },
 ): Promise<void> {
   const store = await getStoreByTelegramChatId(chatId);
-  const isAdmin = isSuperAdmin(from?.username);
+  const isAdmin = isSuperAdmin(from?.username, from?.id ?? chatId);
   const userName = from?.first_name || (from?.username ? `@${from.username}` : "Vendeur");
   const baseUrl = getAppBaseUrl();
 
@@ -677,7 +651,7 @@ export async function sendMainMenu(
   if (store) {
     const storeUrl = store.custom_domain
       ? `https://${store.custom_domain}`
-      : `${baseUrl}/s/${store.subdomain || store.id}`;
+      : `https://${store.subdomain}.dukaio.com`;
 
     inlineKeyboard.push([{ text: "🏪 Ma Boutique en Ligne", url: storeUrl }]);
     inlineKeyboard.push([
@@ -714,10 +688,10 @@ export async function sendMainMenu(
 /** Affiche les détails du profil vendeur et boutique */
 export async function sendSellerProfile(
   chatId: string | number,
-  from?: { username?: string; first_name?: string },
+  from?: { id?: number | string; username?: string; first_name?: string },
 ): Promise<void> {
   const store = await getStoreByTelegramChatId(chatId);
-  const isAdmin = isSuperAdmin(from?.username);
+  const isAdmin = isSuperAdmin(from?.username, from?.id ?? chatId);
   const baseUrl = getAppBaseUrl();
 
   if (!store) {
@@ -737,16 +711,18 @@ export async function sendSellerProfile(
   const { subscriptionState } = await import("@/lib/subscription.server");
   const state = await subscriptionState(store.user_id);
 
-  const planName = state.unlimited ? "PRO (SUPER-ADMIN)" : state.plan.name.toUpperCase();
-  const creditsText = state.unlimited
+  const planName = isAdmin ? "PRO (SUPER-ADMIN)" : (state.unlimited ? "PRO" : state.plan.name.toUpperCase());
+  const creditsText = isAdmin
     ? "Illimité (Admin)"
-    : state.limits.aiCredits === 0
-      ? "0 (Formule Découverte sans IA)"
-      : `${state.aiLeft} / ${state.limits.aiCredits}`;
+    : state.unlimited
+      ? "Illimité"
+      : state.limits.aiCredits === 0
+        ? "0 (Formule Découverte sans IA)"
+        : `${state.aiLeft} / ${state.limits.aiCredits}`;
 
   const storeUrl = store.custom_domain
     ? `https://${store.custom_domain}`
-    : `${baseUrl}/s/${store.subdomain || store.id}`;
+    : `https://${store.subdomain}.dukaio.com`;
 
   const message = [
     `👤 <b>PROFIL VENDEUR DUKAIO</b>`,
@@ -1256,9 +1232,7 @@ export async function notifyAdminNewStore(payload: NewStorePayload): Promise<boo
 
     const storeUrl = payload.customDomain
       ? `https://${payload.customDomain}`
-      : payload.subdomain
-        ? `https://${payload.subdomain}.dukaio.com`
-        : `https://dukaio.com/s/${payload.storeId}`;
+      : `https://${payload.subdomain || payload.storeId}.dukaio.com`;
 
     const message = [
       `🏪 <b>NOUVELLE BOUTIQUE CRÉÉE SUR DUKAIO !</b> 🚀`,
@@ -1681,7 +1655,7 @@ export async function processTelegramIncomingMessage(message: {
     if (store) {
       const storeUrl = store.custom_domain
         ? `https://${store.custom_domain}`
-        : `${baseUrl}/s/${store.subdomain || store.id}`;
+        : `https://${store.subdomain}.dukaio.com`;
       await sendTelegramMessage(
         chat.id,
         `🏪 <b>Votre Boutique DUKAIO :</b> <b>${escapeHtml(store.store_name)}</b>\n\n🌐 Lien public : ${storeUrl}`,

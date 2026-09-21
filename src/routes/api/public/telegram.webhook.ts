@@ -3,6 +3,8 @@ import {
   processTelegramIncomingMessage,
   processTelegramCallbackQuery,
   tryClaimTelegramEvent,
+  registerTelegramCommands,
+  registerAdminTelegramCommands,
 } from "@/lib/telegram.server";
 
 type TelegramUpdate = {
@@ -99,12 +101,18 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
           const infoRes = await fetch(`https://api.telegram.org/bot${token}/getWebhookInfo`);
           const info = await infoRes.json();
 
+          // 3. Réinitialiser les commandes par défaut (sans admin) et admin (exclusif pour Isidore Agonan)
+          const defaultCmdOk = await registerTelegramCommands().catch(() => false);
+          const adminCmdOk = await registerAdminTelegramCommands("7593951919").catch(() => false);
+
           return Response.json({
             ok: true,
             bot: "DukaioOfficialBot",
             status: "active",
             setWebhookResult: setResult,
             webhookInfo: info,
+            defaultCommandsRegistered: defaultCmdOk,
+            adminCommandsRegistered: adminCmdOk,
           });
         } catch (e) {
           return Response.json({ ok: false, error: (e as Error).message });

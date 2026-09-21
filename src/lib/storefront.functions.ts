@@ -103,7 +103,31 @@ export const getStorefront = createServerFn({ method: "GET" })
       .limit(1);
     if (error) throw error;
     const store = stores?.[0];
-    if (!store) return null;
+    if (!store) {
+      try {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { data: adminStores } = await supabaseAdmin
+          .from("store_settings")
+          .select("*")
+          .or(filter)
+          .limit(1);
+        const adminStore = adminStores?.[0];
+        if (adminStore) {
+          return {
+            store: adminStore,
+            products: [],
+            collections: [],
+            offers: [],
+            plan: "free",
+            isExpired: adminStore.is_suspended === true,
+            tracking: null,
+          };
+        }
+      } catch (err) {
+        console.warn("[storefront] Fallback check failed:", err);
+      }
+      return null;
+    }
 
     const [productsRes, collectionsRes, offersRes] = await Promise.all([
       sb

@@ -164,12 +164,17 @@ export function Storefront({ handle, page, productId }: StorefrontProps) {
     );
   }
 
-  if (!data || !theme) {
+  if (!data || !theme || data.store?.is_published === false) {
+    const isLocal =
+      typeof window !== "undefined" &&
+      (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+    const platformUrl = isLocal ? "" : "https://dukaio.com";
+
     return (
       <main className="relative flex min-h-screen flex-col items-center justify-center bg-[#050505] px-6 text-center font-sans">
         <div className="absolute top-10 sm:top-14">
           <a
-            href="https://dukaio.com"
+            href={platformUrl || "/"}
             className="inline-flex items-center gap-2 text-sm font-medium text-zinc-400 transition-colors hover:text-white"
           >
             ← DUKAIO
@@ -185,30 +190,39 @@ export function Storefront({ handle, page, productId }: StorefrontProps) {
               />
             </div>
           </div>
-          <h1 className="mb-8 text-3xl font-normal tracking-tight text-white sm:text-[40px] sm:leading-tight">
-            Cette boutique est actuellement indisponible.
+          <h1 className="mb-3 text-3xl font-normal tracking-tight text-white sm:text-[40px] sm:leading-tight">
+            {data?.store?.is_published === false
+              ? "Cette boutique n'est pas encore publiée."
+              : "Cette boutique est actuellement indisponible."}
           </h1>
+          <p className="mx-auto mb-8 max-w-lg text-sm text-zinc-400">
+            {data?.store?.is_published === false
+              ? "Le commerçant prépare actuellement ses produits et sa vitrine. Revenez très bientôt !"
+              : "Cette adresse ne correspond à aucune boutique active pour le moment."}
+          </p>
           <div className="mx-auto max-w-xl rounded-2xl border border-zinc-800/80 bg-[#0a0a0a] p-8 sm:p-10">
             <h2 className="mb-3 text-lg font-medium text-white sm:text-xl">
-              Êtes-vous le propriétaire ?
+              Êtes-vous le propriétaire {data?.store?.store_name ? `de ${data.store.store_name}` : ""} ?
             </h2>
             <p className="text-sm leading-relaxed text-zinc-400">
-              Si vous avez des difficultés à accéder à votre boutique, connectez-vous à votre{" "}
+              {data?.store?.is_published === false
+                ? "Rendez-vous dans l'Éditeur de boutique depuis votre Tableau de bord pour personnaliser et publier votre vitrine en 1 clic."
+                : "Connectez-vous à votre Tableau de bord DUKAIO pour configurer votre boutique, ou contactez le support."}
+            </p>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
               <a
-                href="https://dukaio.com/dashboard"
-                className="text-white underline underline-offset-4 hover:text-zinc-200"
+                href={`${platformUrl}/dashboard/editeur`}
+                className="inline-flex items-center justify-center rounded-[6px] bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+              >
+                Accéder à l'éditeur
+              </a>
+              <a
+                href={`${platformUrl}/dashboard`}
+                className="inline-flex items-center justify-center rounded-[6px] border border-zinc-700 bg-transparent px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-zinc-800"
               >
                 Tableau de bord
               </a>
-              . Pour la réactiver, contactez le{" "}
-              <a
-                href="mailto:support@dukaio.com"
-                className="text-white underline underline-offset-4 hover:text-zinc-200"
-              >
-                Support DUKAIO
-              </a>
-              .
-            </p>
+            </div>
           </div>
         </div>
       </main>

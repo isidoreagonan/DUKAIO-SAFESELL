@@ -55,10 +55,11 @@ export function storePath(handle: string, path = "/") {
   return normPath === "/" ? base : `${base}${normPath}`;
 }
 
-/** URL absolue de la boutique : sous-domaine propre ou domaine personnalisé. */
+/** URL absolue de la boutique : sous-domaine propre (ex: https://boutique.dukaio.com) ou domaine personnalisé. */
 export function storeUrl(handle: string, customDomain?: string | null) {
-  if (customDomain) {
-    return `https://${customDomain.trim()}`;
+  if (customDomain && customDomain.trim()) {
+    const cleanDomain = customDomain.trim().replace(/^https?:\/\//, "");
+    return `https://${cleanDomain}`;
   }
   return `https://${handle.trim()}.${ROOT_DOMAIN}`;
 }

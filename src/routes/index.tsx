@@ -4,6 +4,9 @@ import { ArrowRight, BarChart3, ImagePlus, PackageCheck, Pause, Play, Smartphone
 import { Button } from "@/components/ui/button";
 import { assets, pageMeta, PricingGrid } from "@/components/public-site";
 import { PublicLayout } from "@/components/landing/public-layout";
+import { Storefront } from "@/components/site/Storefront";
+import { storeHandleFromHost, storefrontQuery } from "@/lib/storefront";
+import { getIncomingHost } from "@/lib/storefront.functions";
 
 const motionVideo = { url: "/landing/dukaio-motion-web.mp4" };
 const motionPoster = { url: "/landing/dukaio-motion-poster.jpg" };
@@ -15,9 +18,58 @@ const checkoutDemoGif = { url: "/landing/dukaio-checkout-demo.gif" };
 const checkoutDemoPoster = { url: "/landing/dukaio-checkout-demo-poster.webp" };
 
 export const Route = createFileRoute("/")({
-  head: () => {
-    const meta = pageMeta("DUKAIO — Lancez votre boutique en ligne", "Créez votre boutique, présentez vos produits et recevez vos commandes avec paiement à la livraison.", "/");
-    return { ...meta, links: [...meta.links, { rel: "preload", as: "image", href: aiDemoGif.url, fetchPriority: "high" }] };
+  beforeLoad: async () => {
+    try {
+      const host =
+        typeof window !== "undefined" ? window.location.host : await getIncomingHost().catch(() => null);
+      const handle = storeHandleFromHost(host);
+      return { handle: handle || null };
+    } catch {
+      return { handle: null };
+    }
+  },
+  loader: async ({ context }) => {
+    if (context.handle) {
+      try {
+        return await context.queryClient.ensureQueryData(storefrontQuery(context.handle));
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  },
+  head: (ctx) => {
+    const context = ctx?.context as { handle: string | null } | undefined;
+    const loaderData = ctx?.loaderData as any;
+    if (context?.handle) {
+      const name = loaderData?.store?.store_name ?? context.handle;
+      const description =
+        loaderData?.store?.description?.slice(0, 155) ??
+        `Découvrez les produits de ${name} et commandez en ligne en quelques clics.`;
+      const title = `${name} — Boutique en ligne`;
+      return {
+        meta: [
+          { title },
+          { name: "description", content: description },
+          { property: "og:title", content: title },
+          { property: "og:description", content: description },
+          { property: "og:type", content: "website" },
+          { name: "twitter:card", content: "summary_large_image" },
+        ],
+      };
+    }
+    const meta = pageMeta(
+      "DUKAIO — Lancez votre boutique en ligne",
+      "Créez votre boutique, présentez vos produits et recevez vos commandes avec paiement à la livraison.",
+      "/"
+    );
+    return {
+      ...meta,
+      links: [
+        ...meta.links,
+        { rel: "preload", as: "image", href: aiDemoGif.url, fetchPriority: "high" },
+      ],
+    };
   },
   component: Index,
 });
@@ -149,6 +201,11 @@ function MotionPlayer() {
 }
 
 function Index() {
+  const { handle } = Route.useRouteContext();
+  if (handle) {
+    return <Storefront handle={handle} page="home" />;
+  }
+
   return (
     <PublicLayout>
       <main className="bg-background">

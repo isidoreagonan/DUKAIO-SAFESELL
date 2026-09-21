@@ -155,7 +155,7 @@ export function CheckoutPage() {
           confirmer la livraison.
         </p>
         <a
-          href={`/s/${handle}`}
+          href={shop?.href("/") ?? "/"}
           className="mt-6 inline-flex items-center justify-center gap-2 rounded-[var(--radius)] bg-[var(--rose)] px-6 py-3 text-sm font-bold tracking-wide text-white uppercase"
         >
           Continuer mes achats
@@ -172,7 +172,7 @@ export function CheckoutPage() {
           Ajoutez un produit à votre panier pour passer commande.
         </p>
         <a
-          href={`/s/${handle}`}
+          href={shop?.href("/") ?? "/"}
           className="mt-6 inline-flex items-center gap-2 rounded-[var(--radius)] border border-border px-5 py-3 text-sm font-bold uppercase transition hover:bg-muted"
         >
           <ArrowLeft size={15} /> Retour à la boutique
@@ -392,7 +392,7 @@ export function CheckoutPage() {
         </div>
 
         <a
-          href={`/s/${handle}`}
+          href={shop?.href("/") ?? "/"}
           className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground transition hover:text-foreground"
         >
           <ArrowLeft size={13} /> Continuer mes achats
