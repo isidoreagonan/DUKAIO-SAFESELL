@@ -455,6 +455,24 @@ export async function reconcilePayment(payment: PaymentRow) {
     } catch (e) {
       console.error("promo consume", e);
     }
+
+    /* Suivi publicitaire global DUKAIO (Meta CAPI & TikTok Events API pour la souscription) */
+    try {
+      const { reportPlatformServerConversion } = await import("@/lib/platform-tracking.server");
+      const { data: userRec } = await store.auth.admin.getUserById(payment.user_id);
+      await reportPlatformServerConversion({
+        event: "Subscribe",
+        eventId: `sub_${payment.id}`,
+        value: Number(payment.amount),
+        currency: "XOF",
+        contentName: `Abonnement DUKAIO ${payment.plan}`,
+        email: userRec?.user?.email ?? null,
+        externalId: payment.user_id,
+        sourceUrl: "https://dukaio.com/dashboard/parametres",
+      });
+    } catch (e) {
+      console.error("[platform_tracking:server] subscription reporting", e);
+    }
     /* Numéro de reçu lisible, dérivé de l'identifiant du paiement. */
     const receiptNumber = `DK-${String(payment.id).replace(/-/g, "").slice(0, 8).toUpperCase()}`;
     const paidAt = new Date().toISOString();

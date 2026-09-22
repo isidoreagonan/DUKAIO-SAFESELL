@@ -52,6 +52,7 @@ import { Route as AuthenticatedAdminModelesIaRouteImport } from './routes/_authe
 import { Route as AuthenticatedAdminPromosRouteImport } from './routes/_authenticated/admin/promos'
 import { Route as AuthenticatedAdminRetraitsRouteImport } from './routes/_authenticated/admin/retraits'
 import { Route as AuthenticatedAdminTendancesRouteImport } from './routes/_authenticated/admin/tendances'
+import { Route as AuthenticatedAdminTrackingRouteImport } from './routes/_authenticated/admin/tracking'
 import { Route as AuthenticatedAdminTraficRouteImport } from './routes/_authenticated/admin/trafic'
 import { Route as AuthenticatedAdminUtilisateursRouteImport } from './routes/_authenticated/admin/utilisateurs'
 import { Route as AuthenticatedAdminVerificationRouteImport } from './routes/_authenticated/admin/verification'
@@ -317,6 +318,12 @@ const AuthenticatedAdminTendancesRoute =
   AuthenticatedAdminTendancesRouteImport.update({
     id: '/tendances',
     path: '/tendances',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminTrackingRoute =
+  AuthenticatedAdminTrackingRouteImport.update({
+    id: '/tracking',
+    path: '/tracking',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
 const AuthenticatedAdminTraficRoute =
@@ -595,6 +602,7 @@ export interface FileRoutesByFullPath {
   '/admin/promos': typeof AuthenticatedAdminPromosRoute
   '/admin/retraits': typeof AuthenticatedAdminRetraitsRoute
   '/admin/tendances': typeof AuthenticatedAdminTendancesRoute
+  '/admin/tracking': typeof AuthenticatedAdminTrackingRoute
   '/admin/trafic': typeof AuthenticatedAdminTraficRoute
   '/admin/utilisateurs': typeof AuthenticatedAdminUtilisateursRoute
   '/admin/verification': typeof AuthenticatedAdminVerificationRoute
@@ -678,6 +686,7 @@ export interface FileRoutesByTo {
   '/admin/promos': typeof AuthenticatedAdminPromosRoute
   '/admin/retraits': typeof AuthenticatedAdminRetraitsRoute
   '/admin/tendances': typeof AuthenticatedAdminTendancesRoute
+  '/admin/tracking': typeof AuthenticatedAdminTrackingRoute
   '/admin/trafic': typeof AuthenticatedAdminTraficRoute
   '/admin/utilisateurs': typeof AuthenticatedAdminUtilisateursRoute
   '/admin/verification': typeof AuthenticatedAdminVerificationRoute
@@ -765,6 +774,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/promos': typeof AuthenticatedAdminPromosRoute
   '/_authenticated/admin/retraits': typeof AuthenticatedAdminRetraitsRoute
   '/_authenticated/admin/tendances': typeof AuthenticatedAdminTendancesRoute
+  '/_authenticated/admin/tracking': typeof AuthenticatedAdminTrackingRoute
   '/_authenticated/admin/trafic': typeof AuthenticatedAdminTraficRoute
   '/_authenticated/admin/utilisateurs': typeof AuthenticatedAdminUtilisateursRoute
   '/_authenticated/admin/verification': typeof AuthenticatedAdminVerificationRoute
@@ -852,6 +862,7 @@ export interface FileRouteTypes {
     | '/admin/promos'
     | '/admin/retraits'
     | '/admin/tendances'
+    | '/admin/tracking'
     | '/admin/trafic'
     | '/admin/utilisateurs'
     | '/admin/verification'
@@ -935,6 +946,7 @@ export interface FileRouteTypes {
     | '/admin/promos'
     | '/admin/retraits'
     | '/admin/tendances'
+    | '/admin/tracking'
     | '/admin/trafic'
     | '/admin/utilisateurs'
     | '/admin/verification'
@@ -1021,6 +1033,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/promos'
     | '/_authenticated/admin/retraits'
     | '/_authenticated/admin/tendances'
+    | '/_authenticated/admin/tracking'
     | '/_authenticated/admin/trafic'
     | '/_authenticated/admin/utilisateurs'
     | '/_authenticated/admin/verification'
@@ -1415,6 +1428,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminTendancesRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/tracking': {
+      id: '/_authenticated/admin/tracking'
+      path: '/tracking'
+      fullPath: '/admin/tracking'
+      preLoaderRoute: typeof AuthenticatedAdminTrackingRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/admin/trafic': {
       id: '/_authenticated/admin/trafic'
       path: '/trafic'
@@ -1717,6 +1737,7 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminPromosRoute: typeof AuthenticatedAdminPromosRoute
   AuthenticatedAdminRetraitsRoute: typeof AuthenticatedAdminRetraitsRoute
   AuthenticatedAdminTendancesRoute: typeof AuthenticatedAdminTendancesRoute
+  AuthenticatedAdminTrackingRoute: typeof AuthenticatedAdminTrackingRoute
   AuthenticatedAdminTraficRoute: typeof AuthenticatedAdminTraficRoute
   AuthenticatedAdminUtilisateursRoute: typeof AuthenticatedAdminUtilisateursRoute
   AuthenticatedAdminVerificationRoute: typeof AuthenticatedAdminVerificationRoute
@@ -1737,6 +1758,7 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminPromosRoute: AuthenticatedAdminPromosRoute,
     AuthenticatedAdminRetraitsRoute: AuthenticatedAdminRetraitsRoute,
     AuthenticatedAdminTendancesRoute: AuthenticatedAdminTendancesRoute,
+    AuthenticatedAdminTrackingRoute: AuthenticatedAdminTrackingRoute,
     AuthenticatedAdminTraficRoute: AuthenticatedAdminTraficRoute,
     AuthenticatedAdminUtilisateursRoute: AuthenticatedAdminUtilisateursRoute,
     AuthenticatedAdminVerificationRoute: AuthenticatedAdminVerificationRoute,

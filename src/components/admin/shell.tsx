@@ -23,6 +23,7 @@ import {
   Users,
   type LucideIcon,
   Ticket,
+  Target,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import {
@@ -56,6 +57,7 @@ const NAV: { label: string; items: AdminNavItem[] }[] = [
     label: "Plateforme",
     items: [
       { title: "Marketing & E-mails", to: "/admin/marketing", icon: Megaphone },
+      { title: "Pixels & Tracking", to: "/admin/tracking", icon: Target },
       { title: "Abonnements", to: "/admin/abonnements", icon: CreditCard },
       { title: "Retraits", to: "/admin/retraits", icon: Banknote },
       { title: "Codes promo", to: "/admin/promos", icon: Ticket },

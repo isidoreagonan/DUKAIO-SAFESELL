@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
 import { ConfirmProvider } from "@/components/ui/confirm-dialog";
 import { NoticeHost } from "@/components/ui/notice-dialog";
+import { PlatformTrackingHost } from "@/components/platform-tracking-host";
 
 function NotFoundComponent() {
   return (
@@ -150,6 +151,7 @@ function RootComponent() {
         <Outlet />
       </ConfirmProvider>
       <NoticeHost />
+      <PlatformTrackingHost />
       <Toaster />
     </QueryClientProvider>
   );

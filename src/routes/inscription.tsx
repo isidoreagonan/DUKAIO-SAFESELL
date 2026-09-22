@@ -8,6 +8,8 @@ import { pageMeta } from "@/components/landing/public-site";
 import { AuthShell, Divider, Field, GoogleButton } from "@/components/auth-shell";
 import { supabase } from "@/integrations/supabase/client";
 import { confirmSignup, resendSignupCode, startSignup } from "@/lib/account-auth.functions";
+import { trackPlatformEvent } from "@/lib/platform-tracking-client";
+import { reportPlatformRegistrationServer } from "@/lib/platform-tracking.functions";
 
 export const Route = createFileRoute("/inscription")({
   head: () =>
@@ -29,6 +31,7 @@ function Page() {
   const begin = useServerFn(startSignup);
   const confirm = useServerFn(confirmSignup);
   const resend = useServerFn(resendSignupCode);
+  const reportRegistration = useServerFn(reportPlatformRegistrationServer);
 
   useEffect(() => {
     void supabase.auth.getSession().then(({ data }) => {
@@ -121,6 +124,15 @@ function Page() {
         toast.error("Code invalide", { description: "reason" in res ? res.reason : "Veuillez réessayer." });
         return;
       }
+
+      // Suivi d'acquisition publicitaire de la plateforme DUKAIO (Pixel client + CAPI serveur)
+      const regEventId = `reg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      trackPlatformEvent("CompleteRegistration", {
+        email: draft.email,
+        contentName: "Inscription Vendeur DUKAIO",
+        eventId: regEventId,
+      });
+      void reportRegistration({ data: { email: draft.email, eventId: regEventId } }).catch(() => {});
 
       const { error: signinErr } = await supabase.auth.signInWithPassword({
         email: draft.email,
