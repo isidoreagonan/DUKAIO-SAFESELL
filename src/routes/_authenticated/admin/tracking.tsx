@@ -2,22 +2,15 @@ import { useState } from "react";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import {
-  Activity,
   AlertCircle,
-  Check,
   CheckCircle2,
   Copy,
-  ExternalLink,
   Eye,
   EyeOff,
   FlaskConical,
-  HelpCircle,
-  Info,
   Loader2,
   Save,
   ShieldCheck,
-  Sparkles,
-  Target,
   Zap,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -131,27 +124,62 @@ function AdminPlatformTrackingPage() {
       title="Pixels & Tracking Publicitaire"
       badge={{ label: "Plateforme", variant: "primary" }}
       description="Connectez vos pixels Facebook, TikTok et Google pour diffuser des campagnes publicitaires et acquérir de nouveaux vendeurs sur DUKAIO."
-      actions={
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 shadow-sm">
-            <span className="text-xs font-semibold text-muted-foreground">Suivi actif</span>
+    >
+      <form
+        autoComplete="off"
+        onSubmit={(e) => {
+          e.preventDefault();
+          void handleSave();
+        }}
+        className="space-y-6"
+      >
+        {/* Champs cachés leurres pour empêcher Chrome / gestionnaires de mots de passe de préremplir le compte admin */}
+        <div style={{ display: "none" }} aria-hidden="true">
+          <input type="text" name="fakeusernameremembered" tabIndex={-1} autoComplete="off" />
+          <input type="password" name="fakepasswordremembered" tabIndex={-1} autoComplete="new-password" />
+        </div>
+
+        {/* Barre de contrôle principale DANS la page (et non dans la barre du haut) */}
+        <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
             <Switch
+              id="platform-tracking-toggle"
               checked={settings.enabled}
               onCheckedChange={(checked) => updateField("enabled", checked)}
             />
+            <div>
+              <label
+                htmlFor="platform-tracking-toggle"
+                className="flex cursor-pointer items-center gap-2 text-sm font-bold text-foreground"
+              >
+                Suivi publicitaire global
+                <span
+                  className={cn(
+                    "rounded-full px-2 py-0.5 text-[10px] font-bold",
+                    settings.enabled
+                      ? "bg-emerald-500/10 text-emerald-600"
+                      : "bg-muted text-muted-foreground",
+                  )}
+                >
+                  {settings.enabled ? "Actif" : "Désactivé"}
+                </span>
+              </label>
+              <p className="text-xs text-muted-foreground">
+                Active ou coupe la diffusion des pixels et évènements sur les pages du site DUKAIO.
+              </p>
+            </div>
           </div>
+
           <Button
-            onClick={handleSave}
+            type="submit"
             disabled={saving}
-            className="flex cursor-pointer items-center gap-2 bg-primary font-bold text-primary-foreground shadow-sm hover:bg-primary/90"
+            className="flex cursor-pointer items-center justify-center gap-2 bg-primary px-5 py-2 font-bold text-primary-foreground shadow-sm hover:bg-primary/90 shrink-0"
           >
             {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-            Enregistrer
+            Enregistrer les réglages
           </Button>
         </div>
-      }
-    >
-      <div className="space-y-6">
+
         {/* Isolation & Security Notice */}
         <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-emerald-950 dark:text-emerald-200">
           <div className="flex items-start gap-3">
@@ -350,10 +378,20 @@ function AdminPlatformTrackingPage() {
           >
             <div className="space-y-4 pt-2">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">
+                <label htmlFor="dukaio_meta_pixel_id" className="text-xs font-bold text-foreground">
                   Identifiant du Pixel Facebook (Dataset ID)
                 </label>
                 <Input
+                  id="dukaio_meta_pixel_id"
+                  name="dukaio_meta_pixel_id"
+                  type="text"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck={false}
+                  data-lpignore="true"
+                  data-1p-ignore="true"
+                  data-form-type="other"
                   placeholder="Ex : 123456789012345"
                   value={settings.facebook_pixel_id}
                   onChange={(e) => updateField("facebook_pixel_id", e.target.value)}
@@ -367,7 +405,7 @@ function AdminPlatformTrackingPage() {
 
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-foreground">
+                  <label htmlFor="dukaio_meta_capi_token" className="text-xs font-bold text-foreground">
                     Jeton d'accès Conversions API (CAPI)
                   </label>
                   <button
@@ -379,8 +417,21 @@ function AdminPlatformTrackingPage() {
                     {showMetaToken ? "Masquer" : "Afficher"}
                   </button>
                 </div>
+                {/* Champ type text avec sécurité CSS pour ne JAMAIS déclencher le gestionnaire de mots de passe de Chrome */}
                 <Input
-                  type={showMetaToken ? "text" : "password"}
+                  id="dukaio_meta_capi_token"
+                  name="dukaio_meta_capi_token"
+                  type="text"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck={false}
+                  data-lpignore="true"
+                  data-1p-ignore="true"
+                  data-form-type="other"
+                  style={{
+                    WebkitTextSecurity: showMetaToken ? "none" : "disc",
+                  }}
                   placeholder="EAA..."
                   value={settings.facebook_capi_token}
                   onChange={(e) => updateField("facebook_capi_token", e.target.value)}
@@ -393,11 +444,21 @@ function AdminPlatformTrackingPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">
+                <label htmlFor="dukaio_meta_test_code" className="text-xs font-bold text-foreground">
                   Code de test d'évènements (Optionnel)
                 </label>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2 sm:flex-nowrap">
                   <Input
+                    id="dukaio_meta_test_code"
+                    name="dukaio_meta_test_code"
+                    type="text"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck={false}
+                    data-lpignore="true"
+                    data-1p-ignore="true"
+                    data-form-type="other"
                     placeholder="Ex : TEST12345"
                     value={settings.facebook_test_event_code}
                     onChange={(e) => updateField("facebook_test_event_code", e.target.value.toUpperCase())}
@@ -442,6 +503,23 @@ function AdminPlatformTrackingPage() {
                   <p className="leading-relaxed">{testResult.facebook.detail}</p>
                 </div>
               )}
+
+              {/* Pied de formulaire avec bouton d'enregistrement */}
+              <div className="flex items-center justify-between border-t border-border pt-4 mt-6">
+                <span className="text-xs text-muted-foreground">
+                  {settings.updated_at
+                    ? `Dernière mise à jour : ${new Date(settings.updated_at).toLocaleString("fr-FR")}`
+                    : "Modifications non enregistrées"}
+                </span>
+                <Button
+                  type="submit"
+                  disabled={saving}
+                  className="flex cursor-pointer items-center gap-2 bg-primary font-bold text-primary-foreground shadow-sm hover:bg-primary/90"
+                >
+                  {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+                  Enregistrer
+                </Button>
+              </div>
             </div>
           </Panel>
         )}
@@ -454,8 +532,20 @@ function AdminPlatformTrackingPage() {
           >
             <div className="space-y-4 pt-2">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">Identifiant du Pixel TikTok</label>
+                <label htmlFor="dukaio_tiktok_pixel_id" className="text-xs font-bold text-foreground">
+                  Identifiant du Pixel TikTok
+                </label>
                 <Input
+                  id="dukaio_tiktok_pixel_id"
+                  name="dukaio_tiktok_pixel_id"
+                  type="text"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck={false}
+                  data-lpignore="true"
+                  data-1p-ignore="true"
+                  data-form-type="other"
                   placeholder="Ex : C1234567890ABCDEF"
                   value={settings.tiktok_pixel_id}
                   onChange={(e) => updateField("tiktok_pixel_id", e.target.value)}
@@ -468,7 +558,7 @@ function AdminPlatformTrackingPage() {
 
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-foreground">
+                  <label htmlFor="dukaio_tiktok_token" className="text-xs font-bold text-foreground">
                     Jeton d'accès TikTok Events API
                   </label>
                   <button
@@ -481,7 +571,19 @@ function AdminPlatformTrackingPage() {
                   </button>
                 </div>
                 <Input
-                  type={showTiktokToken ? "text" : "password"}
+                  id="dukaio_tiktok_token"
+                  name="dukaio_tiktok_token"
+                  type="text"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck={false}
+                  data-lpignore="true"
+                  data-1p-ignore="true"
+                  data-form-type="other"
+                  style={{
+                    WebkitTextSecurity: showTiktokToken ? "none" : "disc",
+                  }}
                   placeholder="Jeton d'accès..."
                   value={settings.tiktok_access_token}
                   onChange={(e) => updateField("tiktok_access_token", e.target.value)}
@@ -493,11 +595,21 @@ function AdminPlatformTrackingPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">
+                <label htmlFor="dukaio_tiktok_test_code" className="text-xs font-bold text-foreground">
                   Code de test TikTok (Optionnel)
                 </label>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2 sm:flex-nowrap">
                   <Input
+                    id="dukaio_tiktok_test_code"
+                    name="dukaio_tiktok_test_code"
+                    type="text"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck={false}
+                    data-lpignore="true"
+                    data-1p-ignore="true"
+                    data-form-type="other"
                     placeholder="Ex : TEST12345"
                     value={settings.tiktok_test_event_code}
                     onChange={(e) => updateField("tiktok_test_event_code", e.target.value)}
@@ -537,6 +649,23 @@ function AdminPlatformTrackingPage() {
                   <p className="leading-relaxed">{testResult.tiktok.detail}</p>
                 </div>
               )}
+
+              {/* Pied de formulaire avec bouton d'enregistrement */}
+              <div className="flex items-center justify-between border-t border-border pt-4 mt-6">
+                <span className="text-xs text-muted-foreground">
+                  {settings.updated_at
+                    ? `Dernière mise à jour : ${new Date(settings.updated_at).toLocaleString("fr-FR")}`
+                    : "Modifications non enregistrées"}
+                </span>
+                <Button
+                  type="submit"
+                  disabled={saving}
+                  className="flex cursor-pointer items-center gap-2 bg-primary font-bold text-primary-foreground shadow-sm hover:bg-primary/90"
+                >
+                  {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+                  Enregistrer
+                </Button>
+              </div>
             </div>
           </Panel>
         )}
@@ -550,8 +679,20 @@ function AdminPlatformTrackingPage() {
             <div className="space-y-4 pt-2">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-foreground">Identifiant Google Ads (AW-)</label>
+                  <label htmlFor="dukaio_google_ads_id" className="text-xs font-bold text-foreground">
+                    Identifiant Google Ads (AW-)
+                  </label>
                   <Input
+                    id="dukaio_google_ads_id"
+                    name="dukaio_google_ads_id"
+                    type="text"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck={false}
+                    data-lpignore="true"
+                    data-1p-ignore="true"
+                    data-form-type="other"
                     placeholder="Ex : AW-123456789"
                     value={settings.google_ads_id}
                     onChange={(e) => updateField("google_ads_id", e.target.value)}
@@ -559,10 +700,20 @@ function AdminPlatformTrackingPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-foreground">
+                  <label htmlFor="dukaio_google_conv_label" className="text-xs font-bold text-foreground">
                     Libellé de conversion Google Ads
                   </label>
                   <Input
+                    id="dukaio_google_conv_label"
+                    name="dukaio_google_conv_label"
+                    type="text"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck={false}
+                    data-lpignore="true"
+                    data-1p-ignore="true"
+                    data-form-type="other"
                     placeholder="Ex : AbCdEfGhIjKlMnOpQrS"
                     value={settings.google_ads_conversion_label}
                     onChange={(e) => updateField("google_ads_conversion_label", e.target.value)}
@@ -573,10 +724,20 @@ function AdminPlatformTrackingPage() {
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-foreground">
+                  <label htmlFor="dukaio_ga4_id" className="text-xs font-bold text-foreground">
                     Identifiant de mesure GA4 (G-)
                   </label>
                   <Input
+                    id="dukaio_ga4_id"
+                    name="dukaio_ga4_id"
+                    type="text"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck={false}
+                    data-lpignore="true"
+                    data-1p-ignore="true"
+                    data-form-type="other"
                     placeholder="Ex : G-XXXXXXXXXX"
                     value={settings.ga4_measurement_id}
                     onChange={(e) => updateField("ga4_measurement_id", e.target.value)}
@@ -585,7 +746,9 @@ function AdminPlatformTrackingPage() {
                 </div>
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-foreground">Secret d'API GA4 Protocol</label>
+                    <label htmlFor="dukaio_ga4_secret" className="text-xs font-bold text-foreground">
+                      Secret d'API GA4 Protocol
+                    </label>
                     <button
                       type="button"
                       onClick={() => setShowGaSecret(!showGaSecret)}
@@ -596,7 +759,19 @@ function AdminPlatformTrackingPage() {
                     </button>
                   </div>
                   <Input
-                    type={showGaSecret ? "text" : "password"}
+                    id="dukaio_ga4_secret"
+                    name="dukaio_ga4_secret"
+                    type="text"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck={false}
+                    data-lpignore="true"
+                    data-1p-ignore="true"
+                    data-form-type="other"
+                    style={{
+                      WebkitTextSecurity: showGaSecret ? "none" : "disc",
+                    }}
                     placeholder="Secret d'API GA4"
                     value={settings.ga4_api_secret}
                     onChange={(e) => updateField("ga4_api_secret", e.target.value)}
@@ -639,6 +814,23 @@ function AdminPlatformTrackingPage() {
                   <p className="leading-relaxed">{testResult.google.detail}</p>
                 </div>
               )}
+
+              {/* Pied de formulaire avec bouton d'enregistrement */}
+              <div className="flex items-center justify-between border-t border-border pt-4 mt-6">
+                <span className="text-xs text-muted-foreground">
+                  {settings.updated_at
+                    ? `Dernière mise à jour : ${new Date(settings.updated_at).toLocaleString("fr-FR")}`
+                    : "Modifications non enregistrées"}
+                </span>
+                <Button
+                  type="submit"
+                  disabled={saving}
+                  className="flex cursor-pointer items-center gap-2 bg-primary font-bold text-primary-foreground shadow-sm hover:bg-primary/90"
+                >
+                  {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+                  Enregistrer
+                </Button>
+              </div>
             </div>
           </Panel>
         )}
@@ -823,7 +1015,7 @@ INSERT INTO public.platform_tracking_settings (id) VALUES (1) ON CONFLICT (id) D
             </div>
           </Panel>
         )}
-      </div>
+      </form>
     </AdminShell>
   );
 }
