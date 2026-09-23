@@ -60,6 +60,12 @@ async function withSignedMedia(ads: DiscoveryAd[]): Promise<DiscoveryAd[]> {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     return ads.map((ad) => {
       if (ad.media_path) {
+        if (ad.media_path.startsWith("http")) {
+          return {
+            ...ad,
+            media_signed_url: ad.media_path,
+          };
+        }
         const { data } = supabaseAdmin.storage.from("store-media").getPublicUrl(ad.media_path);
         return {
           ...ad,
@@ -392,6 +398,11 @@ export const refreshDiscoveryAdVideo = createServerFn({ method: "POST" })
       return { ok: false, video_url: null, reason: "Publicité introuvable" };
     }
 
+    // Si la vidéo est déjà hébergée de façon permanente sur Bunny CDN, aucun rafraîchissement nécessaire
+    if (ad.video_url?.includes(".b-cdn.net")) {
+      return { ok: true, video_url: ad.video_url };
+    }
+
     let freshUrl: string | null = null;
 
     // 1. Essai léger : extraction directe depuis la page Ad Library
@@ -498,14 +509,23 @@ export const refreshDiscoveryAdVideo = createServerFn({ method: "POST" })
     }
 
     if (freshUrl) {
-      // Sauvegarde du nouveau jeton en base (0 Ko de stockage Supabase Storage utilisé)
+      // Sauvegarde pérenne sur Bunny.net CDN (0 Ko de stockage Supabase Storage utilisé)
+      let finalUrl = freshUrl;
+      try {
+        const { uploadVideoFromUrl } = await import("@/lib/bunny.server");
+        const bunnyUrl = await uploadVideoFromUrl(freshUrl, ad.external_id);
+        if (bunnyUrl) finalUrl = bunnyUrl;
+      } catch {
+        /* repli sur l'URL directe Meta */
+      }
+
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       await supabaseAdmin
         .from("discovery_ads")
-        .update({ video_url: freshUrl, last_seen_at: new Date().toISOString() })
+        .update({ video_url: finalUrl, last_seen_at: new Date().toISOString() })
         .eq("id", data.id);
 
-      return { ok: true, video_url: freshUrl };
+      return { ok: true, video_url: finalUrl };
     }
 
     return { ok: false, video_url: ad.video_url, reason: "Flux vidéo archivé sur Meta" };

@@ -26,6 +26,11 @@ export const Route = createFileRoute("/api/public/video/stream")({
           return new Response("Vidéo introuvable", { status: 404 });
         }
 
+        // Si déjà hébergé sur Bunny.net CDN, redirection directe ultra-rapide (support Range natif)
+        if (ad.video_url.includes(".b-cdn.net")) {
+          return Response.redirect(ad.video_url, 302);
+        }
+
         const rangeHeader = request.headers.get("range");
 
         const fetchMeta = async (targetUrl: string) => {
@@ -49,6 +54,23 @@ export const Route = createFileRoute("/api/public/video/stream")({
 
         if (!metaRes || !metaRes.ok) {
           return new Response("Flux vidéo indisponible ou expiré", { status: metaRes?.status || 404 });
+        }
+
+        // Migration automatique en arrière-plan vers Bunny.net pour pérenniser la vidéo à vie
+        if (ad.external_id && !rangeHeader) {
+          import("@/lib/bunny.server").then(async ({ uploadVideoFromUrl }) => {
+            try {
+              const bunnyUrl = await uploadVideoFromUrl(ad.video_url, ad.external_id);
+              if (bunnyUrl) {
+                await supabaseAdmin
+                  .from("discovery_ads")
+                  .update({ video_url: bunnyUrl })
+                  .eq("id", ad.id);
+              }
+            } catch {
+              /* ignore background upload error */
+            }
+          });
         }
 
         const responseHeaders = new Headers();
