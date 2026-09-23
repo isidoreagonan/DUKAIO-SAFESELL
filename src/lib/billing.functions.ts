@@ -168,11 +168,11 @@ export const startCardPayment = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { userId, claims } = context as unknown as Ctx;
     const { primaryStore, expectedAmount } = await import("@/lib/subscription.server");
-    const { ligdicashInvoice } = await import("@/lib/billing.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { getRequestHost } = await import("@tanstack/react-start/server");
-
     const { applyPromo } = await import("@/lib/promo.server");
+    const { PLAN_CATALOG } = await import("@/lib/plans");
+
     const store = await primaryStore(userId);
     const base = expectedAmount(data.plan, data.period);
     const promo = await applyPromo({ code: data.promo, plan: data.plan, period: data.period, amount: base });
@@ -181,6 +181,7 @@ export const startCardPayment = createServerFn({ method: "POST" })
     const host = getRequestHost({ xForwardedHost: true });
     const origin = host ? `https://${host}` : "https://dukaio.com";
     const email = typeof claims["email"] === "string" ? (claims["email"] as string) : "";
+    const planName = PLAN_CATALOG[data.plan]?.name ?? data.plan;
 
     const { error } = await supabaseAdmin.from("subscription_payments").insert({
       id: paymentId,
@@ -193,25 +194,39 @@ export const startCardPayment = createServerFn({ method: "POST" })
       promo_code: promo.code,
       discount_amount: promo.discount,
       currency: "XOF",
-      provider: "ligdicash",
+      provider: "stripe",
       status: "pending",
     });
     if (error) throw new Error(error.message);
 
-    const invoice = await ligdicashInvoice({
-      reference: paymentId,
-      amount,
-      label: `Abonnement DUKAIO ${data.plan} (${data.period === "yearly" ? "annuel" : "mensuel"})`,
-      origin,
-      customer: { firstName: store.store_name, lastName: "DUKAIO", email: email || "client@dukaio.com" },
-    });
+    try {
+      const { createStripeCheckoutSession } = await import("@/lib/stripe.server");
+      const session = await createStripeCheckoutSession({
+        paymentId,
+        amount,
+        planLabel: planName,
+        planKey: data.plan,
+        period: data.period,
+        origin,
+        customerEmail: email,
+        storeName: store.store_name,
+      });
 
-    await supabaseAdmin
-      .from("subscription_payments")
-      .update({ provider_ref: invoice.token })
-      .eq("id", paymentId);
+      await supabaseAdmin
+        .from("subscription_payments")
+        .update({ provider_ref: session.id })
+        .eq("id", paymentId);
 
-    return { paymentId, amount, url: invoice.url };
+      return { paymentId, amount, url: session.url };
+    } catch (stripeErr) {
+      // Si les clés Stripe ne sont pas encore configurées dans .env
+      const msg = stripeErr instanceof Error ? stripeErr.message : String(stripeErr);
+      await supabaseAdmin
+        .from("subscription_payments")
+        .update({ status: "failed", failure_reason: msg })
+        .eq("id", paymentId);
+      throw new Error(`Paiement par carte indisponible : ${msg}`);
+    }
   });
 
 /** Vérifie un paiement auprès du prestataire et active la formule si payée. */

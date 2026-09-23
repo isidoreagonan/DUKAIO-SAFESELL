@@ -878,10 +878,17 @@ function CheckoutDialog({
                   </p>
                 </div>
               ) : (
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  Vous serez redirigé vers la page sécurisée 3D Secure pour payer par Visa, MasterCard
-                  ou American Express.
-                </p>
+                <div className="space-y-2 rounded-xl border border-border bg-card p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-foreground">Paiement sécurisé par Stripe</span>
+                    <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold text-blue-600">
+                      Stripe 3D Secure
+                    </span>
+                  </div>
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    Vous serez redirigé vers Stripe pour payer en toute sécurité avec votre carte Visa, Mastercard, American Express, Apple Pay ou Google Pay.
+                  </p>
+                </div>
               )}
               <div className="rounded-xl border border-dashed border-border bg-muted/30 p-3">
                 <label className="text-xs font-semibold text-muted-foreground">

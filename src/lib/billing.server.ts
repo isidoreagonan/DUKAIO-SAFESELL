@@ -364,6 +364,14 @@ export async function reconcilePayment(payment: PaymentRow) {
     pending = !paid && !MOMO_FAILED.has(result.status.toUpperCase());
     if (!paid && !pending && !reason)
       reason = "Paiement refusé ou annulé sur le téléphone. Relancez la demande pour réessayer.";
+  } else if (payment.provider === "stripe") {
+    if (!payment.provider_ref) return { status: "pending" as const };
+    const { getStripeSessionStatus } = await import("@/lib/stripe.server");
+    const result = await getStripeSessionStatus(payment.provider_ref);
+    raw = result.raw;
+    paid = result.paymentStatus === "paid" || result.status === "complete";
+    pending = !paid && result.status === "open";
+    if (!paid && !pending) reason = "Paiement par carte non abouti ou annulé.";
   } else {
     if (!payment.provider_ref) return { status: "pending" as const };
     const result = await ligdicashStatus(payment.provider_ref);

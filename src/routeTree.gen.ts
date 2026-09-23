@@ -83,6 +83,7 @@ import { Route as AuthenticatedDashboardProduitsIaRouteImport } from './routes/_
 import { Route as AuthenticatedDashboardProduitsNouveauRouteImport } from './routes/_authenticated/dashboard/produits.nouveau'
 import { Route as ApiPublicBillingLigdicashRouteImport } from './routes/api/public/billing.ligdicash'
 import { Route as ApiPublicBillingPawapayRouteImport } from './routes/api/public/billing.pawapay'
+import { Route as ApiPublicBillingStripeRouteImport } from './routes/api/public/billing.stripe'
 import { Route as ApiPublicCronDailyReportRouteImport } from './routes/api/public/cron.daily-report'
 import { Route as ApiPublicCronDecouverteRouteImport } from './routes/api/public/cron.decouverte'
 import { Route as ApiPublicCronRelancesRouteImport } from './routes/api/public/cron.relances'
@@ -500,6 +501,11 @@ const ApiPublicBillingPawapayRoute = ApiPublicBillingPawapayRouteImport.update({
   path: '/api/public/billing/pawapay',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicBillingStripeRoute = ApiPublicBillingStripeRouteImport.update({
+  id: '/api/public/billing/stripe',
+  path: '/api/public/billing/stripe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicCronDailyReportRoute =
   ApiPublicCronDailyReportRouteImport.update({
     id: '/api/public/cron/daily-report',
@@ -629,6 +635,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/produits/nouveau': typeof AuthenticatedDashboardProduitsNouveauRoute
   '/api/public/billing/ligdicash': typeof ApiPublicBillingLigdicashRoute
   '/api/public/billing/pawapay': typeof ApiPublicBillingPawapayRoute
+  '/api/public/billing/stripe': typeof ApiPublicBillingStripeRoute
   '/api/public/cron/daily-report': typeof ApiPublicCronDailyReportRoute
   '/api/public/cron/decouverte': typeof ApiPublicCronDecouverteRoute
   '/api/public/cron/relances': typeof ApiPublicCronRelancesRoute
@@ -713,6 +720,7 @@ export interface FileRoutesByTo {
   '/dashboard/produits/nouveau': typeof AuthenticatedDashboardProduitsNouveauRoute
   '/api/public/billing/ligdicash': typeof ApiPublicBillingLigdicashRoute
   '/api/public/billing/pawapay': typeof ApiPublicBillingPawapayRoute
+  '/api/public/billing/stripe': typeof ApiPublicBillingStripeRoute
   '/api/public/cron/daily-report': typeof ApiPublicCronDailyReportRoute
   '/api/public/cron/decouverte': typeof ApiPublicCronDecouverteRoute
   '/api/public/cron/relances': typeof ApiPublicCronRelancesRoute
@@ -801,6 +809,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/produits/nouveau': typeof AuthenticatedDashboardProduitsNouveauRoute
   '/api/public/billing/ligdicash': typeof ApiPublicBillingLigdicashRoute
   '/api/public/billing/pawapay': typeof ApiPublicBillingPawapayRoute
+  '/api/public/billing/stripe': typeof ApiPublicBillingStripeRoute
   '/api/public/cron/daily-report': typeof ApiPublicCronDailyReportRoute
   '/api/public/cron/decouverte': typeof ApiPublicCronDecouverteRoute
   '/api/public/cron/relances': typeof ApiPublicCronRelancesRoute
@@ -889,6 +898,7 @@ export interface FileRouteTypes {
     | '/dashboard/produits/nouveau'
     | '/api/public/billing/ligdicash'
     | '/api/public/billing/pawapay'
+    | '/api/public/billing/stripe'
     | '/api/public/cron/daily-report'
     | '/api/public/cron/decouverte'
     | '/api/public/cron/relances'
@@ -973,6 +983,7 @@ export interface FileRouteTypes {
     | '/dashboard/produits/nouveau'
     | '/api/public/billing/ligdicash'
     | '/api/public/billing/pawapay'
+    | '/api/public/billing/stripe'
     | '/api/public/cron/daily-report'
     | '/api/public/cron/decouverte'
     | '/api/public/cron/relances'
@@ -1060,6 +1071,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/produits/nouveau'
     | '/api/public/billing/ligdicash'
     | '/api/public/billing/pawapay'
+    | '/api/public/billing/stripe'
     | '/api/public/cron/daily-report'
     | '/api/public/cron/decouverte'
     | '/api/public/cron/relances'
@@ -1114,6 +1126,7 @@ export interface RootRouteChildren {
   SHandleIndexRoute: typeof SHandleIndexRoute
   ApiPublicBillingLigdicashRoute: typeof ApiPublicBillingLigdicashRoute
   ApiPublicBillingPawapayRoute: typeof ApiPublicBillingPawapayRoute
+  ApiPublicBillingStripeRoute: typeof ApiPublicBillingStripeRoute
   ApiPublicCronDailyReportRoute: typeof ApiPublicCronDailyReportRoute
   ApiPublicCronDecouverteRoute: typeof ApiPublicCronDecouverteRoute
   ApiPublicCronRelancesRoute: typeof ApiPublicCronRelancesRoute
@@ -1645,6 +1658,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBillingPawapayRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/billing/stripe': {
+      id: '/api/public/billing/stripe'
+      path: '/api/public/billing/stripe'
+      fullPath: '/api/public/billing/stripe'
+      preLoaderRoute: typeof ApiPublicBillingStripeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron/daily-report': {
       id: '/api/public/cron/daily-report'
       path: '/api/public/cron/daily-report'
@@ -1890,6 +1910,7 @@ const rootRouteChildren: RootRouteChildren = {
   SHandleIndexRoute: SHandleIndexRoute,
   ApiPublicBillingLigdicashRoute: ApiPublicBillingLigdicashRoute,
   ApiPublicBillingPawapayRoute: ApiPublicBillingPawapayRoute,
+  ApiPublicBillingStripeRoute: ApiPublicBillingStripeRoute,
   ApiPublicCronDailyReportRoute: ApiPublicCronDailyReportRoute,
   ApiPublicCronDecouverteRoute: ApiPublicCronDecouverteRoute,
   ApiPublicCronRelancesRoute: ApiPublicCronRelancesRoute,
