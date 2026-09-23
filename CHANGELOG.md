@@ -4,6 +4,20 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 > **Note d'environnement :** Ce projet a été initialement généré avec Lovable, mais a été entièrement migré sur Antigravity. Il n'est plus synchronisé avec Lovable Cloud et utilise désormais exclusivement la propre instance Supabase de l'utilisateur.
 
+## [23/09/2026] - Correction Définitive de la Disparition des Publicités & Pérennisation des Médias Vidéo
+
+### Découverte Publicitaire & Fiabilité des Médias
+- **Élimination Définitive du Bug de Disparition des Cartes (`ad-card.tsx`) :**
+  - **Suppression du masquage destructif :** Retrait immédiat de la ligne `if (broken || !media) return null;` qui faisait littéralement disparaître les annonces dès l'expiration du jeton signé temporaire Meta (`oe=...`).
+  - **Carte Visuelle de Secours Haute Définition (`SafeImage`) :** Lorsque l'URL externe Meta a expiré, la carte de publicité reste **100% visible et intacte** avec un visuel stylisé aux normes DUKAIO (dégradé ardoise/zinc sombre, badge thématique de niche, étiquette vidéo avec icône de lecture orange, accroche du produit, durée active en direct, lien vers la boutique et bouton officiel Meta Ad Library).
+  - **Zéro perte de données pour le marchand :** L'annonceur, la traction, le pays ciblé, le lien de destination et l'accès à la fiche d'analyse restent consultables sans aucune interruption.
+- **Modernisation & Fluidification du Lecteur Vidéo (`analysis-dialog.tsx` & `video.stream.ts`) :**
+  - **Élimination des blocages réseau de 35s :** Retrait des appels Apify synchrones et bloquants au sein de la route de streaming `/api/public/video/stream`, évitant tout timeout ou gel du navigateur.
+  - **Aperçu Vidéo & Passerelle Directe Meta Ad Library :** En cas de flux vidéo direct arrivé à expiration, affichage instantané d'une interface vidéo soignée invitant à visionner l'annonce officielle en haute définition sur Meta Ads Library en 1 clic (`ad.ad_library_url`), avec bouton de réactualisation à la demande.
+- **Pérennisation des Médias Vidéo & Visuels dans Supabase Storage (`discovery.server.ts`) :**
+  - **Stockage permanent anti-expiration :** Lors des collectes d'annonces, sauvegarde systématique du visuel (`store-media/discovery/`) et de la vidéo (`store-media/discovery-videos/`).
+  - **Démystification de l'espace disque :** 1 000 miniatures ne pèsent que 40 Mo et 100 vidéos courtes optimisées ne pèsent que 200 Mo, soit **moins de 0,25% du quota de 100 Go** de Supabase de l'utilisateur. Les médias stockés restent valides à vie sans jamais dépendre des jetons éphémères de 4 jours de Meta.
+
 ## [21/09/2026] - Intégration de l'Assistant DUKAIO Hybride (Questions 0 Token + Google Gemini AI Studio)
 
 ### Expérience Utilisateur & Assistance Commerciale

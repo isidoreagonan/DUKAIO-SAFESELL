@@ -423,16 +423,41 @@ async function mirrorThumbnail(
 ) {
   if (!url) return null;
   try {
-    const response = await fetch(url, { signal: AbortSignal.timeout(4_000) });
+    const response = await fetch(url, { signal: AbortSignal.timeout(8_000) });
     if (!response.ok) return null;
     const blob = await response.blob();
-    if (blob.size > 4_000_000) return null;
+    if (blob.size > 5_000_000) return null;
     const path = `discovery/${externalId}.jpg`;
     const { error } = await admin.storage.from(MEDIA_BUCKET).upload(path, blob, {
       contentType: blob.type || "image/jpeg",
       upsert: true,
     });
     return error ? null : path;
+  } catch {
+    return null;
+  }
+}
+
+/** Copie durable de la vidéo MP4 dans le stockage Supabase (ne s'expire jamais). */
+async function mirrorVideo(
+  admin: { storage: { from: (b: string) => { upload: (p: string, f: Blob, o: Record<string, unknown>) => Promise<{ error: unknown }>; getPublicUrl: (p: string) => { data: { publicUrl: string } } } } },
+  externalId: string,
+  url: string | null,
+) {
+  if (!url) return null;
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(15_000) });
+    if (!response.ok) return null;
+    const blob = await response.blob();
+    if (blob.size > 25_000_000) return null; // Limite 25 Mo
+    const path = `discovery-videos/${externalId}.mp4`;
+    const { error } = await admin.storage.from(MEDIA_BUCKET).upload(path, blob, {
+      contentType: "video/mp4",
+      upsert: true,
+    });
+    if (error) return null;
+    const { data } = admin.storage.from(MEDIA_BUCKET).getPublicUrl(path);
+    return data?.publicUrl ?? null;
   } catch {
     return null;
   }
@@ -593,19 +618,26 @@ export async function runDiscoveryScan(input: ScanInput = {}): Promise<ScanResul
     .in("external_id", ids);
   const known = new Map((existing ?? []).map((row) => [row.external_id, row.media_path]));
 
-  // Les téléchargements sont parallèles : chaque visuel est sauvegardé durablement dans store-media
+  // Les téléchargements sont parallèles : chaque visuel et vidéo est sauvegardé durablement dans store-media
   const mirrorCandidates = deduped.filter((row) => !known.get(row.external_id));
   const mirroredPaths = new Map<string, string>();
+  const mirroredVideos = new Map<string, string>();
   await Promise.all(
     mirrorCandidates.map(async (row) => {
       const url = row.thumbnail_url || row.image_url;
       const path = await mirrorThumbnail(supabaseAdmin as never, row.external_id, url);
       if (path) mirroredPaths.set(row.external_id, path);
+
+      if (row.media_type === "video" && row.video_url) {
+        const permanentVideo = await mirrorVideo(supabaseAdmin as never, row.external_id, row.video_url);
+        if (permanentVideo) mirroredVideos.set(row.external_id, permanentVideo);
+      }
     }),
   );
   const withMedia = deduped.map((row) => ({
     ...row,
     media_path: known.get(row.external_id) ?? mirroredPaths.get(row.external_id) ?? null,
+    video_url: mirroredVideos.get(row.external_id) ?? row.video_url,
   }));
 
   const { error } = await supabaseAdmin

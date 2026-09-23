@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { BarChart3, ExternalLink, Film, ImageOff, Play } from "lucide-react";
 import { adMedia, countryLabel, flagUrl, tractionLabel, type DiscoveryAd } from "@/lib/discovery";
 import { FavoriteButton } from "@/components/discovery/favorite-button";
@@ -8,11 +7,8 @@ import { cn } from "@/lib/utils";
 
 /** Carte publicité : en-tête annonceur, texte dépliable, visuel, destination, analyse. */
 export function AdCard({ ad, onAnalyse }: { ad: DiscoveryAd; onAnalyse: (id: string) => void }) {
-  const [broken, setBroken] = useState(false);
   const traction = tractionLabel(ad.traction_score);
   const media = adMedia(ad);
-
-  if (broken || !media) return null;
 
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-[6px] border border-border bg-background transition-shadow hover:shadow-[0_12px_28px_-20px_rgba(15,23,42,0.45)]">
@@ -50,31 +46,52 @@ export function AdCard({ ad, onAnalyse }: { ad: DiscoveryAd; onAnalyse: (id: str
         </p>
       </div>
 
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
-        {media && !broken ? (
-          <img
-            src={media}
-            alt=""
-            loading="lazy"
-            referrerPolicy="no-referrer"
-            onError={() => setBroken(true)}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <a
-            href={ad.ad_library_url ?? "#"}
-            target="_blank"
-            rel="noreferrer"
-            className="flex h-full w-full flex-col items-center justify-center gap-2 text-center text-xs font-semibold text-muted-foreground hover:text-foreground"
-          >
-            <ImageOff className="h-6 w-6" />
-            Visuel expiré chez Meta
-            <span className="text-[11px] font-bold text-orange-600">Voir sur la bibliothèque Meta</span>
-          </a>
-        )}
-        {ad.media_type === "video" && media && !broken ? (
-          <span className="absolute bottom-2 left-2 grid h-8 w-8 place-items-center rounded-full bg-slate-900/70 text-white">
-            <Play className="h-4 w-4" />
+      <div
+        onClick={() => onAnalyse(ad.id)}
+        className="relative aspect-[4/3] w-full cursor-pointer overflow-hidden bg-muted group"
+      >
+        <SafeImage
+          src={media}
+          alt={ad.headline || ad.page_name}
+          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          fallback={
+            <div className="relative flex h-full w-full flex-col justify-between bg-gradient-to-br from-slate-900 via-zinc-900 to-slate-950 p-3 text-white">
+              <div className="flex items-center justify-between gap-1.5">
+                <span className="inline-flex items-center gap-1 rounded bg-white/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-zinc-300">
+                  {ad.media_type === "video" ? <Film className="h-3 w-3 text-orange-400" /> : null}
+                  {ad.category || "E-commerce"}
+                </span>
+                <span className="flex items-center gap-1 rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-400">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  {ad.active_days} j
+                </span>
+              </div>
+
+              <div className="my-auto py-1 text-center">
+                {ad.media_type === "video" ? (
+                  <div className="mx-auto mb-1.5 grid h-9 w-9 place-items-center rounded-full bg-orange-500/20 text-orange-400 ring-1 ring-orange-500/40">
+                    <Play className="h-4 w-4 fill-current ml-0.5" />
+                  </div>
+                ) : null}
+                <p className="line-clamp-2 text-xs font-bold leading-tight text-white/95">
+                  {ad.headline || ad.page_name}
+                </p>
+              </div>
+
+              <div className="flex items-center justify-between gap-1 text-[10px] text-zinc-400 border-t border-white/10 pt-1.5">
+                <span className="truncate">{ad.page_name}</span>
+                {ad.ad_library_url ? (
+                  <span className="inline-flex shrink-0 items-center gap-0.5 font-bold text-orange-400">
+                    Meta Ad Library <ExternalLink className="h-2.5 w-2.5" />
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          }
+        />
+        {ad.media_type === "video" && media ? (
+          <span className="absolute bottom-2 left-2 grid h-8 w-8 place-items-center rounded-full bg-slate-900/80 text-white shadow-md backdrop-blur-xs">
+            <Play className="h-4 w-4 fill-current ml-0.5" />
           </span>
         ) : null}
       </div>

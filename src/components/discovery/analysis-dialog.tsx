@@ -214,46 +214,49 @@ function AdMediaSection({ ad }: { ad: DiscoveryAd }) {
   if (ad.video_url && videoError) {
     return (
       <div className="flex flex-col overflow-hidden rounded-[8px] border border-border bg-background">
-        <div className="relative aspect-video w-full bg-black">
-          {media ? (
-            <img
-              src={media}
-              alt=""
-              referrerPolicy="no-referrer"
-              className="h-full w-full object-cover opacity-60"
-            />
-          ) : (
-            <div className="grid h-full w-full place-items-center bg-muted text-muted-foreground">
-              <Film className="h-10 w-10 opacity-40" />
-            </div>
-          )}
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2.5 p-4 text-center text-white bg-black/65 backdrop-blur-[2px]">
-            <span className="grid h-10 w-10 place-items-center rounded-full bg-slate-900/80 text-amber-400 shadow-md">
-              <AlertTriangle className="h-5 w-5" />
+        <div className="relative aspect-video w-full overflow-hidden bg-slate-950">
+          <SafeImage
+            src={media}
+            alt={ad.headline || ad.page_name}
+            className="h-full w-full object-cover opacity-40 blur-[1px]"
+            fallback={
+              <div className="grid h-full w-full place-items-center bg-gradient-to-br from-slate-900 to-zinc-950 text-muted-foreground">
+                <Film className="h-12 w-12 opacity-20 text-orange-400" />
+              </div>
+            }
+          />
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-5 text-center text-white bg-black/60 backdrop-blur-xs">
+            <span className="grid h-11 w-11 place-items-center rounded-full bg-orange-500/20 text-orange-400 ring-1 ring-orange-500/40 shadow-lg">
+              <Play className="h-5 w-5 fill-current ml-0.5" />
             </span>
-            <p className="max-w-sm text-xs font-semibold leading-snug">
-              Le flux direct a expiré ou est protégé. Vous pouvez resynchroniser le flux Meta en 1 clic ou regarder l'annonce directement sur la bibliothèque officielle.
-            </p>
-            <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
-              <button
-                type="button"
-                onClick={() => handleRefresh(false)}
-                disabled={refreshVideo.isPending}
-                className="inline-flex cursor-pointer items-center gap-1.5 rounded-[5px] bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground shadow transition-colors hover:bg-primary/90 disabled:opacity-50"
-              >
-                <RefreshCw className={cn("h-3.5 w-3.5", refreshVideo.isPending && "animate-spin")} />
-                {refreshVideo.isPending ? "Resynchronisation..." : "Resynchroniser avec Meta"}
-              </button>
+            <div className="max-w-md space-y-1">
+              <p className="text-sm font-bold text-white">
+                Vidéo hébergée sur Meta Ads Library
+              </p>
+              <p className="text-xs text-zinc-300 leading-relaxed">
+                Ce contenu dynamique est diffusé sur Facebook & Instagram. Visionnez la vidéo officielle complète en haute définition en 1 clic.
+              </p>
+            </div>
+            <div className="mt-1 flex flex-wrap items-center justify-center gap-2.5">
               {ad.ad_library_url ? (
                 <a
                   href={ad.ad_library_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-[5px] bg-orange-600 px-3 py-1.5 text-xs font-bold text-white shadow transition-colors hover:bg-orange-700"
+                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-[6px] bg-orange-600 px-4 py-2 text-xs font-bold text-white shadow-md transition-all hover:bg-orange-500 hover:shadow-orange-600/30"
                 >
                   Regarder sur Meta Ad Library <ExternalLink className="h-3.5 w-3.5" />
                 </a>
               ) : null}
+              <button
+                type="button"
+                onClick={() => handleRefresh(false)}
+                disabled={refreshVideo.isPending}
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-[6px] border border-white/20 bg-white/10 px-3 py-2 text-xs font-semibold text-white backdrop-blur-md transition-colors hover:bg-white/20 disabled:opacity-50"
+              >
+                <RefreshCw className={cn("h-3.5 w-3.5", refreshVideo.isPending && "animate-spin")} />
+                {refreshVideo.isPending ? "Actualisation…" : "Réactualiser le flux"}
+              </button>
             </div>
           </div>
         </div>
