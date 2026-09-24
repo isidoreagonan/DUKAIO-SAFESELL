@@ -54,9 +54,88 @@ import { HelpWelcomeDialog } from "@/components/dashboard/help-welcome-dialog";
 import { GuidedTour, useTourLauncher } from "@/components/dashboard/guided-tour";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 
+type NavIconProps = React.SVGProps<SVGSVGElement> & {
+  active?: boolean;
+  strokeWidth?: number;
+};
+
+/** Icône Dashboard / Accueil : silhouette maison blanche avec découpe porte quand actif, outline quand inactif */
+function NavHomeIcon({ className, active, ...props }: NavIconProps) {
+  if (active) {
+    return (
+      <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true" {...props}>
+        <path d="M11.47 2.47a.75.75 0 0 1 1.06 0l8.25 8.25a.75.75 0 0 1-1.06 1.06L20 11.06V20a2 2 0 0 1-2 2h-3.5a.75.75 0 0 1-.75-.75V16a1 1 0 0 0-1-1h-1.5a1 1 0 0 0-1 1v5.25a.75.75 0 0 1-.75.75H6a2 2 0 0 1-2-2v-8.94l-.72.72a.75.75 0 0 1-1.06-1.06l8.25-8.25z" />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true" {...props}>
+      <path d="M3 10.5 12 3l9 7.5V20a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <path d="M9 22v-6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v6" />
+    </svg>
+  );
+}
+
+/** Icône Commandes : Shopping bag blanc plein quand actif, outline quand inactif */
+function NavOrdersIcon({ className, active, ...props }: NavIconProps) {
+  if (active) {
+    return (
+      <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true" {...props}>
+        <path fillRule="evenodd" clipRule="evenodd" d="M7.5 6v.75H5.513c-.96 0-1.764.724-1.865 1.679l-1.263 12A1.875 1.875 0 0 0 4.25 22.5h15.5a1.875 1.875 0 0 0 1.865-2.071l-1.263-12A1.875 1.875 0 0 0 18.487 6.75H16.5V6a4.5 4.5 0 1 0-9 0zm1.5 0a3 3 0 1 1 6 0v.75h-6V6zm-1.5 4.5a.75.75 0 0 1 .75.75 2.25 2.25 0 0 0 4.5 0 .75.75 0 0 1 1.5 0 3.75 3.75 0 0 1-7.5 0 .75.75 0 0 1 .75-.75z" />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true" {...props}>
+      <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+      <path d="M3 6h18" />
+      <path d="M16 10a4 4 0 0 1-8 0" />
+    </svg>
+  );
+}
+
+/** Icône Produits : Box / Package blanc plein quand actif, outline quand inactif */
+function NavProductsIcon({ className, active, ...props }: NavIconProps) {
+  if (active) {
+    return (
+      <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true" {...props}>
+        <path d="M12.378 1.602a.75.75 0 0 0-.756 0L3.37 6.166a.75.75 0 0 0-.37.649v10.37a.75.75 0 0 0 .37.649l8.252 4.564a.75.75 0 0 0 .756 0l8.252-4.564a.75.75 0 0 0 .37-.649V6.815a.75.75 0 0 0-.37-.649L12.378 1.602zM12 3.018l6.815 3.77-2.822 1.56-6.815-3.77 2.822-1.56zm-1.125 3.32 6.815 3.77-2.822 1.56-6.815-3.77 2.822-1.56zm-6.875 2.18 6.5 3.596v7.35l-6.5-3.596v-7.35zm8 10.946v-7.35l6.5-3.596v7.35l-6.5 3.596z" />
+      </svg>
+    );
+  }
+  return <Package strokeWidth={1.5} className={className} {...props} />;
+}
+
+/** Icône Clients : silhouette Users blanc plein quand actif, outline quand inactif */
+function NavCustomersIcon({ className, active, ...props }: NavIconProps) {
+  if (active) {
+    return (
+      <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true" {...props}>
+        <path d="M4.5 6.375a4.125 4.125 0 1 1 8.25 0 4.125 4.125 0 0 1-8.25 0zM14.25 8.625a3.375 3.375 0 1 1 6.75 0 3.375 3.375 0 0 1-6.75 0zM1.5 19.125a7.125 7.125 0 0 1 14.25 0v.003l-.001.122H1.5v-.125zM16.5 19.25a5.625 5.625 0 0 0-3.08-4.975 8.625 8.625 0 0 1 4.58-1.275 6.375 6.375 0 0 1 6.375 6.375v.003l-.001.122h-7.874v-.25z" />
+      </svg>
+    );
+  }
+  return <Users strokeWidth={1.5} className={className} {...props} />;
+}
+
+/** Icône Analyses : bar chart blanc plein quand actif, outline quand inactif */
+function NavAnalyticsIcon({ className, active, ...props }: NavIconProps) {
+  if (active) {
+    return (
+      <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true" {...props}>
+        <path d="M3 3a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1v-1a1 1 0 0 0-1-1H4V4a1 1 0 0 0-1-1z" />
+        <rect x="7" y="11" width="3" height="7" rx="1" />
+        <rect x="12" y="7" width="3" height="11" rx="1" />
+        <rect x="17" y="4" width="3" height="14" rx="1" />
+      </svg>
+    );
+  }
+  return <BarChart3 strokeWidth={1.5} className={className} {...props} />;
+}
+
 type NavItem = {
   title: string;
-  icon: LucideIcon;
+  icon: React.ComponentType<NavIconProps> | LucideIcon;
   to?: string;
   search?: Record<string, unknown>;
   href?: string;
@@ -89,34 +168,34 @@ function getNavItems(
   if (isCourier) {
     // Le livreur gère uniquement les commandes et livraisons
     mainNav = [
-      { title: dict.dashboardNav.orders, icon: ClipboardList, to: "/dashboard/commandes", exact: true },
+      { title: dict.dashboardNav.orders, icon: NavOrdersIcon, to: "/dashboard/commandes", exact: true },
     ];
   } else if (isCloser) {
     // Le closer appelle les clients et confirme les commandes
     mainNav = [
-      { title: dict.dashboardNav.home, icon: LayoutGrid, to: "/dashboard", exact: true },
+      { title: dict.dashboardNav.home, icon: NavHomeIcon, to: "/dashboard", exact: true },
       {
         title: dict.dashboardNav.orders,
-        icon: ClipboardList,
+        icon: NavOrdersIcon,
         to: "/dashboard/commandes",
         children: [
-          { title: dict.dashboardNav.myOrders, icon: ClipboardList, to: "/dashboard/commandes", exact: true },
+          { title: dict.dashboardNav.myOrders, icon: NavOrdersIcon, to: "/dashboard/commandes", exact: true },
           { title: dict.dashboardNav.abandonedCarts, icon: ShoppingCart, to: "/dashboard/commandes/paniers" },
         ],
       },
-      { title: dict.dashboardNav.customers, icon: Users, to: "/dashboard/clients" },
+      { title: dict.dashboardNav.customers, icon: NavCustomersIcon, to: "/dashboard/clients" },
     ];
   } else if (isProducts) {
     // Le gestionnaire produits gère le catalogue et la vitrine
     mainNav = [
-      { title: dict.dashboardNav.home, icon: LayoutGrid, to: "/dashboard", exact: true },
+      { title: dict.dashboardNav.home, icon: NavHomeIcon, to: "/dashboard", exact: true },
       {
         title: dict.dashboardNav.products,
-        icon: Package,
+        icon: NavProductsIcon,
         to: "/dashboard/produits",
         children: [
           { title: dict.dashboardNav.createAi, icon: Sparkles, to: "/dashboard/produits/ia" },
-          { title: dict.dashboardNav.myProducts, icon: Package, to: "/dashboard/produits", exact: true },
+          { title: dict.dashboardNav.myProducts, icon: NavProductsIcon, to: "/dashboard/produits", exact: true },
         ],
       },
       { title: dict.dashboardNav.myStore, icon: Store, to: "/dashboard/boutique" },
@@ -124,28 +203,28 @@ function getNavItems(
   } else {
     // Propriétaire ou administrateur complet
     mainNav = [
-      { title: dict.dashboardNav.home, icon: LayoutGrid, to: "/dashboard", exact: true },
+      { title: dict.dashboardNav.home, icon: NavHomeIcon, to: "/dashboard", exact: true },
       {
         title: dict.dashboardNav.products,
-        icon: Package,
+        icon: NavProductsIcon,
         to: "/dashboard/produits",
         children: [
           { title: dict.dashboardNav.createAi, icon: Sparkles, to: "/dashboard/produits/ia" },
-          { title: dict.dashboardNav.myProducts, icon: Package, to: "/dashboard/produits", exact: true },
+          { title: dict.dashboardNav.myProducts, icon: NavProductsIcon, to: "/dashboard/produits", exact: true },
         ],
       },
       {
         title: dict.dashboardNav.orders,
-        icon: ClipboardList,
+        icon: NavOrdersIcon,
         to: "/dashboard/commandes",
         children: [
-          { title: dict.dashboardNav.myOrders, icon: ClipboardList, to: "/dashboard/commandes", exact: true },
+          { title: dict.dashboardNav.myOrders, icon: NavOrdersIcon, to: "/dashboard/commandes", exact: true },
           { title: dict.dashboardNav.abandonedCarts, icon: ShoppingCart, to: "/dashboard/commandes/paniers" },
         ],
       },
       { title: dict.dashboardNav.marketing, icon: Megaphone, to: "/dashboard/marketing", badge: "NEW" },
-      { title: dict.dashboardNav.customers, icon: Users, to: "/dashboard/clients" },
-      { title: dict.dashboardNav.analytics, icon: BarChart3, to: "/dashboard/analyses" },
+      { title: dict.dashboardNav.customers, icon: NavCustomersIcon, to: "/dashboard/clients" },
+      { title: dict.dashboardNav.analytics, icon: NavAnalyticsIcon, to: "/dashboard/analyses" },
       {
         title: dict.dashboardNav.discovery,
         icon: Compass,
@@ -153,7 +232,7 @@ function getNavItems(
         to: "/dashboard/decouverte/boutiques",
         children: [
           { title: dict.dashboardNav.stores, icon: Store, to: "/dashboard/decouverte/boutiques" },
-          { title: dict.dashboardNav.products, icon: Package, to: "/dashboard/decouverte/produits" },
+          { title: dict.dashboardNav.products, icon: NavProductsIcon, to: "/dashboard/decouverte/produits" },
           { title: dict.dashboardNav.ads, icon: Megaphone, to: "/dashboard/decouverte/publicites" },
         ],
       },
@@ -411,14 +490,25 @@ function SidebarLink({
       : "grid grid-cols-[18px_minmax(0,1fr)_auto] gap-2.5 rounded-[5px] px-2",
     active
       ? collapsed
-        ? "bg-primary/20 text-primary"
-        : "bg-chrome-panel text-chrome-foreground"
+        ? "bg-primary/20 text-white font-semibold"
+        : "bg-chrome-panel text-white font-semibold"
       : "text-chrome-muted hover:bg-chrome-accent hover:text-chrome-accent-foreground",
+  );
+
+  const iconClass = cn(
+    "shrink-0 transition-all duration-150",
+    isChild ? "h-3.5 w-3.5" : "h-4 w-4",
+    active ? "text-white" : "text-chrome-muted",
   );
 
   const content = (
     <>
-      <item.icon className={cn("shrink-0", isChild ? "h-3.5 w-3.5" : "h-4 w-4")} />
+      <item.icon
+        active={active}
+        fill={active ? "currentColor" : "none"}
+        strokeWidth={1.5}
+        className={iconClass}
+      />
       {!collapsed ? <span className="min-w-0 flex-1 truncate">{item.title}</span> : null}
       {!collapsed && item.badge ? <NavBadge badge={item.badge} /> : null}
     </>
@@ -496,16 +586,22 @@ function CollapsibleNavItem({
           className={cn(
             "w-full cursor-pointer items-center text-left font-semibold transition-colors flex justify-between rounded-[5px] px-2 h-8 text-[13.5px]",
             parentActive
-              ? "bg-chrome-panel text-chrome-foreground"
+              ? "bg-chrome-panel text-white font-semibold"
               : "text-chrome-muted hover:bg-chrome-accent hover:text-chrome-accent-foreground",
           )}
         >
           <span className="flex items-center gap-2.5 min-w-0">
-            <item.icon className="h-4 w-4 shrink-0" />
+            <item.icon
+              active={parentActive}
+              fill={parentActive ? "currentColor" : "none"}
+              strokeWidth={1.5}
+              className={cn("h-4 w-4 shrink-0 transition-all duration-150", parentActive ? "text-white" : "text-chrome-muted")}
+            />
             <span className="truncate">{item.title}</span>
             {item.badge ? <NavBadge badge={item.badge} /> : null}
           </span>
           <ChevronDown
+            strokeWidth={1.5}
             className={cn(
               "h-3.5 w-3.5 shrink-0 transition-transform text-chrome-muted",
               isOpen ? "" : "-rotate-90",
@@ -649,7 +745,7 @@ function SidebarUser({
                 aria-label={dict.dashboard.settings}
                 className="flex h-9 w-10 cursor-pointer items-center justify-center border-r border-chrome-border/60 text-chrome-muted transition-colors hover:bg-chrome-accent hover:text-chrome-foreground"
               >
-                <Settings className="h-3.5 w-3.5" />
+                <Settings strokeWidth={1.5} className="h-3.5 w-3.5" />
               </Link>
             </TooltipTrigger>
             <TooltipContent side="top" className="text-xs">{dict.dashboard.settings}</TooltipContent>
@@ -663,7 +759,7 @@ function SidebarUser({
                 onClick={signOut}
                 className="flex h-9 w-10 cursor-pointer items-center justify-center text-chrome-muted transition-colors hover:bg-red-50 hover:text-red-500"
               >
-                <LogOut className="h-3.5 w-3.5" />
+                <LogOut strokeWidth={1.5} className="h-3.5 w-3.5" />
               </button>
             </TooltipTrigger>
             <TooltipContent side="top" className="text-xs">{dict.dashboard.logout}</TooltipContent>
@@ -698,9 +794,27 @@ export function NavContent({
     [dict, mainNav, accountNav],
   );
 
-  const [openAccordion, setOpenAccordion] = useState<string | null>(null);
+  // État d'ouverture indépendant pour chaque sous-menu (évite tout conflit ou fermeture intempestive)
+  const [openMenus, setOpenMenus] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    for (const group of groups) {
+      for (const item of group.items) {
+        if (item.children) {
+          const parentActive = item.to
+            ? isActivePath(pathname, item.to, item.exact, item.search, searchString)
+            : item.href
+              ? isActivePath(pathname, item.href.split("?")[0] ?? item.href)
+              : item.children?.some((c) => c.to && isActivePath(pathname, c.to, c.exact, c.search, searchString)) || false;
+          if (parentActive) {
+            initial[item.title] = true;
+          }
+        }
+      }
+    }
+    return initial;
+  });
 
-  // Initialize the open accordion based on the active path when mounted or when path changes
+  // Déplier automatiquement le sous-menu de la page active uniquement lors de la navigation (changement d'URL)
   useEffect(() => {
     for (const group of groups) {
       for (const item of group.items) {
@@ -712,13 +826,14 @@ export function NavContent({
               : item.children?.some((c) => c.to && isActivePath(pathname, c.to, c.exact, c.search, searchString)) || false;
           
           if (parentActive) {
-            setOpenAccordion(item.title);
-            return; // Only one active parent expected
+            setOpenMenus((prev) => (prev[item.title] ? prev : { ...prev, [item.title]: true }));
+            return;
           }
         }
       }
     }
-  }, [pathname, searchString, groups]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, searchString]);
 
   return (
     <TooltipProvider delayDuration={100}>
@@ -744,7 +859,7 @@ export function NavContent({
                   aria-label="Déplier le menu"
                   className="grid h-8 w-8 cursor-pointer place-items-center rounded-[4px] text-chrome-muted transition-colors hover:bg-chrome-accent hover:text-chrome-accent-foreground"
                 >
-                  <PanelLeftOpen className="h-4 w-4" />
+                  <PanelLeftOpen strokeWidth={1.5} className="h-4 w-4" />
                 </button>
               ) : null}
             </div>
@@ -763,7 +878,7 @@ export function NavContent({
               aria-label="Replier le menu"
               className="grid h-8 w-8 shrink-0 cursor-pointer place-items-center rounded-[4px] text-chrome-muted transition-colors hover:bg-chrome-accent hover:text-chrome-accent-foreground"
             >
-              <PanelLeftClose className="h-4 w-4" />
+              <PanelLeftClose strokeWidth={1.5} className="h-4 w-4" />
             </button>
           ) : null}
         </div>
@@ -803,8 +918,8 @@ export function NavContent({
                         item={item}
                         pathname={pathname}
                         searchString={searchString}
-                        isOpen={openAccordion === item.title}
-                        onToggle={() => setOpenAccordion(openAccordion === item.title ? null : item.title)}
+                        isOpen={openMenus[item.title] ?? false}
+                        onToggle={() => setOpenMenus((prev) => ({ ...prev, [item.title]: !prev[item.title] }))}
                         onNavigate={onNavigate}
                         onOpenHelpWelcome={onOpenHelpWelcome}
                       />

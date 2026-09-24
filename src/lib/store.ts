@@ -1,3 +1,4 @@
+import { useCallback, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
@@ -205,12 +206,12 @@ export function useCurrentRole() {
   const role = (store?.memberRole ?? "owner") as "owner" | "admin" | "closer" | "products" | "courier";
   const permissions = store?.memberPermissions ?? (isOwner ? ["*"] : []);
 
-  const can = (permission: string) => {
+  const can = useCallback((permission: string) => {
     if (isOwner || role === "admin" || permissions.includes("*")) return true;
     return permissions.includes(permission);
-  };
+  }, [isOwner, role, permissions]);
 
-  return {
+  return useMemo(() => ({
     isOwner,
     role,
     permissions,
@@ -218,7 +219,7 @@ export function useCurrentRole() {
     isCourier: role === "courier",
     isCloser: role === "closer",
     isAdmin: isOwner || role === "admin",
-  };
+  }), [isOwner, role, permissions, can]);
 }
 
 /** Crée une boutique supplémentaire (limite de la formule vérifiée côté serveur). */

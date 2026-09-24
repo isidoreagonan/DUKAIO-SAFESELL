@@ -4,6 +4,20 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 > **Note d'environnement :** Ce projet a été initialement généré avec Lovable, mais a été entièrement migré sur Antigravity. Il n'est plus synchronisé avec Lovable Cloud et utilise désormais exclusivement la propre instance Supabase de l'utilisateur.
 
+## [24/09/2026] - Correction État Sous-Menus & Icônes Remplies Blanc (Style Shopall)
+
+### Corrigé
+- **Dépliage des sous-menus (`Orders`, `Ad Spy & Trends`, `Products`)** : correction du bug de fermeture intempestive (clignotement). Chaque menu déroulant possède désormais son propre état d'ouverture persistant (`openMenus`), découplé des re-renders de page.
+- **Auto-ouverture lors de la navigation** : le sous-menu de la page active s'ouvre proprement uniquement lors d'un vrai changement d'URL (`pathname`/`searchString`).
+- **Stabilisation des permissions (`store.ts`)** : mémoïsation de `useCurrentRole()` avec `useMemo` et `useCallback` pour éliminer les re-renders en cascade.
+
+### Modifié
+- **Icônes du menu actif (`shell.tsx`)** :
+  - **État actif** : l'icône du menu sélectionné est désormais remplie de blanc pur (`fill="currentColor"` / silhouette pleine) avec texte blanc contrasté, calqué exactement sur la référence Shopall.
+  - **État inactif** : outline fin et moderne (`strokeWidth={1.5}`, `fill="none"`).
+  - **Composants dédiés** : `NavHomeIcon` (silhouette maison avec porte découpée), `NavOrdersIcon` (sac de shopping plein/contour), `NavProductsIcon`, `NavCustomersIcon`, `NavAnalyticsIcon`, `Heart`, `Crown`, etc.
+  - **Structure sidebar** : layout original préservé (`h-8`, `rounded-[5px]`, `bg-chrome-panel` sélecteur).
+
 ## [24/09/2026] - Refonte Complète Navigation Sidebar (Style Premium Linear/Vercel)
 
 ### Modifié
