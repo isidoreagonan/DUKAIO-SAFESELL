@@ -4,6 +4,39 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 > **Note d'environnement :** Ce projet a été initialement généré avec Lovable, mais a été entièrement migré sur Antigravity. Il n'est plus synchronisé avec Lovable Cloud et utilise désormais exclusivement la propre instance Supabase de l'utilisateur.
 
+## [24/09/2026] - Refonte Complète Navigation Sidebar (Style Premium Linear/Vercel)
+
+### Modifié
+- **`NavBadge`** (nouveau composant) : composant centralisé pour les badges `NEW` (vert émeraude avec ring), `PLAN` et autres badges personnalisés. Design plus raffiné que les spans ad-hoc précédents.
+- **`SidebarLink`** : refonte complète du composant de lien de navigation :
+  - **Indicateur actif** : barre verticale orange de 3px à gauche de l'élément actif (style Linear).
+  - **Icônes** : taille optimisée `15px`, coloration adaptative (orange si actif, gris semi-transparent sinon, foreground au hover).
+  - **Font** : `font-medium` (vs `font-semibold`) pour un rendu plus fin et professionnel.
+  - **Arrière-plan actif** : `bg-primary/12` (teinte orange très légère) au lieu du gris plat précédent.
+  - **Transitions** : `transition-all duration-150` pour des animations plus fluides.
+- **`CollapsibleNavItem`** : mêmes améliorations appliquées au bouton parent des menus déroulants (indicateur barre, icône colorée, état actif orange).
+- **Logo Header** (`NavContent`) : refonte complète de l'en-tête de la sidebar :
+  - **Logo mark** : coins plus arrondis `rounded-[7px]`, ombre orange subtile `shadow-[0_0_0_1px_rgba(234,88,12,0.25),0_2px_6px_rgba(234,88,12,0.2)]`.
+  - **Live dot** : indicateur de statut vert animé (`animate-ping`) sur le logo signalant que la boutique est en ligne.
+  - **Wordmark** : nom + sous-titre `Dashboard` en petit, typographie hiérarchisée.
+  - **Boutons collapse** : avec Tooltip et style plus discret.
+- **Labels des sections** : taille réduite `text-[9px]` avec `tracking-[0.14em]` et opacité 40% pour un look épuré.
+- **Espacement** : `space-y-0.5` entre items, `space-y-3` entre sections — hiérarchie visuelle claire.
+
+---
+
+## [24/09/2026] - Refonte Professionnelle du Pied de Sidebar (Carte Utilisateur)
+
+### Modifié
+- **`SidebarUser`** (`src/components/dashboard/shell.tsx`) : refonte complète du bloc inférieur de la sidebar (style Linear/Notion) :
+  - La section utilisateur devient une **carte encadrée** (`border + bg-chrome-panel`) avec avatar, nom, badge plan/rôle et email.
+  - La barre d'actions en bas de carte regroupe : **Langue** (pleine largeur, avec drapeau), **Paramètres** (icône) et **Déconnexion** (icône rouge au survol) — séparés par des bordures verticales fines.
+  - Suppression des boutons "Déconnexion" et "Langue" en rangées séparées remplacés par des icônes intégrées directement dans la carte.
+  - État replié : icônes compactes centrées en colonne avec tooltips côté droit.
+- **`LanguageSwitcher`** (`src/components/ui/language-switcher.tsx`) : ajout du variant `"sidebar-inline"` — affichage pleine largeur dans la barre d'actions de la carte, avec globeicon + label à gauche et drapeau + code à droite. Menu déroulant ouvert vers le haut (`side="top"`).
+
+---
+
 ## [24/09/2026] - Suppression du bouton "Centre d'aide" de la Sidebar
 
 ### Supprimé

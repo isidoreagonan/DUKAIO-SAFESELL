@@ -56,7 +56,7 @@ export function FlagIcon({
 }
 
 interface LanguageSwitcherProps {
-  variant?: "pill" | "minimal" | "sidebar" | "footer";
+  variant?: "pill" | "minimal" | "sidebar" | "sidebar-inline" | "footer";
   className?: string;
 }
 
@@ -173,6 +173,53 @@ export function LanguageSwitcher({
           </span>
         </DropdownMenuTrigger>
         <DropdownMenuContent side="right" align="end" className="w-44 rounded-xl border border-border bg-white p-1 shadow-xl">
+          {LANGUAGES.map((lang) => {
+            const active = lang.code === language;
+            return (
+              <DropdownMenuItem
+                key={lang.code}
+                onClick={() => setLanguage(lang.code)}
+                className={cn(
+                  "flex cursor-pointer items-center justify-between rounded-[6px] px-2.5 py-2 text-xs font-medium transition-colors",
+                  active
+                    ? "bg-primary/10 font-bold text-primary"
+                    : "text-foreground hover:bg-muted",
+                )}
+              >
+                <span className="flex items-center gap-2.5">
+                  <FlagIcon code={lang.code} size="md" />
+                  <span>{lang.label}</span>
+                </span>
+                {active && <Check className="size-4 text-primary" />}
+              </DropdownMenuItem>
+            );
+          })}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
+
+  if (variant === "sidebar-inline") {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          type="button"
+          aria-label="Changer de langue / Change language"
+          className={cn(
+            "flex h-9 w-full cursor-pointer items-center justify-between px-3 text-[11.5px] font-semibold text-chrome-muted transition-colors hover:bg-chrome-accent hover:text-chrome-accent-foreground",
+            className,
+          )}
+        >
+          <span className="flex items-center gap-2">
+            <Globe className="h-3.5 w-3.5" />
+            <span>{dict.dashboard?.language || "Langue"}</span>
+          </span>
+          <span className="flex items-center gap-1 text-[10px] font-bold text-primary">
+            <FlagIcon code={current.code} size="sm" />
+            <span>{current.shortLabel}</span>
+          </span>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent side="top" align="start" className="w-44 rounded-xl border border-border bg-white p-1 shadow-xl">
           {LANGUAGES.map((lang) => {
             const active = lang.code === language;
             return (

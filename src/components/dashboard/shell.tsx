@@ -373,6 +373,21 @@ function TopUserMenu() {
   );
 }
 
+function NavBadge({ badge }: { badge: string }) {
+  if (badge === "PLAN") return <PlanBadge />;
+  if (badge === "NEW")
+    return (
+      <span className="inline-flex items-center rounded-[3px] bg-chrome-warning px-1.5 py-0.5 text-[8.5px] font-black uppercase tracking-wider text-chrome-warning-foreground">
+        NEW
+      </span>
+    );
+  return (
+    <span className="inline-flex items-center rounded-[3px] bg-chrome-warning px-1.5 py-0.5 text-[8.5px] font-black uppercase tracking-wider text-chrome-warning-foreground">
+      {badge}
+    </span>
+  );
+}
+
 function SidebarLink({
   item,
   collapsed,
@@ -388,39 +403,34 @@ function SidebarLink({
   onNavigate?: (() => void) | undefined;
   onOpenHelpWelcome?: (() => void) | undefined;
 }) {
-  const className = cn(
+  const baseClass = cn(
     "w-full cursor-pointer items-center text-left font-semibold transition-colors",
     isChild ? "h-7 text-xs" : "h-8 text-[13.5px]",
-    collapsed ? "grid place-items-center rounded-[10px] px-0 h-10" : "grid grid-cols-[18px_minmax(0,1fr)_auto] gap-2.5 rounded-[5px] px-2",
+    collapsed
+      ? "grid place-items-center rounded-[10px] px-0 h-10"
+      : "grid grid-cols-[18px_minmax(0,1fr)_auto] gap-2.5 rounded-[5px] px-2",
     active
       ? collapsed
         ? "bg-primary/20 text-primary"
         : "bg-chrome-panel text-chrome-foreground"
       : "text-chrome-muted hover:bg-chrome-accent hover:text-chrome-accent-foreground",
   );
+
   const content = (
     <>
       <item.icon className={cn("shrink-0", isChild ? "h-3.5 w-3.5" : "h-4 w-4")} />
       {!collapsed ? <span className="min-w-0 flex-1 truncate">{item.title}</span> : null}
-      {!collapsed && item.badge ? (
-        item.badge === "PLAN" ? (
-          <PlanBadge />
-        ) : (
-          <span className="rounded-[4px] bg-chrome-warning px-1.5 py-0.5 text-[9px] font-black uppercase text-chrome-warning-foreground">
-            {item.badge}
-          </span>
-        )
-      ) : null}
+      {!collapsed && item.badge ? <NavBadge badge={item.badge} /> : null}
     </>
   );
 
   const tour = `nav-${tourSlug(item.title)}`;
   const node = item.href ? (
-    <a href={item.href} data-tour={tour} onClick={onNavigate} className={className}>
+    <a href={item.href} data-tour={tour} onClick={onNavigate} className={baseClass}>
       {content}
     </a>
   ) : item.to ? (
-    <Link to={item.to} search={item.search} data-tour={tour} onClick={onNavigate} className={className}>
+    <Link to={item.to} search={item.search} data-tour={tour} onClick={onNavigate} className={baseClass}>
       {content}
     </Link>
   ) : (
@@ -431,7 +441,7 @@ function SidebarLink({
         onOpenHelpWelcome?.();
         onNavigate?.();
       }}
-      className={className}
+      className={baseClass}
     >
       {content}
     </button>
@@ -485,19 +495,22 @@ function CollapsibleNavItem({
           onClick={handleToggle}
           className={cn(
             "w-full cursor-pointer items-center text-left font-semibold transition-colors flex justify-between rounded-[5px] px-2 h-8 text-[13.5px]",
-            parentActive ? "bg-chrome-panel text-chrome-foreground" : "text-chrome-muted hover:bg-chrome-accent hover:text-chrome-accent-foreground"
+            parentActive
+              ? "bg-chrome-panel text-chrome-foreground"
+              : "text-chrome-muted hover:bg-chrome-accent hover:text-chrome-accent-foreground",
           )}
         >
           <span className="flex items-center gap-2.5 min-w-0">
             <item.icon className="h-4 w-4 shrink-0" />
             <span className="truncate">{item.title}</span>
-            {item.badge ? (
-              <span className="rounded-[4px] bg-chrome-warning px-1.5 py-[1px] text-[8px] font-black uppercase text-chrome-warning-foreground">
-                {item.badge}
-              </span>
-            ) : null}
+            {item.badge ? <NavBadge badge={item.badge} /> : null}
           </span>
-          <ChevronDown className={cn("h-3.5 w-3.5 shrink-0 transition-transform text-chrome-muted", isOpen ? "" : "-rotate-90")} />
+          <ChevronDown
+            className={cn(
+              "h-3.5 w-3.5 shrink-0 transition-transform text-chrome-muted",
+              isOpen ? "" : "-rotate-90",
+            )}
+          />
         </button>
       ) : (
         <SidebarLink
@@ -710,10 +723,13 @@ export function NavContent({
   return (
     <TooltipProvider delayDuration={100}>
       <div className="flex h-full flex-col bg-chrome text-chrome-muted">
+        {/* ── Logo Header ── */}
         <div
           className={cn(
             "flex items-center py-3",
-            collapsed ? "justify-center px-3" : "justify-between gap-2 border-b border-chrome-border px-4",
+            collapsed
+              ? "justify-center px-3"
+              : "justify-between gap-2 border-b border-chrome-border px-4",
           )}
         >
           {collapsed ? (
@@ -734,10 +750,10 @@ export function NavContent({
             </div>
           ) : (
             <div className="flex items-center gap-2.5">
-              <div className="grid h-9 w-9 place-items-center rounded-[4px] bg-chrome-foreground">
+              <div className="grid h-9 w-9 place-items-center rounded-[8px] bg-primary">
                 <img src="/dukaio-icon.png" alt="" className="h-6 w-6 object-contain" />
               </div>
-              <span className="text-lg font-black tracking-normal text-chrome-foreground">DUKAIO</span>
+              <span className="text-[17px] font-black tracking-tight text-chrome-foreground">DUKAIO</span>
             </div>
           )}
           {onToggle && !collapsed ? (
@@ -752,9 +768,15 @@ export function NavContent({
           ) : null}
         </div>
 
-        <nav className={cn("flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]", collapsed ? "px-4 py-3" : "space-y-2 px-2 py-2")}>
+        {/* ── Navigation ── */}
+        <nav
+          className={cn(
+            "flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]",
+            collapsed ? "px-3 py-3" : "px-2 py-2",
+          )}
+        >
           {collapsed ? (
-            <ul className="space-y-2">
+            <ul className="space-y-1.5">
               {mainNav.map((item) => (
                 <li key={item.title}>
                   <SidebarLink
@@ -768,27 +790,29 @@ export function NavContent({
               ))}
             </ul>
           ) : (
-            groups.map((group) => (
-              <section key={group.label}>
-                <p className="px-2 pb-1 pt-1.5 text-[9.5px] font-bold uppercase tracking-wider text-chrome-muted">
-                  {group.label}
-                </p>
-                <ul className="space-y-0">
-                  {group.items.map((item) => (
-                    <CollapsibleNavItem 
-                      key={item.title}
-                      item={item}
-                      pathname={pathname}
-                      searchString={searchString}
-                      isOpen={openAccordion === item.title}
-                      onToggle={() => setOpenAccordion(openAccordion === item.title ? null : item.title)}
-                      onNavigate={onNavigate}
-                      onOpenHelpWelcome={onOpenHelpWelcome}
-                    />
-                  ))}
-                </ul>
-              </section>
-            ))
+            <div className="space-y-2">
+              {groups.map((group) => (
+                <section key={group.label}>
+                  <p className="px-2 pb-1 pt-1.5 text-[9.5px] font-bold uppercase tracking-wider text-chrome-muted">
+                    {group.label}
+                  </p>
+                  <ul className="space-y-0">
+                    {group.items.map((item) => (
+                      <CollapsibleNavItem
+                        key={item.title}
+                        item={item}
+                        pathname={pathname}
+                        searchString={searchString}
+                        isOpen={openAccordion === item.title}
+                        onToggle={() => setOpenAccordion(openAccordion === item.title ? null : item.title)}
+                        onNavigate={onNavigate}
+                        onOpenHelpWelcome={onOpenHelpWelcome}
+                      />
+                    ))}
+                  </ul>
+                </section>
+              ))}
+            </div>
           )}
         </nav>
 
