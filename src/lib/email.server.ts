@@ -5,7 +5,7 @@
  */
 
 export const DEFAULT_FROM =
-  process.env["DUKAIO_FROM_EMAIL"] || "DUKAIO <contact@dukaio.com>";
+  process.env["DUKAIO_FROM_EMAIL"] || "DUKAIO <notifications@dukaio.com>";
 
 export const FROM = DEFAULT_FROM;
 
@@ -240,12 +240,12 @@ export function renderBrandEmail({
               : ""
           }
 
-          <!-- Footer épuré sans distractions -->
+          <!-- Footer transactionnel épuré -->
           <tr>
             <td style="padding:28px 0 0 0;">
               <div style="height:1px;background-color:#f1f5f9;margin-bottom:16px;"></div>
               <p style="margin:0;font-size:11px;line-height:1.5;color:#94a3b8;">
-                DUKAIO — La plateforme e-commerce tout-en-un pour l'Afrique.<br />
+                Cet e-mail automatique concerne votre compte DUKAIO.<br />
                 © ${year} DUKAIO. Tous droits réservés.
               </p>
             </td>
@@ -353,9 +353,38 @@ export async function sendModerationNoticeEmail(input: {
 export type SendEmailOptions = {
   from?: string;
   replyTo?: string;
+  text?: string;
+  headers?: Record<string, string>;
 };
 
-/** Envoi via l'API Resend avec gestion d'erreurs claire. */
+/**
+ * Convertit un e-mail HTML en version texte brut lisible (Multi-part alternative).
+ * Très important pour la réputation auprès des filtres anti-spam et la boîte Principale de Gmail.
+ */
+export function htmlToPlainText(html: string): string {
+  return html
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/<a\s+[^>]*href=["']([^"']*)["'][^>]*>([\s\S]*?)<\/a>/gi, "$2 ($1)")
+    .replace(/<br\s*[\/]?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n\n")
+    .replace(/<\/tr>/gi, "\n")
+    .replace(/<\/h[1-6]>/gi, "\n\n")
+    .replace(/<li[^>]*>/gi, "• ")
+    .replace(/<\/li>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, " ")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+/** Envoi via l'API Resend avec gestion d'erreurs claire et optimisations de délivrabilité (Headers transactionnels + Multipart). */
 export async function sendEmail(
   to: string,
   subject: string,
@@ -366,11 +395,19 @@ export async function sendEmail(
   if (!apiKey) throw new Error("Service e-mail indisponible (clé API manquante)");
 
   const from = options?.from || FROM;
+  const text = options?.text || htmlToPlainText(html);
+
   const payload: Record<string, unknown> = {
     from,
     to: [to],
     subject,
     html,
+    text,
+    headers: {
+      "Auto-Submitted": "auto-generated",
+      "X-Auto-Response-Suppress": "All",
+      ...(options?.headers || {}),
+    },
   };
   if (options?.replyTo) {
     payload["reply_to"] = options.replyTo;
@@ -389,3 +426,4 @@ export async function sendEmail(
   }
   return true;
 }
+
