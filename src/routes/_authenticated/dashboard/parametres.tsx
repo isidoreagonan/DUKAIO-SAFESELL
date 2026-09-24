@@ -533,7 +533,7 @@ function LienTab() {
           onClick={async () => {
             if (!store) return;
             const clean = domain.trim().toLowerCase();
-            if (clean && !subscription.data?.limits.customDomain)
+            if (clean && !subscription.data?.limits?.customDomain)
               return toast.error("Domaine réservé à la formule Pro", {
                 description: "Passez à la formule Pro dans l'onglet Abonnement.",
               });

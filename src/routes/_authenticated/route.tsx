@@ -33,11 +33,26 @@ export const Route = createFileRoute("/_authenticated")({
         ]);
 
         if (profileRes && !profileRes.error && !profileRes.data?.onboarding_completed) {
-          if (user.user_metadata?.["onboarding_completed"]) {
+          let isTeamMember = false;
+          try {
+            const email = (user.email ?? "").toLowerCase().trim();
+            const { data: memberRows } = await supabase
+              .from("store_members")
+              .select("id")
+              .or(`user_id.eq.${user.id},email.eq.${email}`)
+              .limit(1);
+            if (memberRows && memberRows.length > 0) {
+              isTeamMember = true;
+            }
+          } catch {
+            // ignore
+          }
+
+          if (isTeamMember || user.user_metadata?.["onboarding_completed"]) {
             await supabase.from("profiles").upsert(
               {
                 id: user.id,
-                full_name: (user.user_metadata?.["full_name"] as string) || (user.user_metadata?.["name"] as string) || "Commerçant",
+                full_name: (user.user_metadata?.["full_name"] as string) || (user.user_metadata?.["name"] as string) || "Membre",
                 avatar_url: (user.user_metadata?.["avatar_url"] as string) || (user.user_metadata?.["picture"] as string) || null,
                 onboarding_completed: true,
                 onboarding_completed_at: new Date().toISOString(),

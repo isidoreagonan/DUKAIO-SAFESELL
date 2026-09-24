@@ -33,7 +33,7 @@ export function StoreSwitcher() {
   const [name, setName] = useState("");
 
   const list = stores ?? (store ? [store] : []);
-  const limit = sub?.limits.stores ?? 1;
+  const limit = sub?.limits?.stores ?? 1;
   const isOwner = store?.isOwner !== false;
   const canAdd = isOwner && list.length < limit;
   const planName = sub?.plan === "pro" ? "Pro" : sub?.plan === "starter" ? "Starter" : "Découverte";

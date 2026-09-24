@@ -38,7 +38,7 @@ export function useAiAccess() {
 
   const rawPlan = query.data?.plan ?? "free";
   const plan = isOwnerOrAdmin ? "pro" : rawPlan;
-  const credits = isOwnerOrAdmin ? 9999 : (query.data?.limits.aiCredits ?? 0);
+  const credits = isOwnerOrAdmin ? 9999 : (query.data?.limits?.aiCredits ?? 0);
   const unlimited = isOwnerOrAdmin || query.data?.unlimited === true;
   const trialing = !isOwnerOrAdmin && query.data?.trialing === true;
   const trialDaysLeft = query.data?.trialDaysLeft ?? 0;
@@ -107,7 +107,7 @@ export function useTeamAccess() {
 
   const rawPlan = query.data?.plan ?? "free";
   const plan = isOwnerOrAdmin ? "pro" : rawPlan;
-  const seats = isOwnerOrAdmin ? 999 : (query.data?.limits.team ?? 0);
+  const seats = isOwnerOrAdmin ? 999 : (query.data?.limits?.team ?? 0);
   return {
     loading: (query.isLoading && !isOwnerOrAdmin) || (authLoading && !email),
     allowed: isOwnerOrAdmin || seats > 0,
