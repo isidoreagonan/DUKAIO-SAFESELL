@@ -1266,6 +1266,8 @@ export type DiscoveryAdminStats = {
   bunnyZoneName: string;
   bunnyCdnHost: string;
   totalStores: number;
+  totalBrands: number;
+  profiledStores: number;
   totalProducts: number;
   uniqueOffers: number;
   catalogProducts: number;
@@ -1323,6 +1325,11 @@ export const adminGetDiscoveryStats = createServerFn({ method: "GET" })
         .map((a) => (a.headline || a.page_name || "").trim().toLowerCase())
         .filter(Boolean),
     ).size;
+    const uniqueBrands = new Set(
+      (adsList ?? [])
+        .map((a) => (a.page_name || "").trim())
+        .filter(Boolean),
+    ).size;
     const totalProducts = storeProductsSum > 0 ? storeProductsSum : uniquePromotedOffers;
 
     const last = latestScans?.[0] ?? null;
@@ -1340,7 +1347,9 @@ export const adminGetDiscoveryStats = createServerFn({ method: "GET" })
       metaOversizedVideos: metaOversizedVideos ?? 3,
       bunnyZoneName,
       bunnyCdnHost,
-      totalStores: totalStores ?? 0,
+      totalStores: uniqueBrands > 0 ? uniqueBrands : (totalStores ?? 0),
+      totalBrands: uniqueBrands,
+      profiledStores: totalStores ?? 0,
       totalProducts,
       uniqueOffers: uniquePromotedOffers,
       catalogProducts: storeProductsSum,

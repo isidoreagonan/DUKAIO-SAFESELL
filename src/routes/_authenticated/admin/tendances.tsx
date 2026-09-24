@@ -299,7 +299,7 @@ function AdminRadarPage() {
         <div className="relative overflow-hidden rounded-xl border border-border bg-card p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Boutiques identifiées
+              Marques & Annonceurs
             </span>
             <span className="grid h-8 w-8 place-items-center rounded-lg bg-blue-500/10 text-blue-600">
               <Store className="h-4 w-4" />
@@ -312,7 +312,7 @@ function AdminRadarPage() {
             <span className="text-[11px] font-medium text-muted-foreground">marques e-commerce</span>
           </div>
           <p className="mt-1 text-[11px] text-muted-foreground">
-            Toutes boutiques récupérées par le scraping
+            {stats?.profiledStores ? `${stats.profiledStores} catalogues complets analysés` : "Toutes marques actives dans le radar"}
           </p>
         </div>
 
