@@ -4,6 +4,14 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 > **Note d'environnement :** Ce projet a été initialement généré avec Lovable, mais a été entièrement migré sur Antigravity. Il n'est plus synchronisé avec Lovable Cloud et utilise désormais exclusivement la propre instance Supabase de l'utilisateur.
 
+## [24/09/2026] - Suppression du bouton "Centre d'aide" de la Sidebar
+
+### Supprimé
+- **Bouton "Centre d'aide"** (`src/components/dashboard/shell.tsx`) : suppression complète du bouton `LifeBuoy` dans les deux états de la sidebar (replié et déplié).
+- **Import `LifeBuoy`** : nettoyage de l'import Lucide devenu inutilisé.
+
+---
+
 ## [24/09/2026] - Interface Dashboard Adaptée par Rôle (Membres d'Équipe)
 
 ### Ajouté

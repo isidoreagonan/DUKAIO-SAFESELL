@@ -9,7 +9,6 @@ import {
   Heart,
   Crown,
   LayoutGrid,
-  LifeBuoy,
   LogOut,
   Menu,
   Megaphone,
@@ -579,21 +578,7 @@ function SidebarUser({
             {dict.dashboard.settings}
           </TooltipContent>
         </Tooltip>
-        <Tooltip delayDuration={100}>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              aria-label={dict.dashboard.helpCenter}
-              onClick={onOpenHelpWelcome}
-              className="grid h-10 w-full cursor-pointer place-items-center rounded-[10px] text-chrome-muted transition-colors hover:bg-chrome-accent hover:text-chrome-accent-foreground"
-            >
-              <LifeBuoy className="h-5 w-5" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="right" className="text-xs">
-            {dict.dashboard.helpCenter}
-          </TooltipContent>
-        </Tooltip>
+
         <div className="flex justify-center py-0.5">
           <LanguageSwitcher variant="minimal" className="h-8 px-1 text-[11px]" />
         </div>
@@ -659,15 +644,7 @@ function SidebarUser({
         <LogOut className="h-4 w-4" />
         <span>{dict.dashboard.logout}</span>
       </button>
-      <button
-        type="button"
-        aria-label={dict.dashboard.helpCenter}
-        onClick={onOpenHelpWelcome}
-        className="flex h-8 w-full cursor-pointer items-center gap-2.5 rounded-[5px] px-2 text-[13px] font-semibold text-chrome-muted transition-colors hover:bg-chrome-accent hover:text-chrome-accent-foreground"
-      >
-        <LifeBuoy className="h-4 w-4" />
-        <span>{dict.dashboard.helpCenter}</span>
-      </button>
+
       <LanguageSwitcher variant="sidebar" />
     </div>
   );
