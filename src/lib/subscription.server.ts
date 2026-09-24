@@ -40,9 +40,10 @@ export type SubscriptionRow = {
   notes: string | null;
 };
 
-/** Première boutique du vendeur (celle facturée). */
+/** Première boutique du vendeur (celle facturée) ou boutique où il est membre actif. */
 export async function primaryStore(userId: string) {
   const db = await adminDb();
+  // 1. Boutique possédée en propre
   const { data, error } = await db
     .from("store_settings")
     .select("id, store_name, user_id, custom_domain")
@@ -51,8 +52,42 @@ export async function primaryStore(userId: string) {
     .limit(1)
     .maybeSingle();
   if (error) throw new Error(error.message);
-  if (!data) throw new Error("Créez d'abord votre boutique.");
-  return data;
+  if (data) return data;
+
+  // 2. Si non propriétaire, boutique où l'utilisateur est membre actif (closer, livreur, admin...)
+  const { data: member } = await db
+    .from("store_members")
+    .select("store_id, store_settings(id, store_name, user_id, custom_domain)")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  const memberStoreRaw = member?.store_settings as any;
+  const memberStore = Array.isArray(memberStoreRaw) ? memberStoreRaw[0] : memberStoreRaw;
+  if (memberStore) {
+    return memberStore as { id: string; store_name: string; user_id: string; custom_domain: string | null };
+  }
+
+  // 3. Vérification par email si pas encore lié par user_id
+  const { data: userAuth } = await db.auth.admin.getUserById(userId);
+  const email = (userAuth?.user?.email ?? "").toLowerCase().trim();
+  if (email) {
+    const { data: inviteMember } = await db
+      .from("store_members")
+      .select("store_id, store_settings(id, store_name, user_id, custom_domain)")
+      .eq("email", email)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    const inviteStoreRaw = inviteMember?.store_settings as any;
+    const inviteStore = Array.isArray(inviteStoreRaw) ? inviteStoreRaw[0] : inviteStoreRaw;
+    if (inviteStore) {
+      return inviteStore as { id: string; store_name: string; user_id: string; custom_domain: string | null };
+    }
+  }
+
+  return null;
 }
 
 /**
@@ -149,7 +184,45 @@ async function isPlatformAdmin(userId: string) {
 
 export async function subscriptionState(userId: string): Promise<SubscriptionState> {
   const store = await primaryStore(userId);
-  const sub = await ensureSubscription(userId, store.id);
+  if (!store) {
+    const plan = PLAN_CATALOG.free;
+    const dummySub: SubscriptionRow = {
+      id: "dummy",
+      store_id: "",
+      user_id: userId,
+      plan: "free",
+      status: "active",
+      amount: 0,
+      currency: "XOF",
+      billing_period: "monthly",
+      trial_ends_at: null,
+      period_start: null,
+      period_end: null,
+      ai_used: 0,
+      ai_period_start: null,
+      provider: null,
+      provider_ref: null,
+      notes: null,
+    };
+    return {
+      plan,
+      status: "active",
+      active: true,
+      trialing: false,
+      trialDaysLeft: 0,
+      renewsAt: null,
+      limits: plan.limits,
+      aiUsed: 0,
+      aiLeft: 0,
+      unlimited: false,
+      subscription: dummySub,
+      storeId: "",
+      storeName: "Ma Boutique",
+    };
+  }
+
+  // L'abonnement est rattaché au propriétaire de la boutique (store.user_id)
+  const sub = await ensureSubscription(store.user_id, store.id);
   if (await isPlatformAdmin(userId)) {
     const plan = PLAN_CATALOG.pro;
     /* Un admin bénéficie des limites Pro, mais son solde IA reste décompté

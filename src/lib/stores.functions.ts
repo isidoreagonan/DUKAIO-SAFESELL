@@ -143,12 +143,19 @@ export const getMyStores = createServerFn({ method: "GET" })
       .order("created_at", { ascending: true });
     if (ownedErr) throw ownedErr;
 
-    // 2. Boutiques où l'utilisateur est membre actif
-    const { data: memberships, error: memberErr } = await supabaseAdmin
+    // 2. Boutiques où l'utilisateur est membre actif ou invité
+    const userEmail = typeof context.claims["email"] === "string" ? context.claims["email"].toLowerCase().trim() : "";
+    let membershipQuery = supabaseAdmin
       .from("store_members")
-      .select("role, permissions, store_id, store_settings(*)")
-      .eq("user_id", userId)
-      .eq("status", "active");
+      .select("id, role, permissions, store_id, user_id, status, store_settings(*)");
+
+    if (userEmail) {
+      membershipQuery = membershipQuery.or(`user_id.eq.${userId},email.eq.${userEmail}`);
+    } else {
+      membershipQuery = membershipQuery.eq("user_id", userId);
+    }
+
+    const { data: memberships, error: memberErr } = await membershipQuery;
     if (memberErr) throw memberErr;
 
     const list: Array<
@@ -169,8 +176,18 @@ export const getMyStores = createServerFn({ method: "GET" })
     }
 
     for (const m of memberships ?? []) {
-      const s = m.store_settings as any;
-      if (s && !list.some((existing) => existing.id === s.id)) {
+      // Auto-lier l'invitation à l'utilisateur connecté si nécessaire
+      if (!m.user_id && userEmail && m.status !== "inactive") {
+        await supabaseAdmin
+          .from("store_members")
+          .update({ user_id: userId, status: "active", accepted_at: new Date().toISOString() })
+          .eq("id", m.id)
+          .catch(() => null);
+      }
+
+      const raw = m.store_settings as any;
+      const s = Array.isArray(raw) ? raw[0] : raw;
+      if (s && s.id && !list.some((existing) => existing.id === s.id)) {
         list.push({
           ...s,
           isOwner: false,
@@ -203,14 +220,33 @@ export const getStoreOrders = createServerFn({ method: "POST" })
 
     const isOwner = store.user_id === userId;
     if (!isOwner) {
-      const { data: member } = await supabaseAdmin
+      const userEmail = typeof (context as any)?.claims?.email === "string"
+        ? (context as any).claims.email.toLowerCase().trim()
+        : "";
+      let memberQuery = supabaseAdmin
         .from("store_members")
-        .select("role, permissions, status")
-        .eq("store_id", data.storeId)
-        .eq("user_id", userId)
-        .eq("status", "active")
-        .maybeSingle();
-      if (!member) throw new Error("Accès refusé à cette boutique");
+        .select("id, role, permissions, status, user_id")
+        .eq("store_id", data.storeId);
+
+      if (userEmail) {
+        memberQuery = memberQuery.or(`user_id.eq.${userId},email.eq.${userEmail}`);
+      } else {
+        memberQuery = memberQuery.eq("user_id", userId);
+      }
+
+      const { data: member } = await memberQuery.maybeSingle();
+      if (!member || member.status === "inactive") throw new Error("Accès refusé à cette boutique");
+
+      if (!member.user_id && userEmail) {
+        try {
+          await supabaseAdmin
+            .from("store_members")
+            .update({ user_id: userId, status: "active", accepted_at: new Date().toISOString() })
+            .eq("id", member.id);
+        } catch {
+          // ignore
+        }
+      }
     }
 
     const { data: orders, error } = await supabaseAdmin
@@ -258,14 +294,33 @@ export const updateStoreOrderStatus = createServerFn({ method: "POST" })
 
     const isOwner = order.user_id === userId;
     if (!isOwner) {
-      const { data: member } = await supabaseAdmin
+      const userEmail = typeof (context as any)?.claims?.email === "string"
+        ? (context as any).claims.email.toLowerCase().trim()
+        : "";
+      let memberQuery = supabaseAdmin
         .from("store_members")
-        .select("role, permissions, status")
-        .eq("store_id", order.store_id)
-        .eq("user_id", userId)
-        .eq("status", "active")
-        .maybeSingle();
-      if (!member) throw new Error("Accès refusé");
+        .select("id, role, permissions, status, user_id")
+        .eq("store_id", order.store_id);
+
+      if (userEmail) {
+        memberQuery = memberQuery.or(`user_id.eq.${userId},email.eq.${userEmail}`);
+      } else {
+        memberQuery = memberQuery.eq("user_id", userId);
+      }
+
+      const { data: member } = await memberQuery.maybeSingle();
+      if (!member || member.status === "inactive") throw new Error("Accès refusé");
+
+      if (!member.user_id && userEmail) {
+        try {
+          await supabaseAdmin
+            .from("store_members")
+            .update({ user_id: userId, status: "active", accepted_at: new Date().toISOString() })
+            .eq("id", member.id);
+        } catch {
+          // ignore
+        }
+      }
 
       const isAdmin = member.role === "admin";
       const hasDelivery =
@@ -331,14 +386,22 @@ export const deleteStoreOrder = createServerFn({ method: "POST" })
 
     const isOwner = order.user_id === userId;
     if (!isOwner) {
-      const { data: member } = await supabaseAdmin
+      const userEmail = typeof (context as any)?.claims?.email === "string"
+        ? (context as any).claims.email.toLowerCase().trim()
+        : "";
+      let memberQuery = supabaseAdmin
         .from("store_members")
-        .select("role, status")
-        .eq("store_id", order.store_id)
-        .eq("user_id", userId)
-        .eq("status", "active")
-        .maybeSingle();
-      if (!member || member.role !== "admin") {
+        .select("id, role, status, user_id")
+        .eq("store_id", order.store_id);
+
+      if (userEmail) {
+        memberQuery = memberQuery.or(`user_id.eq.${userId},email.eq.${userEmail}`);
+      } else {
+        memberQuery = memberQuery.eq("user_id", userId);
+      }
+
+      const { data: member } = await memberQuery.maybeSingle();
+      if (!member || member.status === "inactive" || member.role !== "admin") {
         throw new Error("Seul le propriétaire de la boutique ou un administrateur peut supprimer une commande.");
       }
     }
