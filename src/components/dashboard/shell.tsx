@@ -43,9 +43,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth, displayName, initials } from "@/hooks/use-auth";
 import { AiJobBanner } from "@/components/dashboard/ai-job-banner";
 import { NotificationsBell } from "@/components/dashboard/notifications";
-import { LanguageSwitcher } from "@/components/ui/language-switcher";
+import { useQueryClient } from "@tanstack/react-query";
 import { useI18n } from "@/lib/i18n";
-import { useStore, useCurrentRole } from "@/lib/store";
+import { useStore, useCurrentRole, clearActiveStoreStorage } from "@/lib/store";
 import { storeUrl } from "@/lib/storefront";
 import { StoreSwitcher } from "@/components/dashboard/store-switcher";
 import { useIsAdmin } from "@/lib/admin";
@@ -248,7 +248,10 @@ function TopUserMenu() {
   const startTour = useTourLauncher();
   const label = planLabel(plan, trialing, trialDaysLeft);
 
+  const qc = useQueryClient();
   const signOut = async () => {
+    clearActiveStoreStorage();
+    qc.clear();
     await supabase.auth.signOut();
     toast.success(dict.dashboard.logout);
     void navigate({ to: "/login" });
@@ -501,7 +504,10 @@ function SidebarUser({
   const navigate = useNavigate();
   const { dict } = useI18n();
   const name = displayName(user);
+  const qc = useQueryClient();
   const signOut = async () => {
+    clearActiveStoreStorage();
+    qc.clear();
     await supabase.auth.signOut();
     onNavigate?.();
     toast.success(dict.dashboard.logout);

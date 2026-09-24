@@ -9,6 +9,7 @@ import {
   useOrderItems,
   useUpdateOrder,
   useUpdateOrderStatus,
+  useCurrentRole,
   type Order,
 } from "@/lib/store";
 import { ACTION_STATUSES, statusMeta, type OrderStatus } from "@/lib/order-status";
@@ -50,6 +51,15 @@ export function OrderDialog({
   const removeOrder = useDeleteOrder();
   const confirmDelete = useConfirmDelete();
   const [note, setNote] = useState("");
+  const { isOwner, isAdmin, isCourier, can } = useCurrentRole();
+  const canManageDelivery = isOwner || isAdmin || isCourier || can("delivery");
+
+  const availableStatuses = ACTION_STATUSES.filter((st) => {
+    if (st === "shipping" || st === "completed") {
+      return canManageDelivery;
+    }
+    return true;
+  });
 
   useEffect(() => {
     setNote(order?.note ?? "");
@@ -185,7 +195,7 @@ export function OrderDialog({
           <section className="rounded-[8px] border border-border p-3.5">
             <p className="text-sm font-bold">Actions</p>
             <div className="mt-3 grid grid-cols-2 gap-2">
-              {ACTION_STATUSES.map((value) => {
+              {availableStatuses.map((value) => {
                 const s = statusMeta(value);
                 const active = order.status === value;
                 return (
@@ -243,22 +253,24 @@ export function OrderDialog({
             </button>
           </section>
 
-          <button
-            disabled={removeOrder.isPending}
-            onClick={async () => {
-              if (!(await confirmDelete(`la commande ${order.order_number}`))) return;
-              removeOrder.mutate(order.id, {
-                onSuccess: () => {
-                  toast.success("Commande supprimée");
-                  onOpenChange(false);
-                },
-                onError: (e) => notifyError(e, "Suppression impossible"),
-              });
-            }}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-[6px] py-2.5 text-sm font-semibold text-destructive hover:bg-destructive/10"
-          >
-            <Trash2 className="h-4 w-4" /> Supprimer la commande
-          </button>
+          {isAdmin ? (
+            <button
+              disabled={removeOrder.isPending}
+              onClick={async () => {
+                if (!(await confirmDelete(`la commande ${order.order_number}`))) return;
+                removeOrder.mutate(order.id, {
+                  onSuccess: () => {
+                    toast.success("Commande supprimée");
+                    onOpenChange(false);
+                  },
+                  onError: (e) => notifyError(e, "Suppression impossible"),
+                });
+              }}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-[6px] py-2.5 text-sm font-semibold text-destructive hover:bg-destructive/10"
+            >
+              <Trash2 className="h-4 w-4" /> Supprimer la commande
+            </button>
+          ) : null}
         </div>
       </DialogContent>
     </Dialog>

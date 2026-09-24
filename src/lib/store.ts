@@ -28,13 +28,38 @@ async function currentUserId() {
 /* Boutique active : le vendeur peut en posséder plusieurs (formule Pro). */
 const ACTIVE_KEY = "dukaio.activeStore";
 
-export function activeStoreId(): string | null {
+export function activeStoreId(userId?: string | null): string | null {
   if (typeof window === "undefined") return null;
+  if (userId) {
+    const userScoped = window.localStorage.getItem(`${ACTIVE_KEY}.${userId}`);
+    if (userScoped) return userScoped;
+  }
   return window.localStorage.getItem(ACTIVE_KEY);
 }
 
-export function setActiveStoreId(id: string) {
-  if (typeof window !== "undefined") window.localStorage.setItem(ACTIVE_KEY, id);
+export function setActiveStoreId(id: string, userId?: string | null) {
+  if (typeof window === "undefined") return;
+  if (userId) {
+    window.localStorage.setItem(`${ACTIVE_KEY}.${userId}`, id);
+  }
+  window.localStorage.setItem(ACTIVE_KEY, id);
+}
+
+export function clearActiveStoreStorage() {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(ACTIVE_KEY);
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const key = window.localStorage.key(i);
+      if (key && key.startsWith(`${ACTIVE_KEY}.`)) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach((k) => window.localStorage.removeItem(k));
+  } catch {
+    // ignore
+  }
 }
 
 export type AccessibleStore = StoreSettings & {
@@ -82,9 +107,9 @@ export function useStore() {
       const userId = await currentUserId();
       const stores = await listStores(userId);
       if (stores.length) {
-        const wanted = activeStoreId();
+        const wanted = activeStoreId(userId);
         const found = stores.find((s) => s.id === wanted) ?? stores[0]!;
-        setActiveStoreId(found.id);
+        setActiveStoreId(found.id, userId);
         return found;
       }
 
@@ -157,8 +182,13 @@ export function useCreateStore() {
 /** Bascule sur une autre boutique : tout le tableau de bord se recharge. */
 export function useSwitchStore() {
   const qc = useQueryClient();
-  return (id: string) => {
-    setActiveStoreId(id);
+  return async (id: string) => {
+    try {
+      const { data } = await supabase.auth.getUser();
+      setActiveStoreId(id, data.user?.id);
+    } catch {
+      setActiveStoreId(id);
+    }
     qc.clear();
     void qc.invalidateQueries();
   };
@@ -471,9 +501,14 @@ export function useDeleteOrder() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      await supabase.from("order_items").delete().eq("order_id", id);
-      const { error } = await supabase.from("orders").delete().eq("id", id);
-      if (error) throw error;
+      try {
+        const { deleteStoreOrder } = await import("@/lib/stores.functions");
+        await deleteStoreOrder({ data: { orderId: id } });
+      } catch (err) {
+        await supabase.from("order_items").delete().eq("order_id", id);
+        const { error } = await supabase.from("orders").delete().eq("id", id);
+        if (error) throw error;
+      }
     },
     onSuccess: () => invalidateOrders(qc),
   });

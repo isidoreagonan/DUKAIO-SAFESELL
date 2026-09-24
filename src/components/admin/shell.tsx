@@ -35,8 +35,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, displayName, initials } from "@/hooks/use-auth";
+import { clearActiveStoreStorage } from "@/lib/store";
 import { toast } from "sonner";
 
 type AdminNavItem = { title: string; to: string; icon: LucideIcon; exact?: boolean };
@@ -177,7 +179,10 @@ function SidebarUser({
   const navigate = useNavigate();
   const name = displayName(user);
 
+  const qc = useQueryClient();
   const signOut = async () => {
+    clearActiveStoreStorage();
+    qc.clear();
     await supabase.auth.signOut();
     onNavigate?.();
     toast.success("Déconnecté");
@@ -387,7 +392,10 @@ function AdminUserMenu() {
   const navigate = useNavigate();
   const name = displayName(user);
 
+  const qc = useQueryClient();
   const signOut = async () => {
+    clearActiveStoreStorage();
+    qc.clear();
     await supabase.auth.signOut();
     toast.success("Déconnecté");
     void navigate({ to: "/login" });

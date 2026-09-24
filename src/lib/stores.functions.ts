@@ -266,15 +266,30 @@ export const updateStoreOrderStatus = createServerFn({ method: "POST" })
         .eq("status", "active")
         .maybeSingle();
       if (!member) throw new Error("Accès refusé");
-      const canUpdate =
-        member.role === "admin" ||
-        member.role === "closer" ||
+
+      const isAdmin = member.role === "admin";
+      const hasDelivery =
+        isAdmin ||
         member.role === "courier" ||
-        (member.permissions &&
-          (member.permissions.includes("orders") ||
-            member.permissions.includes("delivery") ||
-            member.permissions.includes("orders.write")));
-      if (!canUpdate) throw new Error("Vous n'avez pas la permission de modifier le statut de cette commande");
+        (Array.isArray(member.permissions) && member.permissions.includes("delivery"));
+      const hasOrders =
+        isAdmin ||
+        member.role === "closer" ||
+        (Array.isArray(member.permissions) &&
+          (member.permissions.includes("orders") || member.permissions.includes("orders.write")));
+
+      // Vérification fine selon le statut demandé :
+      // - "shipping" et "completed" exigent les droits de livraison (livreur ou admin)
+      // - les statuts de qualification (processing, scheduled, unreachable, cancelled) exigent les droits de closer/orders
+      if (data.status === "shipping" || data.status === "completed") {
+        if (!hasDelivery) {
+          throw new Error("Seul un livreur ou un administrateur peut marquer une commande en cours de livraison ou livrée.");
+        }
+      } else {
+        if (!hasOrders && !hasDelivery) {
+          throw new Error("Vous n'avez pas la permission de modifier le statut de cette commande.");
+        }
+      }
     }
 
     const updatePayload: Record<string, unknown> = { status: data.status };
@@ -292,6 +307,45 @@ export const updateStoreOrderStatus = createServerFn({ method: "POST" })
     } catch {
       // Non bloquant
     }
+
+    return { success: true };
+  });
+
+/**
+ * Supprime une commande de la boutique.
+ * Sécurité stricte : réservé exclusivement au propriétaire de la boutique ou à un administrateur.
+ */
+export const deleteStoreOrder = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ orderId: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const userId = context.userId;
+
+    const { data: order } = await supabaseAdmin
+      .from("orders")
+      .select("id, store_id, user_id, order_number")
+      .eq("id", data.orderId)
+      .maybeSingle();
+    if (!order) throw new Error("Commande introuvable");
+
+    const isOwner = order.user_id === userId;
+    if (!isOwner) {
+      const { data: member } = await supabaseAdmin
+        .from("store_members")
+        .select("role, status")
+        .eq("store_id", order.store_id)
+        .eq("user_id", userId)
+        .eq("status", "active")
+        .maybeSingle();
+      if (!member || member.role !== "admin") {
+        throw new Error("Seul le propriétaire de la boutique ou un administrateur peut supprimer une commande.");
+      }
+    }
+
+    await supabaseAdmin.from("order_items").delete().eq("order_id", data.orderId);
+    const { error } = await supabaseAdmin.from("orders").delete().eq("id", data.orderId);
+    if (error) throw error;
 
     return { success: true };
   });
