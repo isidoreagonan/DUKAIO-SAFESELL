@@ -541,6 +541,8 @@ function SidebarUser({
   const { dict } = useI18n();
   const name = displayName(user);
   const qc = useQueryClient();
+  const { isOwner, role } = useCurrentRole();
+
   const signOut = async () => {
     clearActiveStoreStorage();
     qc.clear();
@@ -552,15 +554,16 @@ function SidebarUser({
 
   if (collapsed) {
     return (
-      <div className="space-y-3 px-3 pb-5">
+      <div className="flex flex-col items-center gap-2 border-t border-chrome-border px-3 pb-4 pt-3">
         <Tooltip delayDuration={100}>
           <TooltipTrigger asChild>
-            <div className="grid h-10 w-full place-items-center rounded-[4px] bg-primary text-xs font-black text-primary-foreground">
+            <div className="grid h-9 w-9 place-items-center rounded-[6px] bg-primary text-xs font-black text-primary-foreground select-none">
               {initials(name) || "D"}
             </div>
           </TooltipTrigger>
           <TooltipContent side="right" className="text-xs">
-            {name}
+            <p className="font-semibold">{name}</p>
+            <p className="text-muted-foreground">{user?.email}</p>
           </TooltipContent>
         </Tooltip>
         <Tooltip delayDuration={100}>
@@ -569,17 +572,14 @@ function SidebarUser({
               to="/dashboard/parametres"
               onClick={onNavigate}
               aria-label={dict.dashboard.settings}
-              className="grid h-10 w-full cursor-pointer place-items-center rounded-[10px] text-chrome-muted transition-colors hover:bg-chrome-accent hover:text-chrome-accent-foreground"
+              className="grid h-8 w-8 cursor-pointer place-items-center rounded-[6px] text-chrome-muted transition-colors hover:bg-chrome-accent hover:text-chrome-accent-foreground"
             >
-              <Settings className="h-5 w-5" />
+              <Settings className="h-4 w-4" />
             </Link>
           </TooltipTrigger>
-          <TooltipContent side="right" className="text-xs">
-            {dict.dashboard.settings}
-          </TooltipContent>
+          <TooltipContent side="right" className="text-xs">{dict.dashboard.settings}</TooltipContent>
         </Tooltip>
-
-        <div className="flex justify-center py-0.5">
+        <div className="flex justify-center">
           <LanguageSwitcher variant="minimal" className="h-8 px-1 text-[11px]" />
         </div>
         <Tooltip delayDuration={100}>
@@ -588,67 +588,79 @@ function SidebarUser({
               type="button"
               aria-label={dict.dashboard.logout}
               onClick={signOut}
-              className="grid h-10 w-full cursor-pointer place-items-center rounded-[10px] text-destructive transition-colors hover:bg-chrome-accent"
+              className="grid h-8 w-8 cursor-pointer place-items-center rounded-[6px] text-chrome-muted transition-colors hover:bg-red-50 hover:text-red-500"
             >
-              <LogOut className="h-5 w-5" />
+              <LogOut className="h-4 w-4" />
             </button>
           </TooltipTrigger>
-          <TooltipContent side="right" className="text-xs">
-            {dict.dashboard.logout}
-          </TooltipContent>
+          <TooltipContent side="right" className="text-xs">{dict.dashboard.logout}</TooltipContent>
         </Tooltip>
       </div>
     );
   }
 
-  const { isOwner, role } = useCurrentRole();
-
   return (
-    <div className="space-y-1 border-t border-chrome-border p-2">
-      <div className="flex min-w-0 items-center justify-between gap-2 rounded-[4px] bg-chrome-panel p-2">
-        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[4px] bg-primary text-xs font-black uppercase text-primary-foreground">
-          {initials(name) || "D"}
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex min-w-0 items-center gap-1.5">
-            <span className="truncate text-xs font-semibold leading-tight text-chrome-foreground">{name}</span>
-            {isOwner ? (
-              <PlanBadge className="px-1 py-[1px] text-[8px]" />
-            ) : (
-              <RoleBadge role={role} className="px-1 py-[1px] text-[8px]" />
-            )}
+    <div className="border-t border-chrome-border p-2">
+      {/* Carte utilisateur principale */}
+      <div className="rounded-[6px] border border-chrome-border/60 bg-chrome-panel overflow-hidden">
+        {/* Infos utilisateur */}
+        <div className="flex min-w-0 items-center gap-2.5 px-3 py-2.5">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[5px] bg-primary text-[11px] font-black uppercase text-primary-foreground select-none">
+            {initials(name) || "D"}
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex min-w-0 items-center gap-1.5">
+              <span className="truncate text-[12.5px] font-semibold leading-tight text-chrome-foreground">{name}</span>
+              {isOwner ? (
+                <PlanBadge className="px-1 py-[1px] text-[7.5px]" />
+              ) : (
+                <RoleBadge role={role} className="px-1 py-[1px] text-[7.5px]" />
+              )}
+            </div>
+            <span className="block truncate text-[10px] leading-tight text-chrome-muted mt-0.5">{user?.email ?? "—"}</span>
           </div>
-          <span className="block truncate text-[10px] text-chrome-muted">{user?.email ?? "—"}</span>
         </div>
-        <Tooltip delayDuration={100}>
-          <TooltipTrigger asChild>
-            <Link
-              to="/dashboard/parametres"
-              onClick={onNavigate}
-              aria-label={dict.dashboard.settings}
-              className="grid h-7 w-7 shrink-0 cursor-pointer place-items-center rounded-[4px] text-chrome-muted transition-colors hover:bg-chrome-accent hover:text-chrome-foreground"
-            >
-              <Settings className="h-4 w-4" />
-            </Link>
-          </TooltipTrigger>
-          <TooltipContent side="top" className="text-xs">
-            {dict.dashboard.settings}
-          </TooltipContent>
-        </Tooltip>
-      </div>
-      <button
-        type="button"
-        onClick={signOut}
-        className="flex h-8 w-full cursor-pointer items-center gap-2.5 rounded-[5px] px-2 text-[13px] font-semibold text-chrome-muted transition-colors hover:bg-chrome-accent hover:text-chrome-accent-foreground"
-      >
-        <LogOut className="h-4 w-4" />
-        <span>{dict.dashboard.logout}</span>
-      </button>
 
-      <LanguageSwitcher variant="sidebar" />
+        {/* Séparateur + Actions */}
+        <div className="border-t border-chrome-border/60 flex items-center">
+          {/* Langue */}
+          <div className="flex-1 border-r border-chrome-border/60">
+            <LanguageSwitcher variant="sidebar-inline" />
+          </div>
+          {/* Paramètres */}
+          <Tooltip delayDuration={100}>
+            <TooltipTrigger asChild>
+              <Link
+                to="/dashboard/parametres"
+                onClick={onNavigate}
+                aria-label={dict.dashboard.settings}
+                className="flex h-9 w-10 cursor-pointer items-center justify-center border-r border-chrome-border/60 text-chrome-muted transition-colors hover:bg-chrome-accent hover:text-chrome-foreground"
+              >
+                <Settings className="h-3.5 w-3.5" />
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs">{dict.dashboard.settings}</TooltipContent>
+          </Tooltip>
+          {/* Déconnexion */}
+          <Tooltip delayDuration={100}>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                aria-label={dict.dashboard.logout}
+                onClick={signOut}
+                className="flex h-9 w-10 cursor-pointer items-center justify-center text-chrome-muted transition-colors hover:bg-red-50 hover:text-red-500"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs">{dict.dashboard.logout}</TooltipContent>
+          </Tooltip>
+        </div>
+      </div>
     </div>
   );
 }
+
 
 export function NavContent({
   onNavigate,
