@@ -101,7 +101,24 @@ async function listStores(_userId: string): Promise<AccessibleStore[]> {
 export function useStores() {
   return useQuery({
     queryKey: ["stores"],
-    queryFn: async (): Promise<AccessibleStore[]> => listStores(await currentUserId()),
+    queryFn: async (): Promise<AccessibleStore[]> => {
+      const list = await listStores(await currentUserId());
+      if (typeof window !== "undefined" && list.length > 0) {
+        try {
+          window.localStorage.setItem("dukaio.cachedStores", JSON.stringify(list));
+        } catch {}
+      }
+      return list;
+    },
+    initialData: () => {
+      if (typeof window === "undefined") return undefined;
+      try {
+        const cached = window.localStorage.getItem("dukaio.cachedStores");
+        if (cached) return JSON.parse(cached) as AccessibleStore[];
+      } catch {}
+      return undefined;
+    },
+    staleTime: 3 * 60_000,
   });
 }
 
@@ -116,6 +133,11 @@ export function useStore() {
         const wanted = activeStoreId(userId);
         const found = stores.find((s) => s.id === wanted) ?? stores[0]!;
         setActiveStoreId(found.id, userId);
+        if (typeof window !== "undefined") {
+          try {
+            window.localStorage.setItem("dukaio.cachedActiveStore", JSON.stringify(found));
+          } catch {}
+        }
         return found;
       }
 
@@ -137,12 +159,18 @@ export function useStore() {
           .single();
         if (createError) throw createError;
         setActiveStoreId(created.id);
-        return {
+        const newStore: AccessibleStore = {
           ...created,
           isOwner: true,
           memberRole: "owner",
           memberPermissions: ["*"],
         };
+        if (typeof window !== "undefined") {
+          try {
+            window.localStorage.setItem("dukaio.cachedActiveStore", JSON.stringify(newStore));
+          } catch {}
+        }
+        return newStore;
       } catch (err) {
         console.warn("[useStore] Could not auto-create store:", err);
         return {
@@ -158,6 +186,15 @@ export function useStore() {
         } as unknown as AccessibleStore;
       }
     },
+    initialData: () => {
+      if (typeof window === "undefined") return undefined;
+      try {
+        const cached = window.localStorage.getItem("dukaio.cachedActiveStore");
+        if (cached) return JSON.parse(cached) as AccessibleStore;
+      } catch {}
+      return undefined;
+    },
+    staleTime: 3 * 60_000,
   });
 }
 
@@ -194,13 +231,12 @@ export function useCreateStore() {
     },
     onSuccess: (created) => {
       setActiveStoreId(created.id);
-      qc.clear();
       void qc.invalidateQueries();
     },
   });
 }
 
-/** Bascule sur une autre boutique : tout le tableau de bord se recharge. */
+/** Bascule instantanément sur une autre boutique : mise à jour optimiste et rechargement ciblé. */
 export function useSwitchStore() {
   const qc = useQueryClient();
   return async (id: string) => {
@@ -210,8 +246,25 @@ export function useSwitchStore() {
     } catch {
       setActiveStoreId(id);
     }
-    qc.clear();
-    void qc.invalidateQueries();
+
+    // Mise à jour optimiste immédiate (0 milliseconde)
+    const stores = qc.getQueryData<AccessibleStore[]>(["stores"]);
+    const target = stores?.find((s) => s.id === id);
+    if (target) {
+      qc.setQueryData(["store"], target);
+      if (typeof window !== "undefined") {
+        try {
+          window.localStorage.setItem("dukaio.cachedActiveStore", JSON.stringify(target));
+        } catch {}
+      }
+    }
+
+    // Invalidation ciblée des données en arrière-plan sans bloquer l'UI
+    void qc.invalidateQueries({ queryKey: ["store"] });
+    void qc.invalidateQueries({ queryKey: ["orders"] });
+    void qc.invalidateQueries({ queryKey: ["products"] });
+    void qc.invalidateQueries({ queryKey: ["stats"] });
+    void qc.invalidateQueries({ queryKey: ["order-item-counts"] });
   };
 }
 
