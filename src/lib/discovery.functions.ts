@@ -1260,6 +1260,11 @@ export type DiscoveryAdminStats = {
   activeAds: number;
   videoAds: number;
   imageAds: number;
+  bunnyVideos: number;
+  bunnyImages: number;
+  metaOversizedVideos: number;
+  bunnyZoneName: string;
+  bunnyCdnHost: string;
   totalStores: number;
   totalProducts: number;
   uniqueOffers: number;
@@ -1288,6 +1293,9 @@ export const adminGetDiscoveryStats = createServerFn({ method: "GET" })
       { count: activeAds },
       { count: videoAds },
       { count: imageAds },
+      { count: bunnyVideos },
+      { count: bunnyImages },
+      { count: metaOversizedVideos },
       { count: totalStores },
       { data: storesCatalog },
       { data: adsList },
@@ -1297,6 +1305,9 @@ export const adminGetDiscoveryStats = createServerFn({ method: "GET" })
       supabaseAdmin.from("discovery_ads").select("*", { count: "exact", head: true }).eq("is_active", true),
       supabaseAdmin.from("discovery_ads").select("*", { count: "exact", head: true }).eq("media_type", "video"),
       supabaseAdmin.from("discovery_ads").select("*", { count: "exact", head: true }).eq("media_type", "image"),
+      supabaseAdmin.from("discovery_ads").select("*", { count: "exact", head: true }).eq("media_type", "video").like("video_url", "%b-cdn.net%"),
+      supabaseAdmin.from("discovery_ads").select("*", { count: "exact", head: true }).eq("media_type", "image").or("media_path.like.*b-cdn.net*,image_url.like.*b-cdn.net*"),
+      supabaseAdmin.from("discovery_ads").select("*", { count: "exact", head: true }).eq("media_type", "video").eq("raw->>meta_oversized_video", "true"),
       supabaseAdmin.from("discovery_stores").select("*", { count: "exact", head: true }),
       supabaseAdmin.from("discovery_stores").select("products_count"),
       supabaseAdmin.from("discovery_ads").select("headline, page_name"),
@@ -1316,12 +1327,19 @@ export const adminGetDiscoveryStats = createServerFn({ method: "GET" })
 
     const last = latestScans?.[0] ?? null;
     const hasApifyKey = Boolean(process.env["APIFY_API_KEY"]?.trim());
+    const bunnyZoneName = process.env["BUNNY_STORAGE_ZONE_NAME"] || "dukaio-ads";
+    const bunnyCdnHost = process.env["BUNNY_CDN_HOSTNAME"] || "dukaio-ads.b-cdn.net";
 
     return {
       totalAds: totalAds ?? 0,
       activeAds: activeAds ?? 0,
       videoAds: videoAds ?? 0,
       imageAds: imageAds ?? 0,
+      bunnyVideos: bunnyVideos ?? 0,
+      bunnyImages: bunnyImages ?? 0,
+      metaOversizedVideos: metaOversizedVideos ?? 3,
+      bunnyZoneName,
+      bunnyCdnHost,
       totalStores: totalStores ?? 0,
       totalProducts,
       uniqueOffers: uniquePromotedOffers,

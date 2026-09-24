@@ -80,7 +80,7 @@ export function AdCard({ ad, onAnalyse }: { ad: DiscoveryAd; onAnalyse: (id: str
 
               <div className="flex items-center justify-between gap-1 text-[10px] text-zinc-400 border-t border-white/10 pt-1.5">
                 <span className="truncate">{ad.page_name}</span>
-                {ad.ad_library_url ? (
+                {ad.ad_library_url || ad.external_id ? (
                   <span className="inline-flex shrink-0 items-center gap-0.5 font-bold text-orange-400">
                     Meta Ad Library <ExternalLink className="h-2.5 w-2.5" />
                   </span>

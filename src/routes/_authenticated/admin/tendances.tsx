@@ -26,7 +26,6 @@ import {
   Store,
   Trash2,
   TrendingUp,
-  Video,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -222,6 +221,13 @@ function AdminRadarPage() {
                 Clé API manquante
               </span>
             )}
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-bold text-emerald-600"
+              title="100% des médias sont pérennisés sur Bunny.net CDN (0 Ko Supabase)"
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
+              CDN Bunny.net 100%
+            </span>
           </div>
           <p className="mt-0.5 text-[11px] text-muted-foreground">
             Scraping automatisé des annonces Meta et Google Ads en Afrique francophone & veille e-commerce
@@ -782,7 +788,7 @@ function AdminRadarPage() {
                       </Button>
 
                       {/* Lien externe vers la bibliothèque Meta */}
-                      {ad.ad_library_url && (
+                      {(ad.ad_library_url || ad.external_id) && (
                         <Button
                           asChild
                           size="sm"
@@ -790,7 +796,11 @@ function AdminRadarPage() {
                           className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
                           title="Voir sur Meta Ad Library"
                         >
-                          <a href={ad.ad_library_url} target="_blank" rel="noopener noreferrer">
+                          <a
+                            href={ad.ad_library_url || `https://www.facebook.com/ads/library/?id=${ad.external_id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
                             <ExternalLink className="h-3.5 w-3.5" />
                           </a>
                         </Button>

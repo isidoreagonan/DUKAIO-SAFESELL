@@ -4,6 +4,32 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 > **Note d'environnement :** Ce projet a été initialement généré avec Lovable, mais a été entièrement migré sur Antigravity. Il n'est plus synchronisé avec Lovable Cloud et utilise désormais exclusivement la propre instance Supabase de l'utilisateur.
 
+## [24/09/2026] - Infrastructure CDN Bunny.net Dédiée, Règle Vidéo ≤ 40 Mo & Pérennisation 100% Hors-Supabase
+
+### Infrastructure CDN & Découverte Publicitaire
+- **Architecture Dédiée Bunny.net CDN (`bunny.server.ts`) :**
+  - **Zéro Ko consommé sur Supabase Storage :** Abandon définitif du stockage des médias publicitaires sur Supabase Storage pour préserver l'intégralité du quota de la base de données.
+  - **Storage Zone & CDN Global :** Configuration de la Storage Zone `dukaio-ads` (Région Francfort/Falkenstein) et de la Pull Zone CDN mondiale sécurisée SSL (`https://dukaio-ads.b-cdn.net`).
+  - **Client d'upload haute résilience :** Module natif `node:https` avec streaming mémoire, requêtes PUT directes, timeout étendu à 300s, et pré-contrôle HEAD des en-têtes HTTP (`checkUrlSize`) pour valider la taille des fichiers avant téléchargement.
+- **Règle Stricte des Vidéos ≤ 40 Mo & Protection de Quota (`discovery.server.ts`) :**
+  - **Plafond anti-saturation :** Pour protéger le quota de 100 Go de Bunny.net contre les vidéos parasites hors format (telenovelas, émissions religieuses, longs webinaires), contrôle strict de la taille en moins de 200 ms avant tout traitement.
+  - **Vidéos e-commerce standard (≤ 40 Mo) :** Uploadées et hébergées à vie sur le CDN Bunny.net (`https://dukaio-ads.b-cdn.net/videos/{external_id}.mp4`).
+  - **Vidéos volumineuses (> 40 Mo) :** Bloquées d'upload sur Bunny, marquées avec le flag `meta_oversized_video: true` et redirigées vers la bibliothèque officielle Meta sans altérer le quota.
+- **Migration Intégrale de la Base de Données Existante (100% Terminée) :**
+  - **337 / 337 images (100%)** migrées et servies via le CDN Bunny.net.
+  - **419 / 419 vidéos e-commerce (100%)** migrées et servies via le CDN Bunny.net.
+  - **3 vidéos hors format (> 40 Mo)** répertoriées avec passerelle Meta Ad Library.
+  - Consommation finale : **2,68 Go / 100 Go** sur Bunny (~2,7% du quota) et **0 Ko** sur Supabase Storage (100% d'économie).
+- **Interface & Lecteur Vidéo Haute Définition (`analysis-dialog.tsx`, `tendances.$id.tsx`, `ad-card.tsx`) :**
+  - Lecteur vidéo HD intégré avec badge source explicite (`Vidéo HD CDN Bunny.net · Pérenne`).
+  - Écran dédié de visionnage pour les publicités volumineuses (> 40 Mo) avec bouton d'action officiel : **« Regarder sur Meta Ad Library »**.
+  - Lien direct Meta Ad Library sécurisé avec fallback automatique sur l'identifiant externe de la publicité (`https://www.facebook.com/ads/library/?id=...`).
+- **Épuration de la Console d'Administration (`admin/tendances.tsx`) :**
+  - Suppression du bandeau temporaire de progression de migration une fois l'opération complétée à 100%.
+  - Ajout d'un badge de statut discret et moderne dans l'en-tête : `● CDN Bunny.net 100%`.
+- **Automatisation Serveur Vercel Cloud :**
+  - Les collectes manuelles ("Collecter les publicités") et les scans périodiques du robot (`cron.decouverte.ts`) s'exécutent entièrement en tâche de fond dans le Cloud Vercel (liaisons 10 Gbps) sans consommer la connexion Internet personnelle de l'utilisateur.
+
 ## [23/09/2026] - Correction Définitive de la Disparition des Publicités & Pérennisation des Médias Vidéo
 
 ### Découverte Publicitaire & Fiabilité des Médias

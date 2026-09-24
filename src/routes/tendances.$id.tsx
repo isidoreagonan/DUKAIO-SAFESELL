@@ -78,22 +78,38 @@ function AdDetail() {
       <div className="grid gap-8 md:grid-cols-2">
         <div className="overflow-hidden rounded-xl border border-border bg-card">
           {ad.video_url ? (
-            <video
-              src={ad.video_url}
-              controls
-              playsInline
-              preload="metadata"
-              referrerPolicy="no-referrer"
-              poster={media ?? undefined}
-              onError={(e) => {
-                const el = e.currentTarget;
-                const streamUrl = `/api/public/video/stream?id=${ad.id}`;
-                if (!el.src.includes(streamUrl)) {
-                  el.src = streamUrl;
-                }
-              }}
-              className="w-full"
-            />
+            <div className="flex flex-col">
+              <video
+                src={ad.video_url}
+                controls
+                playsInline
+                preload="metadata"
+                poster={media ?? undefined}
+                onError={(e) => {
+                  const el = e.currentTarget;
+                  const streamUrl = `/api/public/video/stream?id=${ad.id}`;
+                  if (!el.src.includes(streamUrl)) {
+                    el.src = streamUrl;
+                  }
+                }}
+                className="w-full bg-black object-contain max-h-[500px]"
+              />
+              <div className="flex items-center justify-between border-t border-border bg-muted/40 px-3 py-2 text-xs">
+                <span className="text-muted-foreground font-medium">
+                  {ad.video_url.includes(".b-cdn.net") ? "Vidéo HD (CDN Bunny.net)" : "Vidéo Meta Ads"}
+                </span>
+                {ad.source_url ? (
+                  <a
+                    href={ad.source_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 font-bold text-orange-600 hover:underline"
+                  >
+                    Meta Ad Library <ExternalLink className="h-3 w-3" />
+                  </a>
+                ) : null}
+              </div>
+            </div>
           ) : media ? (
             <img src={media} alt={ad.title} referrerPolicy="no-referrer" className="w-full object-cover" />
           ) : (

@@ -27,7 +27,7 @@ async function run(request: Request) {
     const url = new URL(request.url);
     const force = url.searchParams.get("force") === "true";
     const result = await sendAdminTelegramDailyReport({ force });
-    return Response.json({ ok: true, ...result });
+    return Response.json(result);
   } catch (e) {
     console.error("[Cron Daily Report Error]", e);
     return Response.json({ ok: false, error: (e as Error).message }, { status: 500 });

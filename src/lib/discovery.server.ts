@@ -116,15 +116,15 @@ type Item = {
 };
 
 const CATEGORY_RULES: { category: string; words: string[] }[] = [
-  { category: "Beauté & soin", words: ["parfum", "beaut", "peau", "cheveux", "crème", "maquillage", "savon", "skincare", "perruque"] },
-  { category: "Tech & gadgets", words: ["téléphone", "phone", "montre", "écouteur", "gadget", "caméra", "led", "ai ", "app"] },
-  { category: "Mode & accessoires", words: ["robe", "chaussure", "sac", "mode", "vêtement", "pagne", "bijou", "sneaker"] },
-  { category: "Cuisine", words: ["cuisine", "mixeur", "casserole", "friteuse", "batteur", "ustensile"] },
-  { category: "Maison & jardin", words: ["maison", "salon", "meuble", "matelas", "rideau", "jardin", "ménage"] },
-  { category: "Sport & fitness", words: ["sport", "fitness", "musculation", "ventre", "minceur", "vélo"] },
+  { category: "Beauté & soin", words: ["parfum", "beaut", "peau", "cheveux", "crème", "maquillage", "savon", "skincare", "perruque", "dermaplaning", "épilateur", "sérum", "rides", "visage"] },
+  { category: "Santé & hygiène", words: ["dent", "brosse à dents", "blanchiment", "détartreur", "hydropulseur", "douleur", "massage", "articulation", "posture", "genou", "dos", "ventouse"] },
+  { category: "Tech & gadgets", words: ["téléphone", "phone", "coque", "pochette", "chargeur", "montre", "écouteur", "gadget", "caméra", "led", "ring light", "trépied", "projecteur"] },
+  { category: "Cuisine", words: ["cuisine", "mixeur", "casserole", "friteuse", "air fryer", "batteur", "ustensile", "hachoir", "presse-agrume", "poêle"] },
+  { category: "Auto & moto", words: ["voiture", "auto", "moto", "pneu", "dashcam", "support voiture", "aspirateur voiture", "nettoyage auto", "accessoire auto"] },
+  { category: "Mode & accessoires", words: ["robe", "chaussure", "sac", "mode", "vêtement", "pagne", "bijou", "sneaker", "ceinture"] },
+  { category: "Maison & jardin", words: ["maison", "salon", "meuble", "matelas", "rideau", "jardin", "ménage", "aspirateur"] },
+  { category: "Sport & fitness", words: ["sport", "fitness", "musculation", "ventre", "minceur", "gaine", "abdos"] },
   { category: "Bébé & enfants", words: ["bébé", "enfant", "couche", "poussette", "jouet"] },
-  { category: "Auto & moto", words: ["voiture", "auto", "moto", "pneu", "casque"] },
-  { category: "Formation & services", words: ["formation", "master", "école", "coaching", "cours", "webinar"] },
 ];
 
 function categorize(text: string, fallback?: string) {
@@ -184,6 +184,18 @@ function bodyText(snapshot: Item["snapshot"], card: Card | undefined) {
   return "";
 }
 
+function getVideoDurationSeconds(videoUrl: string | null): number | null {
+  if (!videoUrl) return null;
+  const match = videoUrl.match(/efg=([^&]+)/);
+  if (!match || !match[1]) return null;
+  try {
+    const json = JSON.parse(Buffer.from(decodeURIComponent(match[1]), "base64").toString("utf8"));
+    return typeof json.duration_s === "number" ? json.duration_s : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Cherche un visuel dans toutes les zones renvoyées par Meta (cartes, images, vidéos). */
 function pickMedia(snapshot: Item["snapshot"]) {
   const pools: Media[] = [
@@ -198,7 +210,12 @@ function pickMedia(snapshot: Item["snapshot"]) {
   let image: string | null = null;
   let poster: string | null = null;
   for (const media of pools) {
-    video = video ?? media.video_hd_url ?? media.video_sd_url ?? null;
+    const cand = media.video_hd_url ?? media.video_sd_url ?? null;
+    const dur = getVideoDurationSeconds(cand);
+    // On ne garde que les vidéos de durée e-commerce (<= 90s) pour exclure les séries/films/webinaires
+    if (!video && cand && (dur === null || dur <= 90)) {
+      video = cand;
+    }
     poster = poster ?? media.video_preview_image_url ?? null;
     image = image ?? media.original_image_url ?? media.resized_image_url ?? null;
   }
@@ -343,22 +360,21 @@ async function runActor(actor: string, body: Record<string, unknown>, maxItems: 
  * des produits e-commerce à revendre, pas des offres immatérielles.
  */
 const KEYWORD_POOL = [
-  // Beauté & soin du corps
-  "parfum", "crème éclaircissante", "soin visage", "perruque", "huile cheveux",
-  "maquillage", "savon noir", "beurre de karité", "appareil massage", "épilateur",
-  // Cuisine & maison
-  "mixeur", "friteuse sans huile", "ustensile cuisine", "casserole", "machine à jus",
-  "aspirateur", "rangement maison", "lampe led", "matelas", "rideau",
-  // Mode & accessoires
-  "montre homme", "sac à main", "chaussures femme", "robe", "bijoux plaqué or", "lunettes",
-  // Tech & gadgets
-  "écouteurs sans fil", "montre connectée", "vidéoprojecteur", "caméra surveillance", "power bank",
-  // Bien-être & sport
-  "ceinture ventre plat", "thé minceur", "tapis sport", "appareil abdos", "complément minceur",
-  // Bébé & divers
-  "poussette", "jouet enfant", "couche bébé", "parfum voiture", "produit ménager",
-  // Signaux e-commerce
-  "livraison gratuite", "paiement à la livraison", "commandez maintenant", "prix promo",
+  // Beauté, Soin & Visage (Dermaplaning, épilation, sérum...)
+  "dermaplaning", "appareil massage", "pistolet massage", "épilateur lumière pulsée",
+  "crème anti rides", "sérum visage", "perruque lace", "savon éclaircissant", "soin peau", "ventouse cellulite",
+  // Santé, Douleur & Bien-être
+  "ceinture lombaire", "correcteur posture", "baume douleur", "genouillère compression", "coussin orthopédique",
+  // Dents & Hygiène bucco-dentaire
+  "brosse à dents électrique", "blanchiment dentaire", "détartreur dentaire ultrason", "hydropulseur dentaire", "poudre charbon dents",
+  // Cuisine & Maison
+  "mixeur portable", "friteuse sans huile", "hachoir multifonction", "machine à jus", "casserole antiadhésive", "aspirateur robot",
+  // Voiture & Accessoires Auto
+  "support téléphone voiture", "aspirateur sans fil voiture", "dashcam caméra voiture", "nettoyant phare voiture", "coussin lombaire voiture",
+  // Tech & Téléphonie (Pochettes, coques, gadgets...)
+  "pochette étanche téléphone", "coque protection téléphone", "chargeur induction sans fil", "écouteurs bluetooth sans fil", "trépied ring light led",
+  // Signaux forts e-commerce
+  "paiement à la livraison", "livraison gratuite 24h", "offre promotionnelle limitée",
 ];
 
 const COUNTRY_POOL = ["BJ", "CI", "SN", "BF", "TG", "ML", "CM", "NE", "GN", "CD", "GA", "MA"];
@@ -428,6 +444,70 @@ async function mirrorThumbnail(
   } catch {
     return null;
   }
+}
+
+/**
+ * Règle stricte DUKAIO :
+ * - Vidéos <= 40 Mo : Sauvegardées à vie sur Bunny.net CDN (0 Ko Supabase).
+ * - Vidéos > 40 Mo : Rejetées du stockage Bunny, marquées 'meta_oversized_video: true'
+ *   pour activer le bouton officiel « Regarder sur Meta Ad Library » sans saturer le quota.
+ */
+async function mirrorVideo(
+  supabaseAdmin: any,
+  row: { external_id: string; video_url: string | null; raw?: unknown },
+): Promise<string | null> {
+  if (!row.video_url) return null;
+  if (row.video_url.includes(".b-cdn.net")) return row.video_url;
+
+  try {
+    // 1. Pré-vérification de taille ultra-rapide (HEAD request)
+    let sizeMb = 0;
+    try {
+      const head = await fetch(row.video_url, {
+        method: "HEAD",
+        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+        signal: AbortSignal.timeout(6000),
+      });
+      if (head.ok) {
+        const cl = Number(head.headers.get("content-length")) || 0;
+        sizeMb = cl / (1024 * 1024);
+      }
+    } catch {
+      // continuer
+    }
+
+    // Si la vidéo dépasse 40 Mo : exclure de Bunny et marquer pour Meta Ad Library
+    if (sizeMb > 40) {
+      console.log(
+        `[Discovery] Vidéo volumineuse (${sizeMb.toFixed(1)} Mo) pour ${row.external_id} -> Bunny préservé, bouton Meta Ad Library activé.`,
+      );
+      await supabaseAdmin
+        .from("discovery_ads")
+        .update({
+          raw: {
+            ...((row.raw as Record<string, unknown>) || {}),
+            meta_oversized_video: true,
+            video_size_mb: Math.round(sizeMb * 10) / 10,
+          },
+        })
+        .eq("external_id", row.external_id);
+      return null;
+    }
+
+    // 2. Vidéo e-commerce légère (<= 40 Mo) : téléverser sur Bunny CDN
+    const { uploadVideoFromUrl } = await import("@/lib/bunny.server");
+    const cdnVid = await uploadVideoFromUrl(row.video_url, row.external_id);
+    if (cdnVid) {
+      await supabaseAdmin
+        .from("discovery_ads")
+        .update({ video_url: cdnVid })
+        .eq("external_id", row.external_id);
+      return cdnVid;
+    }
+  } catch (err) {
+    console.error(`[Discovery] Erreur miroir vidéo ${row.external_id}:`, err);
+  }
+  return null;
 }
 
 /** Lance une collecte plafonnée (plusieurs pays et mots-clés) puis enregistre les nouveautés. */
@@ -589,27 +669,55 @@ export async function runDiscoveryScan(input: ScanInput = {}): Promise<ScanResul
   const mirrorCandidates = deduped.filter((row) => !known.get(row.external_id));
   const mirroredPaths = new Map<string, string>();
   const mirroredVideos = new Map<string, string>();
+  // 1. Visuels / Miniatures (rapides, en parallèle)
   await Promise.all(
     mirrorCandidates.map(async (row) => {
-      // 1. Visuel / Miniature
       const imgUrl = row.thumbnail_url || row.image_url;
       if (imgUrl) {
         const path = await mirrorThumbnail(supabaseAdmin as never, row.external_id, imgUrl);
         if (path) mirroredPaths.set(row.external_id, path);
       }
+    }),
+  );
 
-      // 2. Vidéo publicitaire
-      if (row.video_url && row.media_type === "video" && !row.video_url.includes(".b-cdn.net")) {
+  // 2. Vidéos publicitaires : traitement par lots de 3 en parallèle (max 10 prioritaires synchrones)
+  const videoCandidates = mirrorCandidates.filter(
+    (row) => row.video_url && row.media_type === "video" && !row.video_url.includes(".b-cdn.net"),
+  );
+  const syncBatch = videoCandidates.slice(0, 3);
+  const bgBatch = videoCandidates.slice(3);
+
+  for (let i = 0; i < syncBatch.length; i += 3) {
+    const chunk = syncBatch.slice(i, i + 3);
+    await Promise.all(
+      chunk.map(async (row) => {
         try {
-          const { uploadVideoFromUrl } = await import("@/lib/bunny.server");
-          const cdnVid = await uploadVideoFromUrl(row.video_url, row.external_id);
+          const cdnVid = await mirrorVideo(supabaseAdmin, row);
           if (cdnVid) mirroredVideos.set(row.external_id, cdnVid);
         } catch {
           /* continuer sans bloquer */
         }
+      }),
+    );
+  }
+
+  // Traitement en arrière-plan pour le reste sans bloquer la requête
+  if (bgBatch.length > 0) {
+    (async () => {
+      for (let i = 0; i < bgBatch.length; i += 2) {
+        const chunk = bgBatch.slice(i, i + 2);
+        await Promise.all(
+          chunk.map(async (row) => {
+            try {
+              await mirrorVideo(supabaseAdmin, row);
+            } catch {
+              /* ignore background upload error */
+            }
+          }),
+        );
       }
-    }),
-  );
+    })().catch(() => {});
+  }
   const withMedia = deduped.map((row) => ({
     ...row,
     media_path: known.get(row.external_id) ?? mirroredPaths.get(row.external_id) ?? null,

@@ -166,6 +166,57 @@ function AdMediaSection({ ad }: { ad: DiscoveryAd }) {
     );
   }
 
+  const isOversized = Boolean((ad.raw as Record<string, unknown> | null)?.meta_oversized_video);
+  const oversizedMb = (ad.raw as Record<string, unknown> | null)?.video_size_mb as number | undefined;
+  const metaAdUrl = ad.ad_library_url || (ad.external_id ? `https://www.facebook.com/ads/library/?id=${ad.external_id}` : null);
+
+  if (isOversized) {
+    return (
+      <div className="flex flex-col overflow-hidden rounded-[8px] border border-border bg-background">
+        <div className="relative aspect-video w-full overflow-hidden bg-slate-950">
+          <SafeImage
+            src={media}
+            alt={ad.headline || ad.page_name}
+            className="h-full w-full object-cover opacity-50 blur-[1px]"
+            fallback={
+              <div className="grid h-full w-full place-items-center bg-gradient-to-br from-slate-900 to-zinc-950 text-muted-foreground">
+                <Film className="h-12 w-12 opacity-20 text-orange-400" />
+              </div>
+            }
+          />
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-5 text-center text-white bg-black/60 backdrop-blur-xs">
+            <span className="grid h-12 w-12 place-items-center rounded-full bg-orange-500/20 text-orange-400 ring-1 ring-orange-500/40 shadow-lg">
+              <Play className="h-6 w-6 fill-current ml-0.5" />
+            </span>
+            <div className="max-w-md space-y-1">
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-orange-500/20 px-2.5 py-0.5 text-[11px] font-semibold text-orange-300 ring-1 ring-orange-500/30">
+                <span>Vidéo longue durée {oversizedMb ? `(${oversizedMb} Mo)` : "(> 40 Mo)"}</span>
+              </div>
+              <p className="text-sm font-bold text-white">
+                Visionnage officiel sur Meta Ad Library
+              </p>
+              <p className="text-xs text-zinc-300 leading-relaxed">
+                Cette publicité dépasse 40 Mo. Vous pouvez la visionner directement sur Meta en haute définition en 1 clic sans consommer d'espace de stockage.
+              </p>
+            </div>
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-2.5">
+              {metaAdUrl ? (
+                <a
+                  href={metaAdUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-[6px] bg-orange-600 px-4 py-2 text-xs font-bold text-white shadow-md transition-all hover:bg-orange-500 hover:shadow-orange-600/30"
+                >
+                  Regarder sur Meta Ad Library <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (videoUrl && !videoError) {
     return (
       <div className="flex flex-col overflow-hidden rounded-[8px] border border-border bg-background">
@@ -183,7 +234,7 @@ function AdMediaSection({ ad }: { ad: DiscoveryAd }) {
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border bg-muted/40 px-3 py-2 text-[11px] text-muted-foreground">
           <span className="flex items-center gap-1.5 font-medium">
             <Film className="h-3.5 w-3.5 text-orange-500" />
-            Vidéo publicitaire (Stream direct Meta)
+            Vidéo publicitaire {videoUrl?.includes(".b-cdn.net") ? "HD (CDN Bunny.net · Pérenne)" : "(Stream direct Meta)"}
           </span>
           <div className="flex items-center gap-3">
             <button
@@ -195,9 +246,9 @@ function AdMediaSection({ ad }: { ad: DiscoveryAd }) {
               <RefreshCw className={cn("h-3 w-3", refreshVideo.isPending && "animate-spin")} />
               Actualiser le flux
             </button>
-            {ad.ad_library_url ? (
+            {metaAdUrl ? (
               <a
-                href={ad.ad_library_url}
+                href={metaAdUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-1 font-semibold text-orange-600 hover:text-orange-700 hover:underline"
@@ -238,9 +289,9 @@ function AdMediaSection({ ad }: { ad: DiscoveryAd }) {
               </p>
             </div>
             <div className="mt-1 flex flex-wrap items-center justify-center gap-2.5">
-              {ad.ad_library_url ? (
+              {metaAdUrl ? (
                 <a
-                  href={ad.ad_library_url}
+                  href={metaAdUrl}
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex cursor-pointer items-center gap-1.5 rounded-[6px] bg-orange-600 px-4 py-2 text-xs font-bold text-white shadow-md transition-all hover:bg-orange-500 hover:shadow-orange-600/30"

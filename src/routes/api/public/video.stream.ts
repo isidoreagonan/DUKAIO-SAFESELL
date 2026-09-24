@@ -57,10 +57,12 @@ export const Route = createFileRoute("/api/public/video/stream")({
         }
 
         // Migration automatique en arrière-plan vers Bunny.net pour pérenniser la vidéo à vie
-        if (ad.external_id && !rangeHeader) {
+        if (ad.external_id && ad.video_url && !rangeHeader) {
+          const extId = ad.external_id;
+          const vidUrl = ad.video_url;
           import("@/lib/bunny.server").then(async ({ uploadVideoFromUrl }) => {
             try {
-              const bunnyUrl = await uploadVideoFromUrl(ad.video_url, ad.external_id);
+              const bunnyUrl = await uploadVideoFromUrl(vidUrl, extId);
               if (bunnyUrl) {
                 await supabaseAdmin
                   .from("discovery_ads")

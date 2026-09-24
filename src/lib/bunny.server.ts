@@ -1,3 +1,5 @@
+import https from "node:https";
+
 /**
  * Service Bunny.net Storage & CDN pour DUKAIO
  * 
@@ -9,7 +11,6 @@
 const STORAGE_ZONE = process.env["BUNNY_STORAGE_ZONE_NAME"] || "dukaio-ads";
 const API_KEY = process.env["BUNNY_STORAGE_API_KEY"] || "";
 const CDN_HOSTNAME = process.env["BUNNY_CDN_HOSTNAME"] || "dukaio-ads.b-cdn.net";
-const BASE_STORAGE_URL = `https://storage.bunnycdn.com/${STORAGE_ZONE}`;
 
 export function isBunnyConfigured(): boolean {
   return Boolean(STORAGE_ZONE && API_KEY);
@@ -22,7 +23,7 @@ export function getBunnyCdnUrl(subfolder: "videos" | "images", filename: string)
 }
 
 /**
- * Upload un buffer directement sur Bunny Storage
+ * Upload un buffer directement sur Bunny Storage via node:https (robuste, sans ECONNRESET)
  */
 export async function uploadBufferToBunny(
   path: string,
@@ -31,28 +32,48 @@ export async function uploadBufferToBunny(
 ): Promise<string | null> {
   if (!isBunnyConfigured()) return null;
   const cleanPath = path.startsWith("/") ? path.slice(1) : path;
-  const targetUrl = `${BASE_STORAGE_URL}/${cleanPath}`;
+  const nodeBuf = Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer as ArrayBuffer);
 
-  try {
-    const res = await fetch(targetUrl, {
-      method: "PUT",
-      headers: {
-        AccessKey: API_KEY,
-        "Content-Type": contentType,
+  return new Promise((resolve) => {
+    const req = https.request(
+      {
+        hostname: "storage.bunnycdn.com",
+        port: 443,
+        path: `/${STORAGE_ZONE}/${cleanPath}`,
+        method: "PUT",
+        headers: {
+          AccessKey: API_KEY,
+          "Content-Type": contentType,
+          "Content-Length": nodeBuf.length,
+        },
+        timeout: 300_000,
       },
-      body: buffer as BodyInit,
+      (res) => {
+        res.resume(); // Vider les données de réponse pour libérer la mémoire
+        if (res.statusCode === 201 || res.statusCode === 200) {
+          const host = CDN_HOSTNAME.replace(/^https?:\/\//, "").replace(/\/+$/, "");
+          resolve(`https://${host}/${cleanPath}`);
+        } else {
+          console.error(`[Bunny] Upload error (${res.statusCode}) on ${cleanPath}`);
+          resolve(null);
+        }
+      },
+    );
+
+    req.on("error", (err) => {
+      console.error("[Bunny] https upload error:", err);
+      resolve(null);
     });
 
-    if (res.status === 201 || res.status === 200) {
-      const host = CDN_HOSTNAME.replace(/^https?:\/\//, "").replace(/\/+$/, "");
-      return `https://${host}/${cleanPath}`;
-    }
-    console.error(`[Bunny] Upload error (${res.status}):`, await res.text());
-    return null;
-  } catch (err) {
-    console.error("[Bunny] Upload network exception:", err);
-    return null;
-  }
+    req.on("timeout", () => {
+      req.destroy();
+      console.error(`[Bunny] Timeout uploading ${cleanPath}`);
+      resolve(null);
+    });
+
+    req.write(nodeBuf);
+    req.end();
+  });
 }
 
 /**
@@ -70,6 +91,9 @@ export async function uploadVideoFromUrl(
     return sourceUrl;
   }
 
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 240_000);
+
   try {
     const res = await fetch(sourceUrl, {
       headers: {
@@ -77,42 +101,37 @@ export async function uploadVideoFromUrl(
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
         Accept: "*/*",
       },
-      signal: AbortSignal.timeout(30_000), // 30s timeout pour les vidéos
+      signal: controller.signal,
     });
 
     if (!res.ok) {
+      clearTimeout(timer);
       console.warn(`[Bunny] Cannot fetch video source (${res.status}): ${sourceUrl.slice(0, 100)}...`);
+      return null;
+    }
+
+    const cl = Number(res.headers.get("content-length"));
+    // RÈGLE STRICTE DUKAIO : Max 40 Mo par vidéo pour préserver le stockage Bunny.net
+    if (cl && cl > 40 * 1024 * 1024) {
+      clearTimeout(timer);
+      console.log(`[Bunny] Vidéo > 40 Mo (${Math.round(cl / (1024 * 1024))} Mo), stockage préservé. Redirection Meta appliquée.`);
       return null;
     }
 
     const contentType = res.headers.get("content-type") || "video/mp4";
     const arrayBuffer = await res.arrayBuffer();
+    clearTimeout(timer);
 
-    // Protection anti-dépassement : vidéo max 80 Mo
-    if (arrayBuffer.byteLength > 80 * 1024 * 1024) {
-      console.warn(`[Bunny] Video too large (${arrayBuffer.byteLength} bytes), skipping upload`);
+    if (arrayBuffer.byteLength > 40 * 1024 * 1024) {
+      console.log(`[Bunny] Vidéo > 40 Mo (${Math.round(arrayBuffer.byteLength / (1024 * 1024))} Mo), stockage préservé. Redirection Meta appliquée.`);
       return null;
     }
 
     const filename = `${externalId}.mp4`;
     const cleanPath = `videos/${filename}`;
-    const uploadRes = await fetch(`${BASE_STORAGE_URL}/${cleanPath}`, {
-      method: "PUT",
-      headers: {
-        AccessKey: API_KEY,
-        "Content-Type": contentType,
-      },
-      body: arrayBuffer,
-    });
-
-    if (uploadRes.status === 201 || uploadRes.status === 200) {
-      const host = CDN_HOSTNAME.replace(/^https?:\/\//, "").replace(/\/+$/, "");
-      return `https://${host}/${cleanPath}`;
-    }
-
-    console.error(`[Bunny] Storage PUT failed (${uploadRes.status}):`, await uploadRes.text());
-    return null;
+    return await uploadBufferToBunny(cleanPath, arrayBuffer, contentType);
   } catch (err) {
+    clearTimeout(timer);
     console.error("[Bunny] uploadVideoFromUrl failed:", err);
     return null;
   }
@@ -139,7 +158,7 @@ export async function uploadImageFromUrl(
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
         Accept: "image/*,*/*;q=0.8",
       },
-      signal: AbortSignal.timeout(10_000),
+      signal: AbortSignal.timeout(60_000),
     });
 
     if (!res.ok) return null;
@@ -149,21 +168,9 @@ export async function uploadImageFromUrl(
 
     const filename = `${externalId}.jpg`;
     const cleanPath = `images/${filename}`;
-    const uploadRes = await fetch(`${BASE_STORAGE_URL}/${cleanPath}`, {
-      method: "PUT",
-      headers: {
-        AccessKey: API_KEY,
-        "Content-Type": contentType,
-      },
-      body: arrayBuffer,
-    });
-
-    if (uploadRes.status === 201 || uploadRes.status === 200) {
-      const host = CDN_HOSTNAME.replace(/^https?:\/\//, "").replace(/\/+$/, "");
-      return `https://${host}/${cleanPath}`;
-    }
-    return null;
-  } catch {
+    return await uploadBufferToBunny(cleanPath, arrayBuffer, contentType);
+  } catch (err) {
+    console.error(`[Bunny] uploadImageFromUrl failed on ${externalId}:`, err);
     return null;
   }
 }
