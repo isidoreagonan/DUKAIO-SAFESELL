@@ -53,6 +53,7 @@ import { useAiAccess } from "@/lib/entitlements";
 import { toast } from "sonner";
 import { HelpWelcomeDialog } from "@/components/dashboard/help-welcome-dialog";
 import { GuidedTour, useTourLauncher } from "@/components/dashboard/guided-tour";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
 
 type NavItem = {
   title: string;
