@@ -39,6 +39,7 @@ import {
 import { useIsAdmin } from "@/lib/admin";
 import { useDiscoveryAccess } from "@/lib/entitlements";
 import { DiscoveryPaywall } from "@/components/discovery/paywall-dialog";
+import { useI18n } from "@/lib/i18n";
 
 const adSearchSchema = z.object({
   category: z.string().optional().catch(undefined),
@@ -238,6 +239,15 @@ function DiscoveryAdsPage() {
     );
   };
 
+  const { dict } = useI18n();
+
+  const presets = [
+    { value: "traction" as const, label: dict.discoveryPage.recommended, icon: Star, tone: "text-amber-500" },
+    { value: "duration" as const, label: "Longue diffusion", icon: Flame, tone: "text-orange-500" },
+    { value: "variations" as const, label: "Beaucoup de variantes", icon: Copy, tone: "text-blue-500" },
+    { value: "recent" as const, label: dict.discoveryPage.recent, icon: Activity, tone: "text-emerald-600" },
+  ];
+
   return (
     <DashboardShell>
       <DiscoveryHeader updatedAt={updatedAt} />
@@ -264,12 +274,12 @@ function DiscoveryAdsPage() {
           value: term,
           onChange: setTerm,
           onSubmit: () => set("search", term.trim() || undefined),
-          placeholder: "Rechercher un produit : brosse, cheveux, téléphone, casserole…",
+          placeholder: dict.discoveryPage.searchAds,
         }}
         presets={{
           value: filters.sort ?? "traction",
           onChange: (value) => set("sort", value),
-          options: PRESETS,
+          options: presets,
         }}
         sorts={{ value: filters.sort ?? "traction", onChange: (value) => set("sort", value), options: SORTS }}
         onReset={() => {

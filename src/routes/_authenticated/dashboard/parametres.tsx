@@ -42,6 +42,7 @@ import { DashboardShell } from "@/components/dashboard/shell";
 import { SubscriptionPanel } from "@/components/dashboard/subscription";
 import { AuthenticatorPanel } from "@/components/settings/authenticator-panel";
 import { useEntitlements } from "@/lib/entitlements";
+import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import {
   getSecurityState,
@@ -1278,12 +1279,13 @@ function SecuriteTab() {
 }
 
 function AbonnementTab() {
+  const { dict } = useI18n();
   return (
     <Panel>
       <Head
         icon={CreditCard}
-        title="Votre abonnement"
-        desc="Formule en cours, quotas, paiement mobile money ou carte bancaire."
+        title={dict.billingPage.title}
+        desc={dict.billingPage.subtitle}
       />
       <div className="mt-5">
         <SubscriptionPanel />

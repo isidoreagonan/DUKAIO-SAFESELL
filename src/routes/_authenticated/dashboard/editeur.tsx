@@ -38,6 +38,7 @@ import { validateTheme } from "@/theme/validate";
 import { useCreateVersion } from "@/theme/versions";
 import { NavContent } from "@/components/dashboard/shell";
 import { HelpWelcomeDialog } from "@/components/dashboard/help-welcome-dialog";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/dashboard/editeur")({
   head: () => ({
@@ -62,6 +63,7 @@ export const Route = createFileRoute("/_authenticated/dashboard/editeur")({
 });
 
 function ThemeEditorPage() {
+  const { dict, isEn } = useI18n();
   const { data: store, isLoading } = useStore();
   const { data: products } = useProducts();
   const save = useSaveTheme();
@@ -230,7 +232,7 @@ function ThemeEditorPage() {
   if (isLoading || !store || !ready) {
     return (
       <div className="flex h-[70vh] items-center justify-center text-muted-foreground">
-        <Loader2 className="mr-2 size-4 animate-spin" /> Chargement de votre thème…
+        <Loader2 className="mr-2 size-4 animate-spin" /> {dict.editorPage.loadingTheme}
       </div>
     );
   }
@@ -267,8 +269,8 @@ function ThemeEditorPage() {
             <Link
               to="/dashboard/boutique"
               className="flex size-8 shrink-0 items-center justify-center rounded-[6px] border border-border bg-background text-muted-foreground transition hover:bg-accent hover:text-foreground"
-              title="Retour à la boutique"
-              aria-label="Retour à la boutique"
+              title={dict.editorPage.backToStore}
+              aria-label={dict.editorPage.backToStore}
             >
               <ArrowLeft size={16} />
             </Link>
@@ -277,13 +279,13 @@ function ThemeEditorPage() {
               <div className="flex items-center gap-1.5 text-xs font-semibold">
                 <span className="truncate text-sm text-foreground">{store.store_name}</span>
                 <span className="text-muted-foreground">›</span>
-                <span className="text-muted-foreground font-medium">Éditeur de thème</span>
+                <span className="text-muted-foreground font-medium">{dict.editorPage.title}</span>
               </div>
               <p className="truncate text-[11px] text-muted-foreground">
                 <span className={online ? "text-emerald-600 font-medium" : "text-muted-foreground"}>
-                  {online ? "En ligne" : "Hors ligne"}
+                  {online ? dict.editorPage.live : dict.editorPage.offline}
                 </span>
-                {dirty ? " · modifications non enregistrées" : ""}
+                {dirty ? ` · ${dict.editorPage.unsavedChanges}` : ""}
               </p>
             </div>
           </div>
@@ -303,7 +305,7 @@ function ThemeEditorPage() {
               ) : (
                 <Save size={13} />
               )}
-              <span>Enregistrer</span>
+              <span>{dict.editorPage.save}</span>
             </button>
 
             {/* Les actions secondaires vivent dans ce menu */}
@@ -312,7 +314,7 @@ function ThemeEditorPage() {
                 <button
                   type="button"
                   disabled={busy}
-                  aria-label="Plus d'actions"
+                  aria-label={isEn ? "More actions" : "Plus d'actions"}
                   className="flex size-8 shrink-0 items-center justify-center rounded-[6px] border border-border hover:bg-accent disabled:opacity-60 text-muted-foreground hover:text-foreground"
                 >
                   <MoreHorizontal size={15} />
@@ -320,19 +322,19 @@ function ThemeEditorPage() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuItem onSelect={() => setHistoryOpen(true)}>
-                  <History size={14} className="mr-2" /> Historique des versions
+                  <History size={14} className="mr-2" /> {dict.editorPage.versionHistory}
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={reset}>
-                  <RotateCcw size={14} className="mr-2" /> Réinitialiser le thème
+                  <RotateCcw size={14} className="mr-2" /> {dict.editorPage.resetTheme}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 {online ? (
                   <DropdownMenuItem onSelect={() => void persist("unpublish")}>
-                    <Globe size={14} className="mr-2 text-rose-500" /> Dépublier la boutique
+                    <Globe size={14} className="mr-2 text-rose-500" /> {dict.editorPage.unpublishStore}
                   </DropdownMenuItem>
                 ) : (
                   <DropdownMenuItem onSelect={() => void persist("publish")}>
-                    <Globe size={14} className="mr-2 text-emerald-600" /> Publier la boutique
+                    <Globe size={14} className="mr-2 text-emerald-600" /> {dict.editorPage.publishStore}
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
@@ -344,11 +346,10 @@ function ThemeEditorPage() {
           <div className="flex flex-wrap items-center gap-3 border-b border-border bg-primary/5 px-4 py-3 shrink-0">
             <Sparkles size={15} className="text-primary" />
             <p className="min-w-0 flex-1 text-sm">
-              <span className="font-semibold">{aiDraft.draft.name}</span> — brouillon généré par
-              l'IA.{" "}
+              <span className="font-semibold">{aiDraft.draft.name}</span> — {isEn ? "AI-generated draft." : "brouillon généré par l'IA."}{" "}
               {aiDraft.productId
-                ? "Rien n'est enregistré : relisez la page, puis appliquez-la à ce produit."
-                : "Il n'est pas encore dans votre boutique : retouchez la page, puis enregistrez."}
+                ? (isEn ? "Nothing is saved yet: review the page, then apply to this product." : "Rien n'est enregistré : relisez la page, puis appliquez-la à ce produit.")
+                : (isEn ? "Not yet in your store: customize the page, then save." : "Il n'est pas encore dans votre boutique : retouchez la page, puis enregistrez.")}
             </p>
             <button
               type="button"
@@ -356,7 +357,7 @@ function ThemeEditorPage() {
               disabled={busy}
               className="flex items-center justify-center gap-1.5 rounded-[6px] border border-border px-3 py-2 text-sm font-medium hover:bg-accent disabled:opacity-60"
             >
-              <X size={14} /> Abandonner
+              <X size={14} /> {dict.editorPage.discard}
             </button>
             <button
               type="button"
@@ -369,7 +370,7 @@ function ThemeEditorPage() {
               ) : (
                 <Save size={14} />
               )}
-              {aiDraft.productId ? "Appliquer à ce produit" : "Enregistrer le produit"}
+              {aiDraft.productId ? dict.editorPage.applyToProduct : dict.editorPage.saveProduct}
             </button>
           </div>
         ) : null}
@@ -428,7 +429,7 @@ function ThemeEditorPage() {
             )}
           >
             <Layers size={17} />
-            <span>Sections</span>
+            <span>{dict.editorPage.sectionsTab}</span>
           </button>
           <button
             type="button"
@@ -444,7 +445,7 @@ function ThemeEditorPage() {
             )}
           >
             <Palette size={17} />
-            <span>Branding</span>
+            <span>{dict.editorPage.brandingTab}</span>
           </button>
           <button
             type="button"
@@ -457,7 +458,7 @@ function ThemeEditorPage() {
             )}
           >
             <Eye size={17} />
-            <span>Aperçu</span>
+            <span>{dict.editorPage.previewTab}</span>
           </button>
         </nav>
       </div>

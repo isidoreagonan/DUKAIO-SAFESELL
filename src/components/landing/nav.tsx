@@ -1,21 +1,27 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Link } from "@tanstack/react-router";
 import { LayoutDashboard, Menu, X } from "lucide-react";
 import { DukaioLogo } from "@/components/brand/logo";
 import { useAuth } from "@/hooks/use-auth";
+import { useI18n } from "@/lib/i18n";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { cn } from "@/lib/utils";
-
-const links = [
-  { label: "Fonctionnalités", href: "/#fonctionnalites" },
-  { label: "Comment ça marche", href: "/#workflow" },
-  { label: "Tarifs", href: "/#tarifs" },
-  { label: "À propos", href: "/about" },
-];
 
 export function Nav() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { user } = useAuth();
+  const { dict } = useI18n();
+
+  const links = useMemo(
+    () => [
+      { label: dict.nav.features, href: "/#fonctionnalites" },
+      { label: dict.nav.workflow, href: "/#workflow" },
+      { label: dict.nav.pricing, href: "/#tarifs" },
+      { label: dict.nav.about, href: "/about" },
+    ],
+    [dict],
+  );
 
   useEffect(() => {
     const handleScroll = () => {
@@ -87,13 +93,15 @@ export function Nav() {
           ))}
         </ul>
 
-        {/* Droite : Boutons d'appel à l'action CTA */}
+        {/* Droite : Boutons d'appel à l'action CTA & Sélecteur de langue */}
         <div
           className={cn(
-            "hidden items-center gap-2.5 md:flex shrink-0",
+            "hidden items-center gap-2 md:flex shrink-0",
             smoothCurve,
           )}
         >
+          <LanguageSwitcher variant="pill" />
+
           {user ? (
             <Link
               to="/dashboard"
@@ -104,7 +112,7 @@ export function Nav() {
               )}
             >
               <LayoutDashboard className="size-4" />
-              Dashboard
+              {dict.nav.dashboard}
             </Link>
           ) : (
             <>
@@ -116,7 +124,7 @@ export function Nav() {
                   smoothCurve,
                 )}
               >
-                Se connecter
+                {dict.nav.login}
               </Link>
               <Link
                 to="/signup"
@@ -126,26 +134,29 @@ export function Nav() {
                   smoothCurve,
                 )}
               >
-                Ouvrir ma boutique
+                {dict.nav.signup}
               </Link>
             </>
           )}
         </div>
 
         {/* Bouton Mobile Toggle */}
-        <button
-          type="button"
-          aria-label={open ? "Fermer le menu" : "Ouvrir le menu"}
-          aria-expanded={open}
-          onClick={() => setOpen((v) => !v)}
-          className={cn(
-            "pointer-events-auto flex items-center justify-center rounded-full border border-border/70 bg-background/60 md:hidden text-foreground hover:bg-secondary/80",
-            scrolled ? "size-9.5 sm:size-10" : "size-10",
-            smoothCurve,
-          )}
-        >
-          {open ? <X className="size-4" /> : <Menu className="size-4" />}
-        </button>
+        <div className="flex items-center gap-2 md:hidden pointer-events-auto">
+          <LanguageSwitcher variant="pill" className="px-2.5 py-1 text-[11px]" />
+          <button
+            type="button"
+            aria-label={open ? dict.nav.closeMenu : dict.nav.menu}
+            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
+            className={cn(
+              "flex items-center justify-center rounded-full border border-border/70 bg-background/60 text-foreground hover:bg-secondary/80",
+              scrolled ? "size-9 sm:size-9.5" : "size-9.5",
+              smoothCurve,
+            )}
+          >
+            {open ? <X className="size-4" /> : <Menu className="size-4" />}
+          </button>
+        </div>
       </nav>
 
       {/* Menu déroulant Mobile */}
@@ -177,7 +188,7 @@ export function Nav() {
               className="btn-pill mt-2 flex items-center justify-center gap-2 rounded-full px-5 py-3 text-center text-sm font-semibold"
             >
               <LayoutDashboard className="size-4" />
-              Dashboard
+              {dict.nav.dashboard}
             </Link>
           ) : (
             <div className="mt-2 flex flex-col gap-2">
@@ -186,14 +197,14 @@ export function Nav() {
                 onClick={() => setOpen(false)}
                 className="btn-white-3d block rounded-full px-5 py-3 text-center text-sm font-semibold"
               >
-                Se connecter
+                {dict.nav.login}
               </Link>
               <Link
                 to="/signup"
                 onClick={() => setOpen(false)}
                 className="btn-pill block rounded-full px-5 py-3 text-center text-sm font-semibold"
               >
-                Ouvrir ma boutique
+                {dict.nav.signup}
               </Link>
             </div>
           )}

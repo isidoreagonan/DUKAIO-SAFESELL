@@ -2,6 +2,8 @@ import { DukaioLogo } from "@/components/brand/logo";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Plus, ShoppingBag, Star, X } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
 
 import bubble from "@/assets/faq-bubble.png";
 
@@ -186,6 +188,8 @@ export function Faq() {
 }
 
 export function FinalCta() {
+  const { dict } = useI18n();
+
   return (
     <section id="cta" className="bg-background px-5 py-24">
       <div className="relative mx-auto max-w-5xl overflow-hidden rounded-[36px] bg-primary px-6 py-16 text-center shadow-float">
@@ -199,35 +203,58 @@ export function FinalCta() {
         />
         <div className="relative">
           <h2 className="text-3xl font-extrabold leading-tight text-primary-foreground sm:text-4xl md:text-5xl">
-            Prêt à vendre avec{" "}
-            <span className="font-display font-normal">DUKAIO ?</span>
+            {dict.ctaBanner.title}{" "}
+            <span className="font-display font-normal">{dict.ctaBanner.accent}</span>
           </h2>
           <p className="mx-auto mt-4 max-w-lg text-sm text-primary-foreground/85 sm:text-base">
-            Créez votre boutique gratuitement et encaissez vos commandes à la livraison dès aujourd'hui.
+            {dict.ctaBanner.subtitle}
           </p>
-          <a
-            href="#"
+          <Link
+            to="/signup"
             className="btn-pill group mt-8 inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-sm font-semibold"
           >
-            Ouvrir ma boutique
+            {dict.ctaBanner.button}
             <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
-          </a>
+          </Link>
         </div>
       </div>
     </section>
   );
 }
 
-const footerCols = [
-  {
-    title: "Produit",
-    links: ["Fonctionnalités", "Tarifs", "Livraisons COD", "Boutique en ligne"],
-  },
-  { title: "Ressources", links: ["Centre d'aide", "Guide du vendeur", "Blog", "Statut"] },
-  { title: "Entreprise", links: ["À propos", "Contact", "Partenaires", "Mentions légales"] },
-];
-
 export function Footer() {
+  const { dict } = useI18n();
+
+  const footerCols = [
+    {
+      title: dict.footer.productCol,
+      links: [
+        { label: dict.footer.features, href: "/#fonctionnalites" },
+        { label: dict.footer.pricing, href: "/#tarifs" },
+        { label: dict.footer.codDelivery, href: "/#workflow" },
+        { label: dict.footer.onlineStore, href: "/inscription" },
+      ],
+    },
+    {
+      title: dict.footer.resourcesCol,
+      links: [
+        { label: dict.footer.helpCenter, href: "/aide" },
+        { label: dict.footer.sellerGuide, href: "/decouverte" },
+        { label: dict.footer.blog, href: "/#fonctionnalites" },
+        { label: dict.footer.status, href: "/#tarifs" },
+      ],
+    },
+    {
+      title: dict.footer.companyCol,
+      links: [
+        { label: dict.footer.about, href: "/about" },
+        { label: dict.footer.contact, href: "/contact" },
+        { label: dict.footer.partners, href: "/solutions" },
+        { label: dict.footer.legalNotice, href: "/mentions-legales" },
+      ],
+    },
+  ];
+
   return (
     <footer className="border-t border-border bg-surface-tint px-5 py-14">
       <div className="mx-auto max-w-6xl">
@@ -235,7 +262,7 @@ export function Footer() {
           <div>
             <DukaioLogo className="h-8" />
             <p className="mt-4 max-w-xs text-sm text-muted-foreground">
-              La plateforme e-commerce qui permet à chaque vendeur de vendre ses produits physiques en ligne et d'encaisser à la livraison.
+              {dict.footer.description}
             </p>
           </div>
 
@@ -244,12 +271,12 @@ export function Footer() {
               <h3 className="text-sm font-bold">{c.title}</h3>
               <ul className="mt-4 space-y-2.5">
                 {c.links.map((l) => (
-                  <li key={l}>
+                  <li key={l.label}>
                     <a
-                      href="#"
+                      href={l.href}
                       className="text-sm text-muted-foreground transition-colors hover:text-primary"
                     >
-                      {l}
+                      {l.label}
                     </a>
                   </li>
                 ))}
@@ -258,18 +285,21 @@ export function Footer() {
           ))}
         </div>
 
-        <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-border pt-6 text-xs text-muted-foreground sm:flex-row">
-          <p>© {new Date().getFullYear()} DUKAIO. Tous droits réservés.</p>
+        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-border pt-6 text-xs text-muted-foreground sm:flex-row">
+          <p>© {new Date().getFullYear()} {dict.footer.copyright}</p>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
             <Link to="/confidentialite" className="transition-colors hover:text-primary">
-              Politique de confidentialité
+              {dict.footer.privacy}
             </Link>
             <Link to="/confidentialite" hash="cgu" className="transition-colors hover:text-primary">
-              CGU
+              {dict.footer.terms}
             </Link>
             <Link to="/mentions-legales" className="transition-colors hover:text-primary">
-              Mentions légales
+              {dict.footer.legalNotice}
             </Link>
+            <div className="pl-2 border-l border-border">
+              <LanguageSwitcher variant="footer" />
+            </div>
           </div>
         </div>
       </div>

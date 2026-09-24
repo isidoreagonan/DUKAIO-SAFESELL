@@ -94,24 +94,40 @@ export function Storefront({ handle, page, productId }: StorefrontProps) {
         : pageToPath[themePage];
   useTrackVisit(handle, visitPath);
 
-  /* Favicon choisi par le vendeur : appliqué à l'onglet du navigateur. */
-  const faviconUrl = theme?.global?.faviconUrl ?? "";
+  /* Favicon et logo choisis par le vendeur : appliqués à l'onglet et au thème. */
+  const faviconUrl = theme?.global?.faviconUrl || data?.store?.favicon_url || "";
+
   useEffect(() => {
     if (!faviconUrl || typeof document === "undefined") return;
-    const link = document.querySelector<HTMLLinkElement>("link[rel~='icon']");
-    const previous = link?.getAttribute("href") ?? null;
-    const target =
-      link ??
-      (() => {
-        const created = document.createElement("link");
-        created.rel = "icon";
-        document.head.appendChild(created);
-        return created;
-      })();
-    target.setAttribute("href", faviconUrl);
+
+    // Retirer temporairement tous les liens de favicons existants (y compris PNG et apple-touch-icon)
+    const existingIcons = Array.from(
+      document.querySelectorAll<HTMLLinkElement>("link[rel*='icon'], link[rel='apple-touch-icon']"),
+    );
+    const backups = existingIcons.map((el) => ({
+      el,
+      parent: el.parentNode,
+      next: el.nextSibling,
+    }));
+
+    existingIcons.forEach((el) => el.remove());
+
+    const newFavicon = document.createElement("link");
+    newFavicon.rel = "icon";
+    newFavicon.href = faviconUrl;
+    document.head.appendChild(newFavicon);
+
+    const newApple = document.createElement("link");
+    newApple.rel = "apple-touch-icon";
+    newApple.href = faviconUrl;
+    document.head.appendChild(newApple);
+
     return () => {
-      if (previous) target.setAttribute("href", previous);
-      else target.remove();
+      newFavicon.remove();
+      newApple.remove();
+      backups.forEach(({ el, parent, next }) => {
+        if (parent) parent.insertBefore(el, next);
+      });
     };
   }, [faviconUrl]);
 
@@ -288,7 +304,13 @@ export function Storefront({ handle, page, productId }: StorefrontProps) {
         offers={data.offers}
         product={showCatalog || showCheckout ? undefined : product}
       >
-        <BrandProvider value={brandFrom(theme.global)}>
+        <BrandProvider
+          value={{
+            ...brandFrom(theme.global),
+            logoUrl: theme.global?.logoUrl || data.store.logo_url || "",
+            faviconUrl: theme.global?.faviconUrl || data.store.favicon_url || "",
+          }}
+        >
         <PreviewShellProvider value={shell}>
 
           {render(theme.chrome.filter((section) => section.type !== "footer"))}

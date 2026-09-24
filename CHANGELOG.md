@@ -4,6 +4,53 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 > **Note d'environnement :** Ce projet a été initialement généré avec Lovable, mais a été entièrement migré sur Antigravity. Il n'est plus synchronisé avec Lovable Cloud et utilise désormais exclusivement la propre instance Supabase de l'utilisateur.
 
+## [24/09/2026] - Système Multilingue International (Français 🇫🇷 / English 🇬🇧), Drapeaux Graphiques PC & Traduction Complète de Toutes les Pages Clés
+
+### Internationalisation (i18n) & Expérience Utilisateur
+- **Correction des Drapeaux sur PC Windows (`LanguageSwitcher.tsx`) :**
+  - **Élimination du problème des lettres "GB" et "FR" :** Les PC sous Windows 10/11 n'affichant pas les emojis drapeaux nationaux et affichant à la place les deux lettres indicatrices régionales, intégration du composant `FlagIcon` combinant des visuels ultra-nets FlagCDN (`https://flagcdn.com/w40/fr.png` et `gb.png`) avec repli SVG vectoriel direct et dimensions fixes strictes.
+  - Résultat : drapeaux visuels parfaits (tricolore français 🇫🇷 et Union Jack 🇬🇧) visibles sur tous les écrans, PC Windows, Mac, tablettes et smartphones.
+- **Tableau de Bord 100% Réactif & Traduit (`shell.tsx`, `dashboard/index.tsx`) :**
+  - **Traduction instantanée de la barre latérale (Sidebar) :** Catégories ("Vente" / "Sales", "Compte" / "Account") et l'ensemble des éléments de menu ("Accueil", "Produits", "Commandes", "Marketing", "Clients", "Analyses", "Découverte", "Boutiques", "Publicités", "Favoris", "Ma boutique", "Équipe", "Abonnement") réagissent immédiatement au changement de langue sans rechargement.
+  - **Pied de navigation & Actions utilisateur :** "Paramètres" / "Settings", "Centre d'aide" / "Help Center", "Déconnexion" / "Log out", et modalité de visite guidée traduites.
+  - **Barre supérieure (Header) :** Bouton "Voir la boutique" / "View Store", champ de recherche et suggestions d'accès rapide traduits en direct.
+  - **Page d'accueil du Dashboard :** Bannière d'alerte des commandes COD à confirmer, accroche Héro de recherche de produits gagnants, suggestions de recherche, catégories d'inspiration dynamiquement traduites, ainsi que l'intégralité de la moitié inférieure : "Démarrage rapide" / "Quick start", "Générer une page produit avec l'IA" / "Generate a product page with AI", "Ajouter vos propres produits" / "Add your own products", "Configuration de votre boutique" / "Store setup", "Design de boutique" / "Store design", "Nom & Domaine" / "Name & Domain", "Paiement COD & WhatsApp" / "COD & WhatsApp Payment".
+- **Page « Mes Produits » (`produits.index.tsx`) :**
+  - En-tête, compteur de produits et brouillons IA traduits.
+  - Champ de recherche réactif ("Rechercher un produit..." / "Search products...").
+  - Carte de démonstration panier ("Ajouter au panier" / "Add to cart").
+  - Cartes d'atouts inférieurs ("Produits digitaux" / "Digital products", "Stock & variantes" / "Stock & variants", "SEO intégré" / "Built-in SEO").
+  - Badges de méthode ("Photo → IA" / "Photo → AI", "Manuel" / "Manual").
+- **Page « Créer avec DUKAIO IA » (`produits.ia.tsx`) :**
+  - Stepper de progression ("Importer" / "Import", "Personnaliser" / "Customize", "Finaliser" / "Finalize").
+  - Lien retour ("Retour aux produits" / "Back to products").
+  - Sélection de méthode ("Nouvelle page produit" / "New product page", "Choisissez votre méthode pour démarrer" / "Choose your method to get started").
+  - Onglets mobiles ("Par lien (Auto)" / "By link (Auto)", "Par images (Manuel)" / "By images (Manual)").
+  - Carte 1 (Lien externe) : badge Recommandé, titre, description, placeholder de lien, sélecteur de langue cible localisé, bouton "Générer la page" / "Generate page", coût en crédits.
+  - Carte 2 (Visuels directs) : badge Alternative, zone de glisser-déposer ("Depuis votre appareil" / "From your device"), séparateur "OU" / "OR", "Choisir dans la galerie" / "Choose from media library", "Continuer (X images)" / "Continue (X images)".
+  - Écran d'analyse dynamique localisé ("Connexion & extraction du produit", "Analyse visuelle et détection IA", etc.).
+  - Dialogue de confirmation avant de quitter traduit ("Quitter la création ?" / "Leave creation?", "Quitter" / "Leave", "Continuer la création" / "Keep editing").
+- **Page « Mes Favoris » (`decouverte.favoris.tsx`) :**
+  - En-tête de page ("Mes favoris" / "My favorites", sous-titre).
+  - État vide ("Aucun favori pour l'instant" / "No favorites yet").
+  - Titres des sections dynamiques ("Boutiques enregistrées" / "Saved Stores", "Produits enregistrés" / "Saved Products", "Publicités enregistrées" / "Saved Ads").
+  - Actions des cartes : "Analyse de l'annonce" / "Ad Analysis", "Ouvrir la page" / "Open page", "Pubs actives" / "Active ads", "Durée" / "Duration", bouton de suppression.
+- **Page « Ma Boutique » (`boutique.tsx`) :**
+  - En-tête : "Boutique en ligne" / "Online store", boutons "Rafraîchir" / "Refresh", "Voir la boutique" / "View store".
+  - Carte du thème : "Thème en ligne" / "Active Theme", badge "Actif" / "Active", bouton "Modifier le thème" / "Customize theme", date de sauvegarde au format localisé (`fr-FR` ou `en-US`).
+  - Section prochains thèmes : "Prochains thèmes" / "Upcoming themes", badge "Bientôt" / "Coming soon", descriptions éditoriales bilingues et bouton "Me prévenir" / "Notify me".
+- **Éditeur de Thème (`editeur.tsx`, `PageSelector.tsx`, `EditorSidebar.tsx`) :**
+  - Barre d'outils supérieure : "Retour à la boutique" / "Back to store", "Éditeur de thème" / "Theme editor", statut "En ligne" / "Live" / "Hors ligne" / "Offline", badge "modifications non enregistrées" / "unsaved changes", bouton "Enregistrer" / "Save".
+  - Sélecteur de page central (`PageSelector.tsx`) : "Page d'accueil" / "Home page", "Pages produit" / "Product pages", "Nouveau produit IA" / "New AI product", recherche et messages d'aide traduits.
+  - Menu Plus d'actions : "Historique des versions" / "Version history", "Réinitialiser le thème" / "Reset theme", "Dépublier la boutique" / "Unpublish store", "Publier la boutique" / "Publish store".
+  - Bandeau supérieur brouillon IA : textes descriptifs, boutons "Abandonner" / "Discard", "Enregistrer le produit" / "Save product", "Appliquer à ce produit" / "Apply to this product".
+  - Barre latérale (`EditorSidebar.tsx`) : onglets "Sections" et "Branding", en-têtes "Global (toutes les pages)" / "Global (all pages)", libellés de page active, dialogues d'ajout de section et identité de boutique (Logo, Favicon).
+  - Barre de navigation mobile inférieure : onglets "Sections", "Branding", "Aperçu" / "Preview".
+- **Détection Géographique & Priorité Francophone :**
+  - **Priorité naturelle aux pays francophones :** Tout utilisateur se connectant depuis le Bénin, la France, la Côte d'Ivoire, le Sénégal ou dont le navigateur est paramétré en français est automatiquement dirigé vers la version française dès son arrivée sur `dukaio.com`.
+  - **Routes Dédiées `/fr` et `/en` :** Accès direct par URL (`dukaio.com/fr` et `dukaio.com/en`) mémorisant immédiatement la langue choisie et guidant l'utilisateur de manière fluide.
+  - **Persistance Universelle :** Synchronisation simultanée dans `localStorage`, cookie `dukaio_lang` et attribut HTML `lang`.
+
 ## [24/09/2026] - Infrastructure CDN Bunny.net Dédiée, Règle Vidéo ≤ 40 Mo & Pérennisation 100% Hors-Supabase
 
 ### Infrastructure CDN & Découverte Publicitaire

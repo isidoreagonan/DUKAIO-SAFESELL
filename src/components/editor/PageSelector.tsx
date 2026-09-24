@@ -4,6 +4,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { AI_DRAFT_PAGE, useThemeStore } from "@/store/useThemeStore";
 import { useProducts } from "@/lib/store";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 /**
  * Sélecteur de page de la barre supérieure : une seule pastille qui se déplie
@@ -11,6 +12,7 @@ import { cn } from "@/lib/utils";
  * onglets + le menu déroulant « Produit affiché » de la colonne de gauche.
  */
 export function PageSelector({ className }: { className?: string }) {
+  const { isEn } = useI18n();
   const activePage = useThemeStore((s) => s.activePage);
   const setActivePage = useThemeStore((s) => s.setActivePage);
   const previewProductId = useThemeStore((s) => s.previewProductId);
@@ -40,15 +42,20 @@ export function PageSelector({ className }: { className?: string }) {
     return list.filter((p) => p.name.toLowerCase().includes(q));
   }, [list, query]);
 
+  const homeLabel = isEn ? "Home page" : "Page d'accueil";
+  const productPagesLabel = isEn ? "Product pages" : "Pages produit";
+  const productPageSingle = isEn ? "Product page" : "Page produit";
+  const aiDraftLabel = isEn ? "New AI product" : "Nouveau produit IA";
+
   const current = list.find((p) => p.id === previewProductId);
   const label =
     activePage === "home"
-      ? "Page d'accueil"
+      ? homeLabel
       : activePage === "contact"
         ? "Contact"
         : isDraft
-          ? "Nouveau produit IA"
-          : (current?.name ?? "Page produit");
+          ? aiDraftLabel
+          : (current?.name ?? productPageSingle);
 
   const choose = (page: "home" | "contact") => {
     setActivePage(page);
@@ -99,17 +106,17 @@ export function PageSelector({ className }: { className?: string }) {
                 setQuery(e.target.value);
                 if (e.target.value) setShowProducts(true);
               }}
-              placeholder="Rechercher une page"
+              placeholder={isEn ? "Search a page" : "Rechercher une page"}
               className="h-8 w-full bg-transparent text-sm outline-none"
             />
           </div>
         </div>
 
         <div className="max-h-[22rem] overflow-y-auto p-1.5">
-          {matchesQuery("Page d'accueil") ? (
+          {matchesQuery(homeLabel) ? (
             <Row
               icon={<Home size={15} />}
-              label="Page d'accueil"
+              label={homeLabel}
               active={activePage === "home"}
               onClick={() => choose("home")}
             />
@@ -124,7 +131,7 @@ export function PageSelector({ className }: { className?: string }) {
             )}
           >
             <Tag size={15} className="shrink-0 text-muted-foreground" />
-            <span className="flex-1 truncate">Pages produit</span>
+            <span className="flex-1 truncate">{productPagesLabel}</span>
             <span className="text-xs text-muted-foreground">{list.length}</span>
             <ChevronRight
               size={14}
@@ -137,7 +144,7 @@ export function PageSelector({ className }: { className?: string }) {
               {isDraft ? (
                 <Row
                   icon={<Sparkles size={15} className="text-primary" />}
-                  label="Nouveau produit IA"
+                  label={aiDraftLabel}
                   active
                   onClick={() => setOpen(false)}
                 />
@@ -145,8 +152,8 @@ export function PageSelector({ className }: { className?: string }) {
               {filtered.length === 0 ? (
                 <p className="px-2.5 py-2 text-xs text-muted-foreground">
                   {list.length === 0
-                    ? "Ajoutez un produit pour éditer sa page."
-                    : "Aucun produit ne correspond."}
+                    ? (isEn ? "Add a product to edit its page." : "Ajoutez un produit pour éditer sa page.")
+                    : (isEn ? "No matching products." : "Aucun produit ne correspond.")}
                 </p>
               ) : (
                 filtered.map((product) => (
@@ -174,7 +181,9 @@ export function PageSelector({ className }: { className?: string }) {
 
         {activePage === "product" ? (
           <p className="border-t border-border px-3 py-2 text-[11px] text-muted-foreground">
-            Cette page, ses sections et ses couleurs appartiennent uniquement à ce produit.
+            {isEn
+              ? "This page, its sections, and its styling belong exclusively to this product."
+              : "Cette page, ses sections et ses couleurs appartiennent uniquement à ce produit."}
           </p>
         ) : null}
       </PopoverContent>

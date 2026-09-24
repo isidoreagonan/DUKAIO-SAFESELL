@@ -15,6 +15,7 @@ import { useStore } from "@/lib/store";
 import { useThemeVersions } from "@/theme/versions";
 import { storePath, storeUrl } from "@/lib/storefront";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/dashboard/boutique")({
   head: () => ({
@@ -39,25 +40,29 @@ export const Route = createFileRoute("/_authenticated/dashboard/boutique")({
 
 const THEME_NAME = "glow-2.0-public";
 
-const upcoming = [
+const UPCOMING_THEMES = [
   {
     name: "Noir Studio 1.0",
-    desc: "Vitrine éditoriale sombre, pensée pour les marques premium.",
+    descFr: "Vitrine éditoriale sombre, pensée pour les marques premium.",
+    descEn: "Editorial dark storefront, designed for premium brands.",
     gradient: "linear-gradient(135deg,#111114,#2b2b31 60%,#4a4a52)",
   },
   {
     name: "Aurora Retail 1.0",
-    desc: "Grandes images, sections produits animées et paiement rapide.",
+    descFr: "Grandes images, sections produits animées et paiement rapide.",
+    descEn: "Large imagery, animated product sections, and swift checkout.",
     gradient: "linear-gradient(135deg,#1b2a4a,#2d6f9e 55%,#6ecbc4)",
   },
   {
     name: "Marché Pro 1.0",
-    desc: "Catalogue dense multi-catégories pour boutiques à fort volume.",
+    descFr: "Catalogue dense multi-catégories pour boutiques à fort volume.",
+    descEn: "Dense multi-category catalog for high-volume stores.",
     gradient: "linear-gradient(135deg,#3d2415,#8a4a20 55%,#d99a4e)",
   },
   {
     name: "Éclat Beauté 1.0",
-    desc: "Fiches produit longues, avis clients et offres en avant.",
+    descFr: "Fiches produit longues, avis clients et offres en avant.",
+    descEn: "Long-form product pages, customer reviews, and featured offers.",
     gradient: "linear-gradient(135deg,#4a1b34,#a3416b 55%,#f0b9c9)",
   },
 ];
@@ -71,6 +76,7 @@ function Panel({ className, children }: { className?: string; children: React.Re
 }
 
 function BoutiquePage() {
+  const { dict, isEn } = useI18n();
   const { data: store } = useStore();
   const { data: versions } = useThemeVersions(store?.id);
   const [reload, setReload] = useState(0);
@@ -81,13 +87,13 @@ function BoutiquePage() {
   const lastSaved = useMemo(() => {
     const at = versions?.[0]?.created_at;
     if (!at) return null;
-    return new Date(at).toLocaleString("fr-FR", {
+    return new Date(at).toLocaleString(isEn ? "en-US" : "fr-FR", {
       day: "numeric",
       month: "long",
       hour: "2-digit",
       minute: "2-digit",
     });
-  }, [versions]);
+  }, [versions, isEn]);
 
   const previewSrc = previewPath ? `${previewPath}?preview=${reload}` : "";
 
@@ -96,10 +102,10 @@ function BoutiquePage() {
       <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 sm:flex sm:items-center sm:justify-between">
         <div className="min-w-0">
           <h1 className="truncate text-2xl font-extrabold tracking-tight sm:text-3xl">
-            Boutique <span className="font-display not-italic text-muted-foreground">· en ligne</span>
+            {dict.storePage.title} <span className="font-display not-italic text-muted-foreground">· {dict.storePage.badge}</span>
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Prévisualisez et personnalisez le thème de votre vitrine Dukaio.
+            {dict.storePage.subtitle}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -108,7 +114,7 @@ function BoutiquePage() {
             onClick={() => setReload((n) => n + 1)}
             className="btn-3d inline-flex items-center gap-2 rounded-[6px] border border-border px-3 py-2.5 text-sm font-semibold"
           >
-            <RefreshCw className="h-4 w-4" /> <span className="hidden sm:inline">Rafraîchir</span>
+            <RefreshCw className="h-4 w-4" /> <span className="hidden sm:inline">{dict.storePage.refresh}</span>
           </button>
           {liveUrl ? (
             <a
@@ -117,7 +123,7 @@ function BoutiquePage() {
               rel="noreferrer"
               className="btn-3d inline-flex items-center gap-2 rounded-[6px] px-3.5 py-2.5 text-sm font-semibold"
             >
-              <ExternalLink className="h-4 w-4" /> Voir la boutique
+              <ExternalLink className="h-4 w-4" /> {dict.storePage.viewStore}
             </a>
           ) : null}
         </div>
@@ -129,7 +135,7 @@ function BoutiquePage() {
           <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-border px-4 py-3">
             <span className="flex min-w-0 items-center gap-2 text-sm font-semibold">
               <LayoutTemplate className="h-4 w-4 shrink-0 text-primary" />
-              <span className="truncate">Thème en ligne</span>
+              <span className="truncate">{dict.storePage.currentTheme}</span>
             </span>
             <span className="flex shrink-0 items-center gap-1.5 text-xs font-semibold text-muted-foreground">
               <Monitor className="h-3.5 w-3.5" /> <Smartphone className="h-3.5 w-3.5" />
@@ -146,7 +152,7 @@ function BoutiquePage() {
                 >
                   <iframe
                     key={`d-${reload}`}
-                    title="Aperçu ordinateur du thème"
+                    title="Theme desktop preview"
                     src={previewSrc}
                     className="pointer-events-none absolute top-0 left-0 origin-top-left"
                     style={{ width: 1440, height: 1100, transform: "scale(0.42)" }}
@@ -159,7 +165,7 @@ function BoutiquePage() {
                 >
                   <iframe
                     key={`m-${reload}`}
-                    title="Aperçu mobile du thème"
+                    title="Theme mobile preview"
                     src={previewSrc}
                     className="pointer-events-none absolute top-0 left-0 origin-top-left"
                     style={{ width: 390, height: 1000, transform: "scale(0.42)" }}
@@ -168,7 +174,7 @@ function BoutiquePage() {
               </div>
             ) : (
               <div className="grid h-full place-items-center px-6 text-center text-sm text-muted-foreground">
-                Créez votre boutique pour afficher l'aperçu du thème.
+                {dict.storePage.emptyPreview}
               </div>
             )}
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-[linear-gradient(to_top,var(--background),transparent)]" />
@@ -179,11 +185,11 @@ function BoutiquePage() {
               <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <p className="truncate text-sm font-bold">{THEME_NAME}</p>
                 <span className="shrink-0 rounded-[4px] bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary">
-                  Actif
+                  {dict.storePage.active}
                 </span>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
-                {lastSaved ? `Dernière sauvegarde : ${lastSaved}` : "Aucune sauvegarde enregistrée"}
+                {lastSaved ? `${dict.storePage.lastSaved} : ${lastSaved}` : dict.storePage.noSaveYet}
                 {" · Version 2.0"}
               </p>
             </div>
@@ -192,7 +198,7 @@ function BoutiquePage() {
                 to="/dashboard/editeur"
                 className="btn-3d inline-flex items-center gap-2 rounded-[6px] px-3.5 py-2.5 text-sm font-semibold"
               >
-                <LayoutTemplate className="h-4 w-4" /> Modifier le thème
+                <LayoutTemplate className="h-4 w-4" /> {dict.storePage.customizeTheme}
               </Link>
             </div>
           </div>
@@ -203,17 +209,17 @@ function BoutiquePage() {
       <section className="mt-6">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
           <div className="min-w-0">
-            <h2 className="truncate text-lg font-extrabold tracking-tight">Prochains thèmes</h2>
+            <h2 className="truncate text-lg font-extrabold tracking-tight">{dict.storePage.upcomingThemes}</h2>
             <p className="mt-0.5 text-sm text-muted-foreground">
-              Quatre thèmes professionnels arrivent bientôt dans votre bibliothèque.
+              {dict.storePage.upcomingSubtitle}
             </p>
           </div>
           <span className="shrink-0 rounded-[4px] bg-accent px-2.5 py-1 text-[11px] font-bold text-accent-foreground">
-            Bientôt
+            {dict.storePage.comingSoon}
           </span>
         </div>
         <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {upcoming.map((t) => (
+          {UPCOMING_THEMES.map((t) => (
             <article
               key={t.name}
               className="overflow-hidden rounded-[6px] border border-border bg-background"
@@ -226,18 +232,18 @@ function BoutiquePage() {
                   <Sparkles className="h-5 w-5" />
                 </span>
                 <span className="absolute top-2 right-2 flex items-center gap-1 rounded-[4px] bg-[color:var(--primary-foreground)]/15 px-2 py-0.5 text-[10px] font-bold text-[color:var(--primary-foreground)] backdrop-blur-sm">
-                  <Lock className="h-3 w-3" /> Bientôt
+                  <Lock className="h-3 w-3" /> {dict.storePage.comingSoon}
                 </span>
               </div>
               <div className="p-4">
                 <p className="truncate text-sm font-bold">{t.name}</p>
-                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{t.desc}</p>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{isEn ? t.descEn : t.descFr}</p>
                 <button
                   type="button"
-                  onClick={() => toast.success("Nous vous préviendrons dès sa sortie ✓")}
+                  onClick={() => toast.success(dict.storePage.notifySuccess)}
                   className="btn-3d mt-4 inline-flex w-full items-center justify-center gap-2 rounded-[6px] border border-border px-3 py-2 text-xs font-semibold"
                 >
-                  Me prévenir
+                  {dict.storePage.notifyMe}
                 </button>
               </div>
             </article>

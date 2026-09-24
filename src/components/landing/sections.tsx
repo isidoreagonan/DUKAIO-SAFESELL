@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useI18n } from "@/lib/i18n";
 import {
   ArrowUpRight,
   Boxes,
@@ -160,32 +161,34 @@ function ArtPayments() {
 }
 
 
-const pillars = [
-  {
-    art: ArtStore,
-    title: "Boutique en ligne",
-    text: "Votre vitrine personnalisée à votre marque, avec panier, promotions et un lien unique partageable sur WhatsApp, Facebook, TikTok et Instagram.",
-  },
-  {
-    art: ArtOrders,
-    title: "Gestion des stocks & colis",
-    text: "Fiches produits détaillées, gestion des variantes (tailles, couleurs), suivi des niveaux de stock et bordereaux d'expédition prêts en 1 clic.",
-  },
-  {
-    art: ArtPayments,
-    title: "Payé à la livraison",
-    text: "Vos clients commandent en toute confiance et paient à la réception de leur colis. Vous livrez, vous encaissez — sans attente ni frais cachés.",
-  },
-];
-
 export function Pillars() {
+  const { dict } = useI18n();
+
+  const pillars = [
+    {
+      art: ArtStore,
+      title: dict.features.storeTitle,
+      text: dict.features.storeDesc,
+    },
+    {
+      art: ArtOrders,
+      title: dict.features.codTitle,
+      text: dict.features.codDesc,
+    },
+    {
+      art: ArtPayments,
+      title: dict.features.aiTitle,
+      text: dict.features.aiDesc,
+    },
+  ];
+
   return (
     <section id="fonctionnalites" className="bg-background py-24">
       <div className="mx-auto max-w-6xl px-5">
         <SectionTitle
-          title="Tout ce qu'il faut pour vendre,"
-          accent="sans complexité."
-          subtitle="Catalogue de produits physiques, gestion des commandes et suivi des livraisons restent synchronisés en temps réel."
+          title={dict.features.title}
+          accent={dict.features.accent}
+          subtitle={dict.features.subtitle}
         />
 
         <div className="mt-14 grid gap-6 md:grid-cols-3">
@@ -205,39 +208,47 @@ export function Pillars() {
   );
 }
 
-const steps = [
-  {
-    n: "01.",
-    title: "Créez votre catalogue en quelques minutes",
-    text: "Importez vos photos, fixez vos prix, gérez vos stocks et vos variantes. Vos fiches produits sont prêtes à convertir dès la publication.",
-  },
-  {
-    n: "02.",
-    title: "Partagez votre lien de boutique",
-    text: "Un seul lien pour WhatsApp, Instagram et TikTok. Vos clients commandent sans quitter la conversation.",
-  },
-  {
-    n: "03.",
-    title: "Livrez et encaissez à la réception",
-    text: "Suivi de commande en temps réel, bordereau de livraison et encaissement à la réception du colis en toute confiance.",
-  },
-  {
-    n: "04.",
-    title: "Analysez et développez",
-    text: "Suivez vos meilleures ventes, vos marges et vos clients fidèles pour investir là où ça rapporte.",
-  },
-];
-
 export function Workflow() {
   const [active, setActive] = useState(0);
+  const { dict, isEn } = useI18n();
+
+  const steps = [
+    {
+      n: "01.",
+      title: dict.workflow.step1Title,
+      text: dict.workflow.step1Desc,
+    },
+    {
+      n: "02.",
+      title: dict.workflow.step2Title,
+      text: dict.workflow.step2Desc,
+    },
+    {
+      n: "03.",
+      title: dict.workflow.step3Title,
+      text: dict.workflow.step3Desc,
+    },
+    {
+      n: "04.",
+      title: isEn ? "4. Analyze & scale" : "4. Analysez et développez",
+      text: isEn
+        ? "Track your best selling products, profit margins, and loyal customers to reinvest where it matters."
+        : "Suivez vos meilleures ventes, vos marges et vos clients fidèles pour investir là où ça rapporte.",
+    },
+  ];
 
   return (
     <section id="workflow" className="bg-surface-tint py-24">
       <div className="mx-auto max-w-6xl px-5">
         <SectionTitle
-          title="Du visiteur au client payé, avec"
-          accent="DUKAIO."
-          subtitle="Un parcours de vente clair, du premier clic jusqu'au virement de vos revenus."
+          eyebrow={dict.workflow.eyebrow}
+          title={dict.workflow.title}
+          accent={dict.workflow.accent}
+          subtitle={
+            isEn
+              ? "A frictionless sales journey, from the first click to collecting your revenue."
+              : "Un parcours de vente clair, du premier clic jusqu'au virement de vos revenus."
+          }
         />
 
         <div className="mt-14 grid items-start gap-10 lg:grid-cols-2">

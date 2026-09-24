@@ -37,29 +37,48 @@ export function setActiveStoreId(id: string) {
   if (typeof window !== "undefined") window.localStorage.setItem(ACTIVE_KEY, id);
 }
 
-async function listStores(userId: string) {
+export type AccessibleStore = StoreSettings & {
+  isOwner?: boolean;
+  memberRole?: "owner" | "admin" | "closer" | "products" | "courier";
+  memberPermissions?: string[];
+};
+
+async function listStores(_userId: string): Promise<AccessibleStore[]> {
+  try {
+    const { getMyStores } = await import("@/lib/stores.functions");
+    const list = await getMyStores();
+    if (list && list.length > 0) return list as AccessibleStore[];
+  } catch (err) {
+    console.warn("[listStores] Fallback to direct client query:", err);
+  }
+
   const { data, error } = await supabase
     .from("store_settings")
     .select("*")
-    .eq("user_id", userId)
+    .eq("user_id", _userId)
     .order("created_at", { ascending: true });
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []).map((s) => ({
+    ...s,
+    isOwner: true,
+    memberRole: "owner" as const,
+    memberPermissions: ["*"],
+  }));
 }
 
-/** Toutes les boutiques du vendeur, dans l'ordre de création. */
+/** Toutes les boutiques du vendeur (ou boutiques dont il est membre), dans l'ordre de création. */
 export function useStores() {
   return useQuery({
     queryKey: ["stores"],
-    queryFn: async (): Promise<StoreSettings[]> => listStores(await currentUserId()),
+    queryFn: async (): Promise<AccessibleStore[]> => listStores(await currentUserId()),
   });
 }
 
-/** Récupère la boutique active du vendeur, la crée au premier accès. */
+/** Récupère la boutique active du vendeur ou membre, la crée au premier accès si propriétaire sans boutique. */
 export function useStore() {
   return useQuery({
     queryKey: ["store"],
-    queryFn: async (): Promise<StoreSettings> => {
+    queryFn: async (): Promise<AccessibleStore> => {
       const userId = await currentUserId();
       const stores = await listStores(userId);
       if (stores.length) {
@@ -86,9 +105,37 @@ export function useStore() {
         .single();
       if (createError) throw createError;
       setActiveStoreId(created.id);
-      return created;
+      return {
+        ...created,
+        isOwner: true,
+        memberRole: "owner",
+        memberPermissions: ["*"],
+      };
     },
   });
+}
+
+/** Hook d'accès et permissions pour le membre ou propriétaire connecté */
+export function useCurrentRole() {
+  const { data: store } = useStore();
+  const isOwner = store?.isOwner !== false;
+  const role = (store?.memberRole ?? "owner") as "owner" | "admin" | "closer" | "products" | "courier";
+  const permissions = store?.memberPermissions ?? (isOwner ? ["*"] : []);
+
+  const can = (permission: string) => {
+    if (isOwner || role === "admin" || permissions.includes("*")) return true;
+    return permissions.includes(permission);
+  };
+
+  return {
+    isOwner,
+    role,
+    permissions,
+    can,
+    isCourier: role === "courier",
+    isCloser: role === "closer",
+    isAdmin: isOwner || role === "admin",
+  };
 }
 
 /** Crée une boutique supplémentaire (limite de la formule vérifiée côté serveur). */
@@ -157,9 +204,19 @@ function scopeFilter<T extends { eq: (c: string, v: string) => T; or: (f: string
 }
 
 export function useProducts() {
+  const { data: store } = useStore();
   return useQuery({
-    queryKey: ["products"],
+    queryKey: ["products", store?.id],
     queryFn: async (): Promise<Product[]> => {
+      if (store?.id) {
+        try {
+          const { getStoreProducts } = await import("@/lib/stores.functions");
+          const list = await getStoreProducts({ data: { storeId: store.id } });
+          if (list) return list as Product[];
+        } catch {
+          // fallback vers la requête client
+        }
+      }
       const s = await scope();
       const { data, error } = await scopeFilter(
         supabase.from("products").select("*"),
@@ -169,7 +226,6 @@ export function useProducts() {
       return data ?? [];
     },
   });
-
 }
 
 export function useProduct(id: string | undefined) {
@@ -297,9 +353,19 @@ export function useDeleteProduct() {
 }
 
 export function useOrders() {
+  const { data: store } = useStore();
   return useQuery({
-    queryKey: ["orders"],
+    queryKey: ["orders", store?.id],
     queryFn: async (): Promise<Order[]> => {
+      if (store?.id) {
+        try {
+          const { getStoreOrders } = await import("@/lib/stores.functions");
+          const data = await getStoreOrders({ data: { storeId: store.id } });
+          if (data) return data as Order[];
+        } catch {
+          // fallback
+        }
+      }
       const s = await scope();
       const { data, error } = await scopeFilter(supabase.from("orders").select("*"), s).order(
         "created_at",
@@ -331,11 +397,19 @@ export function useOrderItemCounts() {
 
 /** Lignes d'une commande (produits, quantités, prix unitaires). */
 export function useOrderItems(orderId: string | undefined) {
-
   return useQuery({
     queryKey: ["order-items", orderId],
     enabled: Boolean(orderId),
     queryFn: async (): Promise<OrderItem[]> => {
+      if (orderId) {
+        try {
+          const { getStoreOrderItems } = await import("@/lib/stores.functions");
+          const items = await getStoreOrderItems({ data: { orderId } });
+          if (items) return items as OrderItem[];
+        } catch {
+          // fallback
+        }
+      }
       const { data, error } = await supabase
         .from("order_items")
         .select("*")
@@ -363,13 +437,18 @@ export function useUpdateOrderStatus() {
       id: string;
       status: Order["status"];
     }) => {
-      const values: TablesUpdate<"orders"> = { status };
-      if (status === "completed") values.escrow_released_at = new Date().toISOString();
-      const { error } = await supabase.from("orders").update(values).eq("id", id);
-      if (error) throw error;
-      /* Le client reçoit la mise à jour par e-mail (silencieux en cas d'échec). */
-      const { notifyOrderStatus } = await import("@/lib/order-emails.functions");
-      await notifyOrderStatus({ data: { orderId: id, status } }).catch(() => null);
+      try {
+        const { updateStoreOrderStatus } = await import("@/lib/stores.functions");
+        await updateStoreOrderStatus({ data: { orderId: id, status } });
+      } catch {
+        const values: TablesUpdate<"orders"> = { status };
+        if (status === "completed") values.escrow_released_at = new Date().toISOString();
+        const { error } = await supabase.from("orders").update(values).eq("id", id);
+        if (error) throw error;
+        /* Le client reçoit la mise à jour par e-mail (silencieux en cas d'échec). */
+        const { notifyOrderStatus } = await import("@/lib/order-emails.functions");
+        await notifyOrderStatus({ data: { orderId: id, status } }).catch(() => null);
+      }
     },
     onSuccess: () => invalidateOrders(qc),
   });

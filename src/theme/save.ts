@@ -26,7 +26,11 @@ export function useSaveTheme() {
       action?: PublishAction | undefined;
     }) => {
       const snapshot = JSON.parse(JSON.stringify(theme)) as ThemeConfig;
-      const values: TablesUpdate<"store_settings"> = { theme_config: snapshot };
+      const values: TablesUpdate<"store_settings"> = {
+        theme_config: snapshot,
+        logo_url: snapshot.global?.logoUrl || null,
+        favicon_url: snapshot.global?.faviconUrl || null,
+      };
       if (action === "publish") {
         values.theme_published = snapshot;
         values.theme_published_at = new Date().toISOString();

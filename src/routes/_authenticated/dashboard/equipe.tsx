@@ -20,11 +20,7 @@ import { DashboardShell } from "@/components/dashboard/shell";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/lib/store";
 import {
-  PERMISSIONS,
-  ROLES,
   STATUS_META,
-  permissionLabel,
-  roleLabel,
   useRemoveMember,
   useTeam,
   useUpdateMember,
@@ -36,6 +32,7 @@ import { inviteTeamMember } from "@/lib/team.functions";
 import { useConfirmDelete } from "@/components/ui/confirm-dialog";
 import { notifyError, showNotice } from "@/components/ui/notice-dialog";
 import { useTeamAccess } from "@/lib/entitlements";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/dashboard/equipe")({
   head: () => ({
@@ -58,13 +55,6 @@ export const Route = createFileRoute("/_authenticated/dashboard/equipe")({
   component: EquipePage,
 });
 
-const FILTERS: { value: "all" | TeamStatus; label: string }[] = [
-  { value: "all", label: "Tous" },
-  { value: "pending", label: "En attente" },
-  { value: "active", label: "Actifs" },
-  { value: "inactive", label: "Inactifs" },
-];
-
 function initials(value: string) {
   return value
     .split(/[\s@.]+/)
@@ -74,7 +64,7 @@ function initials(value: string) {
     .join("");
 }
 
-function StatusBadge({ status }: { status: TeamStatus }) {
+function StatusBadge({ status, label }: { status: TeamStatus; label: string }) {
   const meta = STATUS_META[status];
   return (
     <span
@@ -83,12 +73,13 @@ function StatusBadge({ status }: { status: TeamStatus }) {
         meta.className,
       )}
     >
-      {meta.label}
+      {label}
     </span>
   );
 }
 
 function EquipePage() {
+  const { dict } = useI18n();
   const { data: store } = useStore();
   const { data: members = [], isLoading } = useTeam(store?.id);
   const [q, setQ] = useState("");
@@ -97,18 +88,72 @@ function EquipePage() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const team = useTeamAccess();
 
-  // Formule Découverte : on explique la limite ici plutôt que de laisser le
-  // serveur refuser l'invitation (l'erreur remontait en écran blanc).
+  const FILTERS: { value: "all" | TeamStatus; label: string }[] = useMemo(
+    () => [
+      { value: "all", label: dict.teamPage.all },
+      { value: "pending", label: dict.teamPage.pending },
+      { value: "active", label: dict.teamPage.active },
+      { value: "inactive", label: dict.teamPage.inactive },
+    ],
+    [dict],
+  );
+
+  const getRoleLabel = (role: TeamRole) => {
+    switch (role) {
+      case "closer":
+        return dict.teamPage.roles.closer;
+      case "products":
+        return dict.teamPage.roles.products;
+      case "courier":
+        return dict.teamPage.roles.courier;
+      case "admin":
+        return dict.teamPage.roles.admin;
+      default:
+        return role;
+    }
+  };
+
+  const getPermissionLabel = (key: string) => {
+    switch (key) {
+      case "orders":
+        return dict.teamPage.permissions.orders;
+      case "products":
+        return dict.teamPage.permissions.products;
+      case "delivery":
+        return dict.teamPage.permissions.delivery;
+      case "customers":
+        return dict.teamPage.permissions.customers;
+      case "analytics":
+        return dict.teamPage.permissions.analytics;
+      case "storefront":
+        return dict.teamPage.permissions.storefront;
+      default:
+        return key;
+    }
+  };
+
+  const getStatusLabel = (s: TeamStatus) => {
+    switch (s) {
+      case "pending":
+        return dict.teamPage.pending;
+      case "active":
+        return dict.teamPage.active;
+      case "inactive":
+        return dict.teamPage.inactive;
+      default:
+        return s;
+    }
+  };
+
   const openInvite = () => {
     if (!team.loading && !team.allowed) {
       showNotice({
-        title: "La gestion d'équipe demande une formule payante",
-        description:
-          "Invitez des closers ou des livreurs avec la formule Starter (1 membre) ou Pro (5 membres par boutique).",
+        title: dict.teamPage.upgradeNoticeTitle,
+        description: dict.teamPage.upgradeNoticeDesc,
         tone: "upgrade",
-        actionLabel: "Voir les formules",
+        actionLabel: dict.teamPage.upgradeNoticeAction,
         actionTo: "/dashboard/parametres",
-        closeLabel: "Plus tard",
+        closeLabel: dict.teamPage.cancel,
       });
       return;
     }
@@ -146,16 +191,14 @@ function EquipePage() {
       <div className="mx-auto w-full max-w-6xl space-y-6">
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight">Équipe</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Invitez vos collaborateurs et choisissez exactement les espaces auxquels ils accèdent.
-            </p>
+            <h1 className="text-3xl font-extrabold tracking-tight">{dict.teamPage.title}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{dict.teamPage.subtitle}</p>
           </div>
           <button
             onClick={openInvite}
             className="btn-3d inline-flex items-center gap-2 rounded-[6px] bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground"
           >
-            <UserPlus className="h-4 w-4" /> Inviter
+            <UserPlus className="h-4 w-4" /> {dict.teamPage.addMember}
           </button>
         </header>
 
@@ -183,17 +226,15 @@ function EquipePage() {
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Rechercher par nom ou e-mail…"
+              placeholder={dict.teamPage.searchPlaceholder}
               className="w-full rounded-[6px] border border-border bg-card py-2.5 pl-10 pr-3 text-sm outline-none focus:border-primary"
             />
           </div>
           <div className="flex overflow-hidden rounded-[6px] border border-border">
-            {(
-              [
-                { value: "list" as const, icon: Rows3, label: "Vue liste" },
-                { value: "grid" as const, icon: LayoutGrid, label: "Vue grille" },
-              ]
-            ).map((v) => (
+            {[
+              { value: "list" as const, icon: Rows3, label: "Vue liste" },
+              { value: "grid" as const, icon: LayoutGrid, label: "Vue grille" },
+            ].map((v) => (
               <button
                 key={v.value}
                 aria-label={v.label}
@@ -212,19 +253,25 @@ function EquipePage() {
 
         {isLoading ? (
           <div className="rounded-[6px] border border-border bg-card p-10 text-center text-sm text-muted-foreground">
-            Chargement de l'équipe…
+            {dict.teamPage.pending}…
           </div>
         ) : rows.length === 0 ? (
-          <EmptyState onInvite={openInvite} filtered={members.length > 0} />
+          <EmptyState
+            onInvite={openInvite}
+            filtered={members.length > 0}
+            title={dict.teamPage.emptyTitle}
+            desc={dict.teamPage.emptyDesc}
+            buttonLabel={dict.teamPage.addMember}
+          />
         ) : view === "list" ? (
           <div className="overflow-hidden rounded-[6px] border border-border bg-card">
             <table className="w-full text-sm">
               <thead className="bg-muted/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
                 <tr>
-                  <th className="px-4 py-3 font-semibold">Membre</th>
-                  <th className="px-4 py-3 font-semibold">Rôle</th>
-                  <th className="px-4 py-3 font-semibold">Accès</th>
-                  <th className="px-4 py-3 font-semibold">Statut</th>
+                  <th className="px-4 py-3 font-semibold">{dict.teamPage.colMember}</th>
+                  <th className="px-4 py-3 font-semibold">{dict.teamPage.colRole}</th>
+                  <th className="px-4 py-3 font-semibold">{dict.teamPage.colPermissions}</th>
+                  <th className="px-4 py-3 font-semibold">{dict.teamPage.colStatus}</th>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
@@ -237,30 +284,30 @@ function EquipePage() {
                           {initials(m.full_name || m.email)}
                         </span>
                         <div className="min-w-0">
-                          <p className="truncate font-semibold">{m.full_name || "Sans nom"}</p>
+                          <p className="truncate font-semibold">{m.full_name || "—"}</p>
                           <p className="truncate text-xs text-muted-foreground">{m.email}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3">{roleLabel(m.role)}</td>
+                    <td className="px-4 py-3">{getRoleLabel(m.role)}</td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
                         {m.permissions.length === 0 ? (
-                          <span className="text-xs text-muted-foreground">Aucun</span>
+                          <span className="text-xs text-muted-foreground">—</span>
                         ) : (
                           m.permissions.map((p) => (
                             <span
                               key={p}
                               className="rounded-full border border-border px-2 py-0.5 text-[11px]"
                             >
-                              {permissionLabel(p)}
+                              {getPermissionLabel(p)}
                             </span>
                           ))
                         )}
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <StatusBadge status={m.status} />
+                      <StatusBadge status={m.status} label={getStatusLabel(m.status)} />
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
@@ -268,21 +315,21 @@ function EquipePage() {
                           onClick={() => setEditing(m)}
                           className="rounded-[6px] px-2.5 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground"
                         >
-                          Gérer
+                          {dict.teamPage.colActions}
                         </button>
                         <button
-                          aria-label="Retirer le membre"
+                          aria-label={dict.teamPage.deleteTitle}
                           onClick={async () => {
                             if (
                               !(await confirmDelete(
-                                `${m.email} de l'équipe`,
-                                "Ce membre perdra immédiatement l'accès à votre boutique.",
+                                `${m.email} (${dict.teamPage.title})`,
+                                dict.teamPage.deleteDesc,
                               ))
                             )
                               return;
                             remove.mutate(m.id, {
-                              onSuccess: () => toast.success("Membre retiré"),
-                              onError: (e) => notifyError(e, "Suppression impossible"),
+                              onSuccess: () => toast.success(dict.teamPage.deleteConfirm),
+                              onError: (e) => notifyError(e, "Erreur"),
                             });
                           }}
                           className="rounded-[6px] p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
@@ -306,20 +353,20 @@ function EquipePage() {
                       {initials(m.full_name || m.email)}
                     </span>
                     <div className="min-w-0">
-                      <p className="truncate font-semibold">{m.full_name || "Sans nom"}</p>
+                      <p className="truncate font-semibold">{m.full_name || "—"}</p>
                       <p className="truncate text-xs text-muted-foreground">{m.email}</p>
                     </div>
                   </div>
-                  <StatusBadge status={m.status} />
+                  <StatusBadge status={m.status} label={getStatusLabel(m.status)} />
                 </div>
-                <p className="mt-3 text-sm font-medium">{roleLabel(m.role)}</p>
+                <p className="mt-3 text-sm font-medium">{getRoleLabel(m.role)}</p>
                 <div className="mt-2 flex flex-wrap gap-1">
                   {m.permissions.map((p) => (
                     <span
                       key={p}
                       className="rounded-full border border-border px-2 py-0.5 text-[11px]"
                     >
-                      {permissionLabel(p)}
+                      {getPermissionLabel(p)}
                     </span>
                   ))}
                 </div>
@@ -327,7 +374,7 @@ function EquipePage() {
                   onClick={() => setEditing(m)}
                   className="mt-4 w-full rounded-[6px] border border-border py-2 text-sm font-semibold hover:bg-muted"
                 >
-                  Gérer les accès
+                  {dict.teamPage.colActions}
                 </button>
               </article>
             ))}
@@ -348,10 +395,10 @@ function EquipePage() {
               { id: editing.id, ...patch },
               {
                 onSuccess: () => {
-                  toast.success("Accès mis à jour");
+                  toast.success(dict.teamPage.saveChanges);
                   setEditing(null);
                 },
-                onError: (e) => notifyError(e, "Modification impossible"),
+                onError: (e) => notifyError(e, "Erreur"),
               },
             )
           }
@@ -361,27 +408,33 @@ function EquipePage() {
   );
 }
 
-function EmptyState({ onInvite, filtered }: { onInvite: () => void; filtered: boolean }) {
+function EmptyState({
+  onInvite,
+  filtered,
+  title,
+  desc,
+  buttonLabel,
+}: {
+  onInvite: () => void;
+  filtered: boolean;
+  title: string;
+  desc: string;
+  buttonLabel: string;
+}) {
   return (
     <div className="rounded-[6px] border border-border bg-gradient-to-b from-accent/50 to-card px-6 py-16 text-center">
       <div className="mx-auto grid h-16 w-16 place-items-center rounded-[10px] border border-border bg-card">
         <PhoneCall className="h-7 w-7 text-primary" />
       </div>
-      <h2 className="mt-6 text-2xl font-extrabold leading-tight sm:text-3xl">
-        Déléguez la confirmation
-        <br />
-        de vos commandes
-      </h2>
+      <h2 className="mt-6 text-2xl font-extrabold leading-tight sm:text-3xl">{title}</h2>
       <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground">
-        {filtered
-          ? "Aucun membre ne correspond à cette recherche."
-          : "Invitez un closer : il appelle vos clients, confirme les commandes et fait avancer vos livraisons — vous gardez la main sur le reste."}
+        {filtered ? "Aucun membre ne correspond à cette recherche." : desc}
       </p>
       <button
         onClick={onInvite}
         className="btn-3d mt-6 inline-flex items-center gap-2 rounded-[6px] bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground"
       >
-        <UserPlus className="h-4 w-4" /> Inviter un membre
+        <UserPlus className="h-4 w-4" /> {buttonLabel}
       </button>
       <div className="mx-auto mt-8 grid max-w-2xl gap-3 sm:grid-cols-3">
         {[
@@ -395,10 +448,6 @@ function EmptyState({ onInvite, filtered }: { onInvite: () => void; filtered: bo
           </div>
         ))}
       </div>
-      <p className="mx-auto mt-6 max-w-xl text-xs text-muted-foreground">
-        Chaque membre reçoit un e-mail d'invitation et n'accède qu'aux espaces que vous cochez —
-        jamais au reste du dashboard.
-      </p>
     </div>
   );
 }
@@ -430,9 +479,20 @@ function PermissionPicker({
   value: string[];
   onChange: (next: string[]) => void;
 }) {
+  const { dict } = useI18n();
+
+  const permissionsList = [
+    { key: "orders", label: dict.teamPage.permissions.orders, hint: dict.teamPage.permissions.ordersHint },
+    { key: "products", label: dict.teamPage.permissions.products, hint: dict.teamPage.permissions.productsHint },
+    { key: "delivery", label: dict.teamPage.permissions.delivery, hint: dict.teamPage.permissions.deliveryHint },
+    { key: "customers", label: dict.teamPage.permissions.customers, hint: dict.teamPage.permissions.customersHint },
+    { key: "analytics", label: dict.teamPage.permissions.analytics, hint: dict.teamPage.permissions.analyticsHint },
+    { key: "storefront", label: dict.teamPage.permissions.storefront, hint: dict.teamPage.permissions.storefrontHint },
+  ];
+
   return (
     <div className="grid gap-2 sm:grid-cols-2">
-      {PERMISSIONS.map((p) => {
+      {permissionsList.map((p) => {
         const on = value.includes(p.key);
         return (
           <button
@@ -454,17 +514,45 @@ function PermissionPicker({
 }
 
 function InviteDialog({ storeId, onClose }: { storeId: string; onClose: () => void }) {
+  const { dict } = useI18n();
   const invite = useServerFn(inviteTeamMember);
   const qc = useQueryClient();
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [role, setRole] = useState<TeamRole>("closer");
-  const [permissions, setPermissions] = useState<string[]>(ROLES[0]!.defaults);
+  const [permissions, setPermissions] = useState<string[]>(["orders", "customers"]);
   const [sending, setSending] = useState(false);
+
+  const rolesConfig: { value: TeamRole; label: string; hint: string; defaults: string[] }[] = [
+    {
+      value: "closer",
+      label: dict.teamPage.roles.closer,
+      hint: dict.teamPage.roles.closerHint,
+      defaults: ["orders", "customers"],
+    },
+    {
+      value: "products",
+      label: dict.teamPage.roles.products,
+      hint: dict.teamPage.roles.productsHint,
+      defaults: ["products", "storefront"],
+    },
+    {
+      value: "courier",
+      label: dict.teamPage.roles.courier,
+      hint: dict.teamPage.roles.courierHint,
+      defaults: ["delivery", "orders"],
+    },
+    {
+      value: "admin",
+      label: dict.teamPage.roles.admin,
+      hint: dict.teamPage.roles.adminHint,
+      defaults: ["orders", "products", "delivery", "customers", "analytics", "storefront"],
+    },
+  ];
 
   const pickRole = (next: TeamRole) => {
     setRole(next);
-    setPermissions(ROLES.find((r) => r.value === next)?.defaults ?? []);
+    setPermissions(rolesConfig.find((r) => r.value === next)?.defaults ?? []);
   };
 
   const submit = async () => {
@@ -495,10 +583,10 @@ function InviteDialog({ storeId, onClose }: { storeId: string; onClose: () => vo
   };
 
   return (
-    <Dialog title="Inviter un membre" onClose={onClose}>
+    <Dialog title={dict.teamPage.inviteModalTitle} onClose={onClose}>
       <div className="mt-5 space-y-5">
         <label className="block">
-          <span className="text-sm font-semibold">Adresse e-mail</span>
+          <span className="text-sm font-semibold">{dict.teamPage.emailLabel}</span>
           <div className="relative mt-1.5">
             <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
@@ -512,7 +600,7 @@ function InviteDialog({ storeId, onClose }: { storeId: string; onClose: () => vo
         </label>
 
         <label className="block">
-          <span className="text-sm font-semibold">Nom (optionnel)</span>
+          <span className="text-sm font-semibold">{dict.teamPage.nameLabel}</span>
           <input
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
@@ -522,9 +610,9 @@ function InviteDialog({ storeId, onClose }: { storeId: string; onClose: () => vo
         </label>
 
         <div>
-          <span className="text-sm font-semibold">Rôle</span>
+          <span className="text-sm font-semibold">{dict.teamPage.roleLabel}</span>
           <div className="mt-1.5 grid gap-2 sm:grid-cols-2">
-            {ROLES.map((r) => (
+            {rolesConfig.map((r) => (
               <button
                 key={r.value}
                 type="button"
@@ -542,9 +630,9 @@ function InviteDialog({ storeId, onClose }: { storeId: string; onClose: () => vo
         </div>
 
         <div>
-          <span className="text-sm font-semibold">Ce qu'il pourra faire</span>
+          <span className="text-sm font-semibold">{dict.teamPage.permissionsLabel}</span>
           <p className="mb-2 text-xs text-muted-foreground">
-            Cochez uniquement les espaces que ce membre doit gérer.
+            {dict.teamPage.inviteModalDesc}
           </p>
           <PermissionPicker value={permissions} onChange={setPermissions} />
         </div>
@@ -554,7 +642,7 @@ function InviteDialog({ storeId, onClose }: { storeId: string; onClose: () => vo
             onClick={onClose}
             className="rounded-[6px] border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted"
           >
-            Annuler
+            {dict.teamPage.cancel}
           </button>
           <button
             onClick={submit}
@@ -562,7 +650,7 @@ function InviteDialog({ storeId, onClose }: { storeId: string; onClose: () => vo
             className="btn-3d inline-flex items-center gap-2 rounded-[6px] bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-60"
           >
             <Send className="h-4 w-4" />
-            {sending ? "Envoi…" : "Envoyer l'invitation"}
+            {sending ? "Envoi…" : dict.teamPage.sendInvite}
           </button>
         </div>
       </div>
@@ -579,17 +667,31 @@ function ManageDialog({
   onClose: () => void;
   onSave: (patch: { role: TeamRole; permissions: string[]; status: TeamStatus }) => void;
 }) {
+  const { dict } = useI18n();
   const [role, setRole] = useState<TeamRole>(member.role);
   const [permissions, setPermissions] = useState<string[]>(member.permissions);
   const [status, setStatus] = useState<TeamStatus>(member.status);
+
+  const rolesConfig: { value: TeamRole; label: string }[] = [
+    { value: "closer", label: dict.teamPage.roles.closer },
+    { value: "products", label: dict.teamPage.roles.products },
+    { value: "courier", label: dict.teamPage.roles.courier },
+    { value: "admin", label: dict.teamPage.roles.admin },
+  ];
+
+  const statusList: { key: TeamStatus; label: string }[] = [
+    { key: "pending", label: dict.teamPage.pending },
+    { key: "active", label: dict.teamPage.active },
+    { key: "inactive", label: dict.teamPage.inactive },
+  ];
 
   return (
     <Dialog title={member.full_name || member.email} onClose={onClose}>
       <div className="mt-5 space-y-5">
         <div>
-          <span className="text-sm font-semibold">Rôle</span>
+          <span className="text-sm font-semibold">{dict.teamPage.roleLabel}</span>
           <div className="mt-1.5 grid gap-2 sm:grid-cols-2">
-            {ROLES.map((r) => (
+            {rolesConfig.map((r) => (
               <button
                 key={r.value}
                 type="button"
@@ -606,26 +708,26 @@ function ManageDialog({
         </div>
 
         <div>
-          <span className="text-sm font-semibold">Accès</span>
+          <span className="text-sm font-semibold">{dict.teamPage.permissionsLabel}</span>
           <div className="mt-1.5">
             <PermissionPicker value={permissions} onChange={setPermissions} />
           </div>
         </div>
 
         <div>
-          <span className="text-sm font-semibold">Statut</span>
+          <span className="text-sm font-semibold">{dict.teamPage.colStatus}</span>
           <div className="mt-1.5 flex gap-2">
-            {(["pending", "active", "inactive"] as TeamStatus[]).map((s) => (
+            {statusList.map((s) => (
               <button
-                key={s}
+                key={s.key}
                 type="button"
-                onClick={() => setStatus(s)}
+                onClick={() => setStatus(s.key)}
                 className={cn(
                   "rounded-[6px] border px-3 py-2 text-sm font-semibold",
-                  status === s ? "border-primary bg-accent" : "border-border hover:bg-muted",
+                  status === s.key ? "border-primary bg-accent" : "border-border hover:bg-muted",
                 )}
               >
-                {STATUS_META[s].label}
+                {s.label}
               </button>
             ))}
           </div>
@@ -636,13 +738,13 @@ function ManageDialog({
             onClick={onClose}
             className="rounded-[6px] border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted"
           >
-            Annuler
+            {dict.teamPage.cancel}
           </button>
           <button
             onClick={() => onSave({ role, permissions, status })}
             className="btn-3d rounded-[6px] bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground"
           >
-            Enregistrer
+            {dict.teamPage.saveChanges}
           </button>
         </div>
       </div>

@@ -17,8 +17,10 @@ import { useSelectedSection, useThemeStore } from "@/store/useThemeStore";
 import { getDefinition, sectionLibrary } from "@/theme/registry";
 import { pageLabels, type Field } from "@/theme/types";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 function SectionLibraryDialog() {
+  const { isEn } = useI18n();
   const [open, setOpen] = useState(false);
   const addSection = useThemeStore((s) => s.addSection);
   const chrome = useThemeStore((s) => s.chrome);
@@ -29,12 +31,12 @@ function SectionLibraryDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="w-full">
-          <Plus size={14} /> Ajouter une section
+          <Plus size={14} /> {isEn ? "Add section" : "Ajouter une section"}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Bibliothèque de sections</DialogTitle>
+          <DialogTitle>{isEn ? "Section Library" : "Bibliothèque de sections"}</DialogTitle>
         </DialogHeader>
         <div className="grid max-h-[60vh] grid-cols-1 gap-2 overflow-y-auto sm:grid-cols-2">
           {sectionLibrary.map((def) => {
@@ -65,6 +67,7 @@ function SectionLibraryDialog() {
 
 /** Logo + favicon de la boutique : réglages communs à toutes les pages. */
 function BrandPanel() {
+  const { isEn } = useI18n();
   const global = useThemeStore((s) => s.global);
   const updateBrand = useThemeStore((s) => s.updateBrand);
 
@@ -72,16 +75,16 @@ function BrandPanel() {
     <div className="space-y-4">
       <div className="flex items-center gap-2 text-sm font-semibold">
         <ImageIcon size={15} className="text-muted-foreground" />
-        Identité de la boutique
+        {isEn ? "Store Identity" : "Identité de la boutique"}
       </div>
       <ImageUploader
-        label="Logo (en-tête et pied de page)"
+        label={isEn ? "Logo (header & footer)" : "Logo (en-tête et pied de page)"}
         value={global.logoUrl ?? ""}
         onChange={(v) => updateBrand("logoUrl", v)}
       />
       {global.logoUrl ? (
         <RangeInput
-          label="Hauteur du logo"
+          label={isEn ? "Logo height" : "Hauteur du logo"}
           value={global.logoHeight ?? 40}
           min={20}
           max={96}
@@ -89,23 +92,27 @@ function BrandPanel() {
         />
       ) : (
         <p className="text-xs text-muted-foreground">
-          Sans logo, le nom de la boutique reste affiché en texte.
+          {isEn
+            ? "Without a logo, the store name is displayed as text."
+            : "Sans logo, le nom de la boutique reste affiché en texte."}
         </p>
       )}
       <ImageUploader
-        label="Favicon (icône de l'onglet)"
+        label={isEn ? "Favicon (browser tab icon)" : "Favicon (icône de l'onglet)"}
         value={global.faviconUrl ?? ""}
         onChange={(v) => updateBrand("faviconUrl", v)}
       />
       <p className="text-xs text-muted-foreground">
-        Utilisez une image carrée (512 × 512 px) pour un favicon net.
+        {isEn
+          ? "Use a square image (512 × 512 px) for crisp favicon display."
+          : "Utilisez une image carrée (512 × 512 px) pour un favicon net."}
       </p>
     </div>
   );
 }
 
 function GlobalSettingsPanel() {
-
+  const { isEn } = useI18n();
   const global = useThemeStore((s) => s.global);
   const activePage = useThemeStore((s) => s.activePage);
   const previewProductId = useThemeStore((s) => s.previewProductId);
@@ -121,41 +128,45 @@ function GlobalSettingsPanel() {
       <div className="flex items-center gap-2 text-sm font-semibold">
         <Palette size={15} className="text-muted-foreground" />
         {activePage === "product" && previewProductId && productGlobals?.[previewProductId]
-          ? "Style de ce produit"
-          : "Réglages globaux"}
+          ? isEn
+            ? "Style of this product"
+            : "Style de ce produit"
+          : isEn
+            ? "Global settings"
+            : "Réglages globaux"}
       </div>
       <ColorPicker
-        label="Couleur principale"
+        label={isEn ? "Primary color" : "Couleur principale"}
         value={settings.primaryColor}
         onChange={(v) => updateGlobal("primaryColor", v)}
       />
       <ColorPicker
-        label="Couleur secondaire"
+        label={isEn ? "Secondary color" : "Couleur secondaire"}
         value={settings.softColor}
         onChange={(v) => updateGlobal("softColor", v)}
       />
       <ColorPicker
-        label="Fond pastel"
+        label={isEn ? "Pastel background" : "Fond pastel"}
         value={settings.paleColor}
         onChange={(v) => updateGlobal("paleColor", v)}
       />
       <ColorPicker
-        label="Accent (doré)"
+        label={isEn ? "Accent (gold)" : "Accent (doré)"}
         value={settings.accentColor}
         onChange={(v) => updateGlobal("accentColor", v)}
       />
       <FontSelect
-        label="Police des titres"
+        label={isEn ? "Heading font" : "Police des titres"}
         value={settings.headingFont}
         onChange={(v) => updateGlobal("headingFont", v)}
       />
       <FontSelect
-        label="Police du texte"
+        label={isEn ? "Body font" : "Police du texte"}
         value={settings.bodyFont}
         onChange={(v) => updateGlobal("bodyFont", v)}
       />
       <RangeInput
-        label="Arrondi"
+        label={isEn ? "Corner radius" : "Arrondi"}
         value={settings.radius}
         min={0}
         max={40}
@@ -166,6 +177,7 @@ function GlobalSettingsPanel() {
 }
 
 export function SectionSettingsPanel({ onClose }: { onClose?: () => void } = {}) {
+  const { isEn } = useI18n();
   const section = useSelectedSection();
   const select = useThemeStore((s) => s.select);
   const updateSetting = useThemeStore((s) => s.updateSetting);
@@ -176,7 +188,7 @@ export function SectionSettingsPanel({ onClose }: { onClose?: () => void } = {})
   const Icon = def.icon;
 
   const groups = def.schema.reduce<Record<string, Field[]>>((acc, field) => {
-    const key = field.group ?? "Contenu";
+    const key = field.group ?? (isEn ? "Content" : "Contenu");
     (acc[key] ??= []).push(field);
     return acc;
   }, {});
@@ -195,7 +207,7 @@ export function SectionSettingsPanel({ onClose }: { onClose?: () => void } = {})
             type="button"
             onClick={handleClose}
             className="rounded-[6px] p-1 text-muted-foreground hover:bg-accent hover:text-foreground md:hidden"
-            aria-label="Retour aux sections"
+            aria-label={isEn ? "Back to sections" : "Retour aux sections"}
           >
             <ArrowLeft size={16} />
           </button>
@@ -205,7 +217,7 @@ export function SectionSettingsPanel({ onClose }: { onClose?: () => void } = {})
           <div className="min-w-0">
             <span className="block truncate text-sm font-semibold">{def.label}</span>
             <span className="hidden text-[11px] text-muted-foreground md:block">
-              Paramètres de la section
+              {isEn ? "Section settings" : "Paramètres de la section"}
             </span>
           </div>
         </div>
@@ -216,8 +228,8 @@ export function SectionSettingsPanel({ onClose }: { onClose?: () => void } = {})
               type="button"
               onClick={() => removeSection(section.id)}
               className="rounded-[6px] p-1.5 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
-              aria-label="Supprimer la section"
-              title="Supprimer la section"
+              aria-label={isEn ? "Delete section" : "Supprimer la section"}
+              title={isEn ? "Delete section" : "Supprimer la section"}
             >
               <Trash2 size={15} />
             </button>
@@ -227,8 +239,8 @@ export function SectionSettingsPanel({ onClose }: { onClose?: () => void } = {})
             type="button"
             onClick={handleClose}
             className="hidden rounded-[6px] p-1.5 text-muted-foreground transition hover:bg-accent hover:text-foreground md:flex"
-            aria-label="Fermer les paramètres"
-            title="Fermer"
+            aria-label={isEn ? "Close settings" : "Fermer les paramètres"}
+            title={isEn ? "Close" : "Fermer"}
           >
             <X size={16} />
           </button>
@@ -270,11 +282,19 @@ export function EditorSidebar({
   /** Réinitialise le thème sur les données réelles de la boutique. */
   onReset?: () => void;
 }) {
+  const { dict, isEn } = useI18n();
   const [internalTab, setInternalTab] = useState<"sections" | "branding">("sections");
   const tab = controlledTab ?? internalTab;
   const setTab = onTabChange ?? setInternalTab;
   const selectedId = useThemeStore((s) => s.selectedId);
   const activePage = useThemeStore((s) => s.activePage);
+
+  const activePageLabel =
+    activePage === "home"
+      ? (isEn ? "Home" : "Accueil")
+      : activePage === "product"
+        ? (isEn ? "Product Page" : "Page produit")
+        : (isEn ? "Contact" : "Contact");
 
   return (
     <aside className="flex h-full min-h-0 w-full shrink-0 flex-col border-border bg-card md:w-[320px] lg:w-[340px] md:border-r">
@@ -306,7 +326,7 @@ export function EditorSidebar({
               )}
             >
               <Layers size={13} />
-              <span>Sections</span>
+              <span>{dict.editorPage.sectionsTab}</span>
             </button>
             <button
               type="button"
@@ -319,7 +339,7 @@ export function EditorSidebar({
               )}
             >
               <Palette size={13} />
-              <span>Branding</span>
+              <span>{dict.editorPage.brandingTab}</span>
             </button>
           </div>
           {onReset ? (
@@ -327,8 +347,8 @@ export function EditorSidebar({
               type="button"
               onClick={onReset}
               className="ml-1.5 rounded-[6px] p-1.5 text-muted-foreground transition hover:bg-accent hover:text-foreground"
-              aria-label="Réinitialiser le thème"
-              title="Réinitialiser"
+              aria-label={dict.editorPage.resetTheme}
+              title={dict.editorPage.resetTheme}
             >
               <RotateCcw size={14} />
             </button>
@@ -341,13 +361,13 @@ export function EditorSidebar({
               <>
                 <div className="space-y-1">
                   <p className="px-1.5 text-[11px] font-bold tracking-[0.14em] text-muted-foreground uppercase">
-                    Global (toutes les pages)
+                    {isEn ? "Global (all pages)" : "Global (toutes les pages)"}
                   </p>
                   <SectionList scope="chrome" />
                 </div>
                 <div className="space-y-1">
                   <p className="px-1.5 text-[11px] font-bold tracking-[0.14em] text-muted-foreground uppercase">
-                    {pageLabels[activePage]}
+                    {activePageLabel}
                   </p>
                   <SectionList scope={activePage} />
                 </div>

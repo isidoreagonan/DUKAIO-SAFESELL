@@ -45,6 +45,7 @@ import { useProducts, useStore } from "@/lib/store";
 import { useUploadMedia, useMedia } from "@/lib/media";
 import { setPendingAiDraft } from "@/lib/ai-draft";
 import { useAiAccess } from "@/lib/entitlements";
+import { useI18n } from "@/lib/i18n";
 import { AiCreditsBadge, AiUpgradeDialog } from "@/components/dashboard/ai-credits";
 import {
   Select,
@@ -170,13 +171,17 @@ function completePrompts(funnel: FunnelPayload, draft: ProductDraft) {
   }));
 }
 
-/** Stepper professionnel avec labels et lignes de progression. */
-const STEP_LABELS = ["Importer", "Personnaliser", "Finaliser"] as const;
-
 function Stepper({ step }: { step: number }) {
+  const { dict } = useI18n();
+  const stepLabels = [
+    dict.aiCreatePage.stepImport,
+    dict.aiCreatePage.stepCustomize,
+    dict.aiCreatePage.stepFinalize,
+  ];
+
   return (
     <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
-      {STEP_LABELS.map((label, index) => {
+      {stepLabels.map((label, index) => {
         const done = index < step;
         const active = index === step;
 
@@ -204,7 +209,7 @@ function Stepper({ step }: { step: number }) {
                 {label}
               </span>
             </div>
-            {index < STEP_LABELS.length - 1 && (
+            {index < stepLabels.length - 1 && (
               <ChevronRight className="h-4 w-4 text-muted-foreground/40" />
             )}
           </div>
@@ -215,6 +220,7 @@ function Stepper({ step }: { step: number }) {
 }
 
 function AnalyzingProductState({ isLink }: { isLink: boolean }) {
+  const { isEn } = useI18n();
   const [activeStep, setActiveStep] = useState(0);
   const [progress, setProgress] = useState(18);
 
@@ -242,14 +248,32 @@ function AnalyzingProductState({ isLink }: { isLink: boolean }) {
 
   const steps = isLink
     ? [
-        { label: "Connexion & extraction du produit", desc: "Récupération du titre, prix et description" },
-        { label: "Analyse et sélection des visuels", desc: "Détection des photos haute définition" },
-        { label: "Préparation de l'offre optimisée", desc: "Configuration de la fiche personnalisable" },
+        {
+          label: isEn ? "Connecting & extracting product" : "Connexion & extraction du produit",
+          desc: isEn ? "Fetching title, price, and description" : "Récupération du titre, prix et description",
+        },
+        {
+          label: isEn ? "Analyzing and selecting visuals" : "Analyse et sélection des visuels",
+          desc: isEn ? "Detecting high-definition product images" : "Détection des photos haute définition",
+        },
+        {
+          label: isEn ? "Preparing optimized offer" : "Préparation de l'offre optimisée",
+          desc: isEn ? "Configuring customizable product page" : "Configuration de la fiche personnalisable",
+        },
       ]
     : [
-        { label: "Analyse visuelle et détection IA", desc: "Identification du produit depuis vos images" },
-        { label: "Extraction des caractéristiques", desc: "Formulation des arguments clés" },
-        { label: "Préparation de l'offre optimisée", desc: "Configuration de la fiche personnalisable" },
+        {
+          label: isEn ? "Visual analysis & AI detection" : "Analyse visuelle et détection IA",
+          desc: isEn ? "Identifying product from your images" : "Identification du produit depuis vos images",
+        },
+        {
+          label: isEn ? "Extracting selling points" : "Extraction des caractéristiques",
+          desc: isEn ? "Formulating key benefits and features" : "Formulation des arguments clés",
+        },
+        {
+          label: isEn ? "Preparing optimized offer" : "Préparation de l'offre optimisée",
+          desc: isEn ? "Configuring customizable product page" : "Configuration de la fiche personnalisable",
+        },
       ];
 
   return (
@@ -371,12 +395,13 @@ function Card({ children, className }: { children: React.ReactNode; className?: 
  */
 function ProduitIaGate() {
   const { loading } = useAiAccess();
+  const { isEn } = useI18n();
 
   if (loading)
     return (
       <DashboardShell>
         <div className="flex h-[50vh] items-center justify-center text-muted-foreground">
-          <Loader2 className="mr-2 size-4 animate-spin" /> Chargement…
+          <Loader2 className="mr-2 size-4 animate-spin" /> {isEn ? "Loading..." : "Chargement…"}
         </div>
       </DashboardShell>
     );
@@ -385,6 +410,7 @@ function ProduitIaGate() {
 }
 
 function ProduitIaPage() {
+  const { dict, isEn } = useI18n();
   const [creationMode, setCreationMode] = useState<"link" | "images">("link");
   const navigate = useNavigate();
   const { produit, job: jobParam } = Route.useSearch();
@@ -403,7 +429,7 @@ function ProduitIaPage() {
   const [step, setStep] = useState(jobParam ? 2 : 0);
   const [images, setImages] = useState<string[]>([]);
   const [productUrl, setProductUrl] = useState("");
-  const [language, setLanguage] = useState("français");
+  const [language, setLanguage] = useState(isEn ? "anglais" : "français");
   const [pickerOpen, setPickerOpen] = useState(false);
   const [galleryPickerOpen, setGalleryPickerOpen] = useState(false);
   const [withVisuals, setWithVisuals] = useState(true);
@@ -933,7 +959,7 @@ function ProduitIaPage() {
               to="/dashboard/produits"
               className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
-              <ArrowLeft className="h-4 w-4" /> Retour aux produits
+              <ArrowLeft className="h-4 w-4" /> {dict.aiCreatePage.backToProducts}
             </Link>
 
           </>
@@ -952,9 +978,9 @@ function ProduitIaPage() {
         {step === 0 && !isAnalyzing ? (
           <div className="animate-in fade-in-50 duration-500">
             <header className="mt-2 text-center">
-              <h1 className="text-3xl font-extrabold tracking-tight">Nouvelle page produit</h1>
+              <h1 className="text-3xl font-extrabold tracking-tight">{dict.aiCreatePage.title}</h1>
               <p className="mt-2 text-sm text-muted-foreground">
-                Choisissez votre méthode pour démarrer.
+                {dict.aiCreatePage.subtitle}
               </p>
             </header>
 
@@ -966,7 +992,7 @@ function ProduitIaPage() {
                   creationMode === "link" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                Par lien (Auto)
+                {dict.aiCreatePage.tabLink}
               </button>
               <button
                 onClick={() => setCreationMode("images")}
@@ -975,7 +1001,7 @@ function ProduitIaPage() {
                   creationMode === "images" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                Par images (Manuel)
+                {dict.aiCreatePage.tabImages}
               </button>
             </div>
 
@@ -989,11 +1015,11 @@ function ProduitIaPage() {
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full -z-0" />
                 <div className="relative z-10 mb-6">
                   <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-[11px] font-bold text-primary tracking-wide">
-                    <Sparkles className="h-3.5 w-3.5" /> RECOMMANDÉ
+                    <Sparkles className="h-3.5 w-3.5" /> {dict.aiCreatePage.recommended}
                   </div>
-                  <h2 className="mt-4 text-xl font-bold">À partir d'un lien</h2>
+                  <h2 className="mt-4 text-xl font-bold">{dict.aiCreatePage.fromLinkTitle}</h2>
                   <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                    Collez un lien AliExpress, Shopify, WooCommerce ou Amazon. DUKAIO AI analysera le produit et rédigera toute la page pour vous.
+                    {dict.aiCreatePage.fromLinkDesc}
                   </p>
                 </div>
                 
@@ -1003,50 +1029,50 @@ function ProduitIaPage() {
                       <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <input
                         className={field + " w-full pl-9 h-11 text-sm bg-background"}
-                        placeholder="Ex: https://fr.aliexpress.com/item/..."
+                        placeholder={dict.aiCreatePage.linkPlaceholder}
                         value={productUrl}
                         onChange={(event) => setProductUrl(event.target.value)}
                       />
                     </label>
                     <Select value={language} onValueChange={setLanguage}>
                       <SelectTrigger className="w-full h-11 bg-background hover:bg-muted/50 transition-colors">
-                        <SelectValue placeholder="Langue" />
+                        <SelectValue placeholder={dict.aiCreatePage.languageLabel} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="français">
                           <div className="flex items-center gap-2">
                             <img src="https://flagcdn.com/w20/fr.png" alt="Français" width={20} className="rounded-none shadow-sm" />
-                            <span>Français</span>
+                            <span>{isEn ? "French" : "Français"}</span>
                           </div>
                         </SelectItem>
                         <SelectItem value="anglais">
                           <div className="flex items-center gap-2">
                             <img src="https://flagcdn.com/w20/gb.png" alt="Anglais" width={20} className="rounded-none shadow-sm" />
-                            <span>Anglais</span>
+                            <span>{isEn ? "English" : "Anglais"}</span>
                           </div>
                         </SelectItem>
                         <SelectItem value="espagnol">
                           <div className="flex items-center gap-2">
                             <img src="https://flagcdn.com/w20/es.png" alt="Espagnol" width={20} className="rounded-none shadow-sm" />
-                            <span>Espagnol</span>
+                            <span>{isEn ? "Spanish" : "Espagnol"}</span>
                           </div>
                         </SelectItem>
                         <SelectItem value="italien">
                           <div className="flex items-center gap-2">
                             <img src="https://flagcdn.com/w20/it.png" alt="Italien" width={20} className="rounded-none shadow-sm" />
-                            <span>Italien</span>
+                            <span>{isEn ? "Italian" : "Italien"}</span>
                           </div>
                         </SelectItem>
                         <SelectItem value="allemand">
                           <div className="flex items-center gap-2">
                             <img src="https://flagcdn.com/w20/de.png" alt="Allemand" width={20} className="rounded-none shadow-sm" />
-                            <span>Allemand</span>
+                            <span>{isEn ? "German" : "Allemand"}</span>
                           </div>
                         </SelectItem>
                         <SelectItem value="portugais">
                           <div className="flex items-center gap-2">
                             <img src="https://flagcdn.com/w20/pt.png" alt="Portugais" width={20} className="rounded-none shadow-sm" />
-                            <span>Portugais</span>
+                            <span>{isEn ? "Portuguese" : "Portugais"}</span>
                           </div>
                         </SelectItem>
                       </SelectContent>
@@ -1060,10 +1086,10 @@ function ProduitIaPage() {
                     className="btn-3d w-full h-11 inline-flex justify-center items-center gap-2 rounded-[8px] text-sm font-semibold disabled:opacity-60 disabled:grayscale"
                   >
                     {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                    Générer la page
+                    {dict.aiCreatePage.generateButton}
                   </button>
                   <p className="text-center text-[11px] text-muted-foreground font-medium">
-                    Coût : 1 crédit IA
+                    {dict.aiCreatePage.creditCost}
                   </p>
                 </div>
               </div>
@@ -1075,11 +1101,11 @@ function ProduitIaPage() {
               )}>
                 <div className="mb-6">
                   <div className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-[11px] font-bold text-muted-foreground tracking-wide">
-                    <ImagePlus className="h-3.5 w-3.5" /> ALTERNATIVE
+                    <ImagePlus className="h-3.5 w-3.5" /> {dict.aiCreatePage.alternative}
                   </div>
-                  <h2 className="mt-4 text-xl font-bold">À partir de vos images</h2>
+                  <h2 className="mt-4 text-xl font-bold">{dict.aiCreatePage.fromImagesTitle}</h2>
                   <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                    Importez vos propres visuels de produit. L'IA les analysera pour pré-remplir votre page.
+                    {dict.aiCreatePage.fromImagesDesc}
                   </p>
                 </div>
                 
@@ -1112,16 +1138,16 @@ function ProduitIaPage() {
                           )}
                         </span>
                         <div>
-                          <p className="text-sm font-semibold">Depuis votre appareil</p>
+                          <p className="text-sm font-semibold">{dict.aiCreatePage.fromDevice}</p>
                           <p className="text-[11px] text-muted-foreground mt-1">
-                            Glissez ou cliquez (3 à 4 images)
+                            {dict.aiCreatePage.dragOrClick}
                           </p>
                         </div>
                       </div>
 
                       <div className="relative text-center">
                         <span className="absolute left-0 top-1/2 h-px w-full bg-border" />
-                        <span className="relative bg-card px-2 text-[10px] uppercase tracking-wider text-muted-foreground font-bold">OU</span>
+                        <span className="relative bg-card px-2 text-[10px] uppercase tracking-wider text-muted-foreground font-bold">{dict.aiCreatePage.orDivider}</span>
                       </div>
 
                       <button
@@ -1130,7 +1156,7 @@ function ProduitIaPage() {
                         className="w-full inline-flex justify-center items-center gap-2 rounded-[8px] border border-border bg-background px-4 py-2.5 text-sm font-semibold hover:bg-muted transition-colors shadow-sm"
                       >
                         <Images className="h-4 w-4 text-muted-foreground" />
-                        Choisir dans la galerie
+                        {dict.aiCreatePage.pickFromGallery}
                       </button>
                     </div>
                   ) : (
@@ -1152,7 +1178,7 @@ function ProduitIaPage() {
                           <button
                             type="button"
                             onClick={() => setGalleryPickerOpen(true)}
-                            title="Ajouter depuis la galerie"
+                            title={dict.aiCreatePage.addFromGallery}
                             className="grid h-20 w-20 place-items-center rounded-[8px] border border-dashed border-border bg-muted/30 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
                           >
                             <Plus className="h-5 w-5" />
@@ -1167,7 +1193,7 @@ function ProduitIaPage() {
                         className="btn-3d w-full h-11 inline-flex justify-center items-center gap-2 rounded-[8px] text-sm font-semibold bg-zinc-800 text-white hover:bg-zinc-700 disabled:opacity-60"
                       >
                         {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
-                        Continuer ({images.length} image{images.length > 1 ? "s" : ""})
+                        {dict.aiCreatePage.continueWithImages} ({images.length} {images.length > 1 ? (isEn ? "images" : "images") : (isEn ? "image" : "image")})
                       </button>
                     </div>
                   )}
@@ -2106,10 +2132,10 @@ function ProduitIaPage() {
 
           <DialogHeader className="space-y-2 text-center sm:text-center mt-2">
             <DialogTitle className="text-xl font-bold tracking-tight text-foreground text-center">
-              Quitter la création ?
+              {dict.aiCreatePage.exitTitle}
             </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground text-center max-w-xs mx-auto leading-relaxed">
-              Ton produit n'est pas encore créé. Si tu quittes maintenant, tes images et tes infos seront perdues.
+              {dict.aiCreatePage.exitDesc}
             </DialogDescription>
           </DialogHeader>
 
@@ -2122,14 +2148,14 @@ function ProduitIaPage() {
               }}
               className="inline-flex h-10 items-center justify-center rounded-[6px] border border-border bg-background px-6 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer"
             >
-              Quitter
+              {dict.aiCreatePage.exitCancel}
             </button>
             <button
               type="button"
               onClick={() => blocker.reset?.()}
               className="btn-3d inline-flex h-10 items-center justify-center rounded-[6px] px-6 text-sm font-semibold cursor-pointer"
             >
-              Continuer la création
+              {dict.aiCreatePage.exitConfirm}
             </button>
           </div>
         </DialogContent>

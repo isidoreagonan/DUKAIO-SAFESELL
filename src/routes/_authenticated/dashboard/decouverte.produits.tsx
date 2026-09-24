@@ -41,6 +41,7 @@ import {
   type ProductFilters,
 } from "@/lib/discovery";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 const productSearchSchema = z.object({
   category: z.string().optional().catch(undefined),
@@ -214,9 +215,14 @@ function DiscoveryProductsPage() {
     refreshPrices.mutate(missing);
   }, [session, products, refreshPrices]);
 
-  const set = <K extends keyof ProductFilters>(key: K, value: ProductFilters[K]) =>
-    setFilters((prev) => ({ ...prev, [key]: value }));
+  const { dict } = useI18n();
 
+  const presets = [
+    { value: "traction" as const, label: dict.discoveryPage.recommended, icon: Star, tone: "text-amber-500" },
+    { value: "ads" as const, label: dict.discoveryPage.activeAds, icon: Megaphone, tone: "text-blue-500" },
+    { value: "duration" as const, label: "Longue diffusion", icon: Flame, tone: "text-orange-500" },
+    { value: "price" as const, label: "Panier élevé", icon: Coins, tone: "text-emerald-600" },
+  ];
 
   return (
     <DashboardShell>
@@ -244,12 +250,12 @@ function DiscoveryProductsPage() {
           value: term,
           onChange: setTerm,
           onSubmit: () => set("search", term.trim() || undefined),
-          placeholder: "Rechercher un produit : brosse, cheveux, téléphone, casserole…",
+          placeholder: dict.discoveryPage.searchProducts,
         }}
         presets={{
           value: filters.sort ?? "traction",
           onChange: (value) => set("sort", value),
-          options: PRESETS,
+          options: presets,
         }}
         sorts={{ value: filters.sort ?? "traction", onChange: (value) => set("sort", value), options: SORTS }}
         onReset={() => {

@@ -43,7 +43,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth, displayName, initials } from "@/hooks/use-auth";
 import { AiJobBanner } from "@/components/dashboard/ai-job-banner";
 import { NotificationsBell } from "@/components/dashboard/notifications";
-import { useStore } from "@/lib/store";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
+import { useI18n } from "@/lib/i18n";
+import { useStore, useCurrentRole } from "@/lib/store";
 import { storeUrl } from "@/lib/storefront";
 import { StoreSwitcher } from "@/components/dashboard/store-switcher";
 import { useIsAdmin } from "@/lib/admin";
@@ -64,49 +66,118 @@ type NavItem = {
   children?: NavItem[];
 };
 
-const mainNav: NavItem[] = [
-  { title: "Accueil", icon: LayoutGrid, to: "/dashboard", exact: true },
-  
-  {
-    title: "Produits",
-    icon: Package,
-    to: "/dashboard/produits",
-    children: [
-      { title: "Créer avec DUKAIO IA", icon: Sparkles, to: "/dashboard/produits/ia" },
-      { title: "Mes Produits", icon: Package, to: "/dashboard/produits", exact: true },
-    ],
+function getNavItems(
+  dict: import("@/lib/i18n").TranslationDictionary,
+  roleInfo?: {
+    isOwner: boolean;
+    role: "owner" | "admin" | "closer" | "products" | "courier";
+    permissions: string[];
+    can: (p: string) => boolean;
   },
-  {
-    title: "Commandes",
-    icon: ClipboardList,
-    to: "/dashboard/commandes",
-    children: [
-      { title: "Mes Commandes", icon: ClipboardList, to: "/dashboard/commandes", exact: true },
-      { title: "Paniers abandonnés", icon: ShoppingCart, to: "/dashboard/commandes/paniers" },
-    ],
-  },
-  { title: "Marketing", icon: Megaphone, to: "/dashboard/marketing", badge: "NEW" },
-  { title: "Clients", icon: Users, to: "/dashboard/clients" },
-  { title: "Analyses", icon: BarChart3, to: "/dashboard/analyses" },
-  {
-    title: "Découverte",
-    icon: Compass,
-    badge: "NEW",
-    to: "/dashboard/decouverte/boutiques",
-    children: [
-      { title: "Boutiques", icon: Store, to: "/dashboard/decouverte/boutiques" },
-      { title: "Produits", icon: Package, to: "/dashboard/decouverte/produits" },
-      { title: "Publicités", icon: Megaphone, to: "/dashboard/decouverte/publicites" },
-    ],
-  },
-  { title: "Mes favoris", icon: Heart, to: "/dashboard/decouverte/favoris" },
-  { title: "Ma boutique", icon: Store, to: "/dashboard/boutique" },
-];
+): {
+  mainNav: NavItem[];
+  accountNav: NavItem[];
+} {
+  const isCourier = roleInfo?.role === "courier";
+  const isCloser = roleInfo?.role === "closer";
+  const isProducts = roleInfo?.role === "products";
+  const isOwner = roleInfo?.isOwner !== false;
+  const isAdmin = isOwner || roleInfo?.role === "admin";
 
-const accountNav: NavItem[] = [
-  { title: "Équipe", icon: UsersRound, to: "/dashboard/equipe" },
-  { title: "Abonnement", icon: Crown, to: "/dashboard/parametres", search: { tab: "abonnement" }, badge: "PLAN" },
-];
+  let mainNav: NavItem[] = [];
+
+  if (isCourier) {
+    // Le livreur gère uniquement les commandes et livraisons
+    mainNav = [
+      { title: dict.dashboardNav.orders, icon: ClipboardList, to: "/dashboard/commandes", exact: true },
+    ];
+  } else if (isCloser) {
+    // Le closer appelle les clients et confirme les commandes
+    mainNav = [
+      { title: dict.dashboardNav.home, icon: LayoutGrid, to: "/dashboard", exact: true },
+      {
+        title: dict.dashboardNav.orders,
+        icon: ClipboardList,
+        to: "/dashboard/commandes",
+        children: [
+          { title: dict.dashboardNav.myOrders, icon: ClipboardList, to: "/dashboard/commandes", exact: true },
+          { title: dict.dashboardNav.abandonedCarts, icon: ShoppingCart, to: "/dashboard/commandes/paniers" },
+        ],
+      },
+      { title: dict.dashboardNav.customers, icon: Users, to: "/dashboard/clients" },
+    ];
+  } else if (isProducts) {
+    // Le gestionnaire produits gère le catalogue et la vitrine
+    mainNav = [
+      { title: dict.dashboardNav.home, icon: LayoutGrid, to: "/dashboard", exact: true },
+      {
+        title: dict.dashboardNav.products,
+        icon: Package,
+        to: "/dashboard/produits",
+        children: [
+          { title: dict.dashboardNav.createAi, icon: Sparkles, to: "/dashboard/produits/ia" },
+          { title: dict.dashboardNav.myProducts, icon: Package, to: "/dashboard/produits", exact: true },
+        ],
+      },
+      { title: dict.dashboardNav.myStore, icon: Store, to: "/dashboard/boutique" },
+    ];
+  } else {
+    // Propriétaire ou administrateur complet
+    mainNav = [
+      { title: dict.dashboardNav.home, icon: LayoutGrid, to: "/dashboard", exact: true },
+      {
+        title: dict.dashboardNav.products,
+        icon: Package,
+        to: "/dashboard/produits",
+        children: [
+          { title: dict.dashboardNav.createAi, icon: Sparkles, to: "/dashboard/produits/ia" },
+          { title: dict.dashboardNav.myProducts, icon: Package, to: "/dashboard/produits", exact: true },
+        ],
+      },
+      {
+        title: dict.dashboardNav.orders,
+        icon: ClipboardList,
+        to: "/dashboard/commandes",
+        children: [
+          { title: dict.dashboardNav.myOrders, icon: ClipboardList, to: "/dashboard/commandes", exact: true },
+          { title: dict.dashboardNav.abandonedCarts, icon: ShoppingCart, to: "/dashboard/commandes/paniers" },
+        ],
+      },
+      { title: dict.dashboardNav.marketing, icon: Megaphone, to: "/dashboard/marketing", badge: "NEW" },
+      { title: dict.dashboardNav.customers, icon: Users, to: "/dashboard/clients" },
+      { title: dict.dashboardNav.analytics, icon: BarChart3, to: "/dashboard/analyses" },
+      {
+        title: dict.dashboardNav.discovery,
+        icon: Compass,
+        badge: "NEW",
+        to: "/dashboard/decouverte/boutiques",
+        children: [
+          { title: dict.dashboardNav.stores, icon: Store, to: "/dashboard/decouverte/boutiques" },
+          { title: dict.dashboardNav.products, icon: Package, to: "/dashboard/decouverte/produits" },
+          { title: dict.dashboardNav.ads, icon: Megaphone, to: "/dashboard/decouverte/publicites" },
+        ],
+      },
+      { title: dict.dashboardNav.favorites, icon: Heart, to: "/dashboard/decouverte/favoris" },
+      { title: dict.dashboardNav.myStore, icon: Store, to: "/dashboard/boutique" },
+    ];
+  }
+
+  // Équipe et Facturation réservés aux propriétaires et administrateurs
+  const accountNav: NavItem[] = isAdmin
+    ? [
+        { title: dict.dashboardNav.team, icon: UsersRound, to: "/dashboard/equipe" },
+        {
+          title: dict.dashboardNav.subscription,
+          icon: Crown,
+          to: "/dashboard/parametres",
+          search: { tab: "abonnement" },
+          badge: "PLAN",
+        },
+      ]
+    : [];
+
+  return { mainNav, accountNav };
+}
 
 function isActivePath(pathname: string, to: string, exact?: boolean, search?: Record<string, unknown>, currentSearch?: string) {
   if (to === "/dashboard/parametres") {
@@ -170,6 +241,7 @@ function PlanBadge({ compact = false, className }: { compact?: boolean; classNam
 function TopUserMenu() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { dict } = useI18n();
   const name = displayName(user);
   const { data: isAdmin } = useIsAdmin();
   const { plan, trialing, trialDaysLeft } = useAiAccess();
@@ -178,7 +250,7 @@ function TopUserMenu() {
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    toast.success("Déconnecté");
+    toast.success(dict.dashboard.logout);
     void navigate({ to: "/login" });
   };
 
@@ -230,21 +302,21 @@ function TopUserMenu() {
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link to="/dashboard/parametres" className="cursor-pointer">
-            <User className="mr-2 h-4 w-4" /> Mon profil
+            <User className="mr-2 h-4 w-4" /> {dict.dashboard.profile}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link to="/dashboard/parametres" search={{ tab: "abonnement" }} className="cursor-pointer">
-            <Crown className="mr-2 h-4 w-4" /> Abonnement
+            <Crown className="mr-2 h-4 w-4" /> {dict.dashboard.subscription}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link to="/dashboard/parametres" className="cursor-pointer">
-            <Settings className="mr-2 h-4 w-4" /> Paramètres
+            <Settings className="mr-2 h-4 w-4" /> {dict.dashboard.settings}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={startTour} className="cursor-pointer">
-          <Compass className="mr-2 h-4 w-4" /> Revoir la visite guidée
+          <Compass className="mr-2 h-4 w-4" /> {dict.dashboard.restartTour}
         </DropdownMenuItem>
         {isAdmin ? (
           <DropdownMenuItem asChild>
@@ -255,7 +327,7 @@ function TopUserMenu() {
         ) : null}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={signOut} className="cursor-pointer text-destructive focus:text-destructive">
-          <LogOut className="mr-2 h-4 w-4" /> Se déconnecter
+          <LogOut className="mr-2 h-4 w-4" /> {dict.dashboard.logout}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -427,11 +499,12 @@ function SidebarUser({
 }) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { dict } = useI18n();
   const name = displayName(user);
   const signOut = async () => {
     await supabase.auth.signOut();
     onNavigate?.();
-    toast.success("Déconnecté");
+    toast.success(dict.dashboard.logout);
     void navigate({ to: "/login" });
   };
 
@@ -453,21 +526,21 @@ function SidebarUser({
             <Link
               to="/dashboard/parametres"
               onClick={onNavigate}
-              aria-label="Paramètres"
+              aria-label={dict.dashboard.settings}
               className="grid h-10 w-full cursor-pointer place-items-center rounded-[10px] text-chrome-muted transition-colors hover:bg-chrome-accent hover:text-chrome-accent-foreground"
             >
               <Settings className="h-5 w-5" />
             </Link>
           </TooltipTrigger>
           <TooltipContent side="right" className="text-xs">
-            Paramètres
+            {dict.dashboard.settings}
           </TooltipContent>
         </Tooltip>
         <Tooltip delayDuration={100}>
           <TooltipTrigger asChild>
             <button
               type="button"
-              aria-label="Centre d'aide"
+              aria-label={dict.dashboard.helpCenter}
               onClick={onOpenHelpWelcome}
               className="grid h-10 w-full cursor-pointer place-items-center rounded-[10px] text-chrome-muted transition-colors hover:bg-chrome-accent hover:text-chrome-accent-foreground"
             >
@@ -475,14 +548,17 @@ function SidebarUser({
             </button>
           </TooltipTrigger>
           <TooltipContent side="right" className="text-xs">
-            Centre d'aide
+            {dict.dashboard.helpCenter}
           </TooltipContent>
         </Tooltip>
+        <div className="flex justify-center py-0.5">
+          <LanguageSwitcher variant="minimal" className="h-8 px-1 text-[11px]" />
+        </div>
         <Tooltip delayDuration={100}>
           <TooltipTrigger asChild>
             <button
               type="button"
-              aria-label="Déconnexion"
+              aria-label={dict.dashboard.logout}
               onClick={signOut}
               className="grid h-10 w-full cursor-pointer place-items-center rounded-[10px] text-destructive transition-colors hover:bg-chrome-accent"
             >
@@ -490,7 +566,7 @@ function SidebarUser({
             </button>
           </TooltipTrigger>
           <TooltipContent side="right" className="text-xs">
-            Déconnexion
+            {dict.dashboard.logout}
           </TooltipContent>
         </Tooltip>
       </div>
@@ -515,14 +591,14 @@ function SidebarUser({
             <Link
               to="/dashboard/parametres"
               onClick={onNavigate}
-              aria-label="Paramètres"
+              aria-label={dict.dashboard.settings}
               className="grid h-7 w-7 shrink-0 cursor-pointer place-items-center rounded-[4px] text-chrome-muted transition-colors hover:bg-chrome-accent hover:text-chrome-foreground"
             >
               <Settings className="h-4 w-4" />
             </Link>
           </TooltipTrigger>
           <TooltipContent side="top" className="text-xs">
-            Paramètres
+            {dict.dashboard.settings}
           </TooltipContent>
         </Tooltip>
       </div>
@@ -532,17 +608,18 @@ function SidebarUser({
         className="flex h-8 w-full cursor-pointer items-center gap-2.5 rounded-[5px] px-2 text-[13px] font-semibold text-chrome-muted transition-colors hover:bg-chrome-accent hover:text-chrome-accent-foreground"
       >
         <LogOut className="h-4 w-4" />
-        <span>Déconnexion</span>
+        <span>{dict.dashboard.logout}</span>
       </button>
       <button
         type="button"
-        aria-label="Centre d'aide"
+        aria-label={dict.dashboard.helpCenter}
         onClick={onOpenHelpWelcome}
         className="flex h-8 w-full cursor-pointer items-center gap-2.5 rounded-[5px] px-2 text-[13px] font-semibold text-chrome-muted transition-colors hover:bg-chrome-accent hover:text-chrome-accent-foreground"
       >
         <LifeBuoy className="h-4 w-4" />
-        <span>Centre d'aide</span>
+        <span>{dict.dashboard.helpCenter}</span>
       </button>
+      <LanguageSwitcher variant="sidebar" />
     </div>
   );
 }
@@ -559,12 +636,15 @@ export function NavContent({
   onOpenHelpWelcome?: (() => void) | undefined;
 }) {
   const { pathname, search: searchString } = useLocation();
+  const { dict } = useI18n();
+  const roleInfo = useCurrentRole();
+  const { mainNav, accountNav } = useMemo(() => getNavItems(dict, roleInfo), [dict, roleInfo]);
   const groups = useMemo(
     () => [
-      { label: "Vente", items: mainNav },
-      { label: "Compte", items: accountNav },
+      { label: dict.dashboardNav.salesGroup, items: mainNav },
+      ...(accountNav.length > 0 ? [{ label: dict.dashboardNav.accountGroup, items: accountNav }] : []),
     ],
-    [],
+    [dict, mainNav, accountNav],
   );
 
   const [openAccordion, setOpenAccordion] = useState<string | null>(null);
@@ -718,6 +798,7 @@ function TrialBanner() {
 
 function HeaderSearch() {
   const navigate = useNavigate();
+  const { dict } = useI18n();
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -772,7 +853,7 @@ function HeaderSearch() {
             setQuery(e.target.value);
             if (!open) setOpen(true);
           }}
-          placeholder="Rechercher produit, commande, client…"
+          placeholder={dict.dashboard.searchPlaceholder}
           className="h-10 w-full rounded-[6px] border border-border bg-white pl-9 pr-8 text-sm text-foreground outline-none placeholder:text-muted-foreground transition-colors focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
         />
         {query.trim() ? (
@@ -836,7 +917,7 @@ function HeaderSearch() {
           ) : (
             <div className="p-2 space-y-1">
               <p className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                Accès rapide
+                {dict.dashboard.quickAccess}
               </p>
               <div className="grid grid-cols-2 gap-1">
                 <button
@@ -845,7 +926,7 @@ function HeaderSearch() {
                   className="flex cursor-pointer items-center gap-2 rounded-[5px] px-2.5 py-2 text-left text-xs font-medium text-foreground hover:bg-muted"
                 >
                   <Sparkles className="h-4 w-4 text-primary shrink-0" />
-                  <span className="truncate">Produits gagnants</span>
+                  <span className="truncate">{dict.dashboardNav.discovery}</span>
                 </button>
                 <button
                   type="button"
@@ -853,7 +934,7 @@ function HeaderSearch() {
                   className="flex cursor-pointer items-center gap-2 rounded-[5px] px-2.5 py-2 text-left text-xs font-medium text-foreground hover:bg-muted"
                 >
                   <Package className="h-4 w-4 text-primary shrink-0" />
-                  <span className="truncate">Créer avec IA</span>
+                  <span className="truncate">{dict.dashboardNav.createAi}</span>
                 </button>
                 <button
                   type="button"
@@ -861,7 +942,7 @@ function HeaderSearch() {
                   className="flex cursor-pointer items-center gap-2 rounded-[5px] px-2.5 py-2 text-left text-xs font-medium text-foreground hover:bg-muted"
                 >
                   <ClipboardList className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <span className="truncate">Mes commandes</span>
+                  <span className="truncate">{dict.dashboardNav.myOrders}</span>
                 </button>
                 <button
                   type="button"
@@ -869,7 +950,7 @@ function HeaderSearch() {
                   className="flex cursor-pointer items-center gap-2 rounded-[5px] px-2.5 py-2 text-left text-xs font-medium text-foreground hover:bg-muted"
                 >
                   <Users className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <span className="truncate">Mes clients</span>
+                  <span className="truncate">{dict.dashboardNav.customers}</span>
                 </button>
               </div>
             </div>
@@ -885,6 +966,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [helpWelcomeOpen, setHelpWelcomeOpen] = useState(false);
   const { data: store } = useStore();
+  const { dict } = useI18n();
   const publicStoreUrl = store?.subdomain
     ? storeUrl(store.subdomain, store.custom_domain)
     : "/dashboard/boutique";
@@ -951,8 +1033,9 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                 className="hidden h-10 cursor-pointer items-center gap-2 rounded-[6px] border border-border bg-white px-3 text-sm font-semibold transition-colors hover:bg-muted xl:inline-flex"
               >
                 <Store className="h-4 w-4 text-primary" />
-                Voir la boutique
+                {dict.dashboard.viewStore}
               </a>
+              <LanguageSwitcher variant="minimal" />
               <NotificationsBell />
               <TopUserMenu />
             </div>

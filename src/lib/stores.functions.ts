@@ -123,3 +123,209 @@ export const notifyAdminStoreCreated = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
+
+/**
+ * Récupère toutes les boutiques accessibles par l'utilisateur connecté :
+ * - Ses propres boutiques (propriétaire)
+ * - Les boutiques où il est membre actif (closer, livreur, gestionnaire, admin)
+ */
+export const getMyStores = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const userId = context.userId;
+
+    // 1. Boutiques possédées par l'utilisateur
+    const { data: owned, error: ownedErr } = await supabaseAdmin
+      .from("store_settings")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: true });
+    if (ownedErr) throw ownedErr;
+
+    // 2. Boutiques où l'utilisateur est membre actif
+    const { data: memberships, error: memberErr } = await supabaseAdmin
+      .from("store_members")
+      .select("role, permissions, store_id, store_settings(*)")
+      .eq("user_id", userId)
+      .eq("status", "active");
+    if (memberErr) throw memberErr;
+
+    const list: Array<
+      any & {
+        isOwner: boolean;
+        memberRole: "owner" | "admin" | "closer" | "products" | "courier";
+        memberPermissions: string[];
+      }
+    > = [];
+
+    for (const store of owned ?? []) {
+      list.push({
+        ...store,
+        isOwner: true,
+        memberRole: "owner",
+        memberPermissions: ["*"],
+      });
+    }
+
+    for (const m of memberships ?? []) {
+      const s = m.store_settings as any;
+      if (s && !list.some((existing) => existing.id === s.id)) {
+        list.push({
+          ...s,
+          isOwner: false,
+          memberRole: m.role as "admin" | "closer" | "products" | "courier",
+          memberPermissions: m.permissions ?? [],
+        });
+      }
+    }
+
+    return list;
+  });
+
+/**
+ * Récupère les commandes d'une boutique pour le propriétaire OU un membre d'équipe autorisé.
+ */
+export const getStoreOrders = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ storeId: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const userId = context.userId;
+
+    // Vérifie les droits d'accès
+    const { data: store } = await supabaseAdmin
+      .from("store_settings")
+      .select("id, user_id")
+      .eq("id", data.storeId)
+      .maybeSingle();
+    if (!store) throw new Error("Boutique introuvable");
+
+    const isOwner = store.user_id === userId;
+    if (!isOwner) {
+      const { data: member } = await supabaseAdmin
+        .from("store_members")
+        .select("role, permissions, status")
+        .eq("store_id", data.storeId)
+        .eq("user_id", userId)
+        .eq("status", "active")
+        .maybeSingle();
+      if (!member) throw new Error("Accès refusé à cette boutique");
+    }
+
+    const { data: orders, error } = await supabaseAdmin
+      .from("orders")
+      .select("*")
+      .eq("store_id", data.storeId)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return orders ?? [];
+  });
+
+/**
+ * Met à jour le statut d'une commande par le propriétaire OU un membre autorisé (closer, livreur, etc.).
+ */
+export const updateStoreOrderStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        orderId: z.string().uuid(),
+        status: z.enum([
+          "pending",
+          "processing",
+          "scheduled",
+          "shipping",
+          "completed",
+          "cancelled",
+          "refunded",
+          "unreachable",
+          "in_escrow",
+        ]),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const userId = context.userId;
+
+    const { data: order } = await supabaseAdmin
+      .from("orders")
+      .select("id, store_id, user_id")
+      .eq("id", data.orderId)
+      .maybeSingle();
+    if (!order) throw new Error("Commande introuvable");
+
+    const isOwner = order.user_id === userId;
+    if (!isOwner) {
+      const { data: member } = await supabaseAdmin
+        .from("store_members")
+        .select("role, permissions, status")
+        .eq("store_id", order.store_id)
+        .eq("user_id", userId)
+        .eq("status", "active")
+        .maybeSingle();
+      if (!member) throw new Error("Accès refusé");
+      const canUpdate =
+        member.role === "admin" ||
+        member.role === "closer" ||
+        member.role === "courier" ||
+        (member.permissions &&
+          (member.permissions.includes("orders") ||
+            member.permissions.includes("delivery") ||
+            member.permissions.includes("orders.write")));
+      if (!canUpdate) throw new Error("Vous n'avez pas la permission de modifier le statut de cette commande");
+    }
+
+    const updatePayload: Record<string, unknown> = { status: data.status };
+    if (data.status === "completed") {
+      updatePayload.escrow_released_at = new Date().toISOString();
+    }
+
+    const { error } = await supabaseAdmin.from("orders").update(updatePayload).eq("id", data.orderId);
+    if (error) throw error;
+
+    // Envoi silencieux de l'e-mail de statut si possible
+    try {
+      const { notifyOrderStatus } = await import("@/lib/order-emails.functions");
+      await notifyOrderStatus({ data: { orderId: data.orderId, status: data.status } });
+    } catch {
+      // Non bloquant
+    }
+
+    return { success: true };
+  });
+
+/**
+ * Récupère les articles d'une commande pour le propriétaire OU un membre autorisé.
+ */
+export const getStoreOrderItems = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ orderId: z.string().uuid() }).parse(data))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: items, error } = await supabaseAdmin
+      .from("order_items")
+      .select("*")
+      .eq("order_id", data.orderId)
+      .order("created_at", { ascending: true });
+    if (error) throw error;
+    return items ?? [];
+  });
+
+/**
+ * Récupère les produits d'une boutique pour le propriétaire OU un membre autorisé.
+ */
+export const getStoreProducts = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ storeId: z.string().uuid() }).parse(data))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: products, error } = await supabaseAdmin
+      .from("products")
+      .select("*")
+      .eq("store_id", data.storeId)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return products ?? [];
+  });

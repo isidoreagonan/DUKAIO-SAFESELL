@@ -73,6 +73,8 @@ function paletteGlobal(store: StoreSettings): GlobalSettings {
   const legacy = (store.theme_config as { global?: Partial<GlobalSettings> } | null)?.global ?? {};
   return {
     ...defaultGlobal,
+    logoUrl: store.logo_url || (typeof legacy.logoUrl === "string" ? legacy.logoUrl : defaultGlobal.logoUrl),
+    faviconUrl: store.favicon_url || (typeof legacy.faviconUrl === "string" ? legacy.faviconUrl : defaultGlobal.faviconUrl),
     primaryColor: palette.primaryColor,
     softColor: palette.softColor,
     paleColor: palette.paleColor,
@@ -135,7 +137,11 @@ export function readThemeConfig(store: StoreSettings, products: Product[]): Them
   const base = personalizedTheme(store, products);
   if (isThemeConfig(raw)) {
     return {
-      global: raw.global,
+      global: {
+        ...raw.global,
+        logoUrl: raw.global?.logoUrl || store.logo_url || "",
+        faviconUrl: raw.global?.faviconUrl || store.favicon_url || "",
+      },
       chrome: raw.chrome,
       pages: {
         home: raw.pages.home,

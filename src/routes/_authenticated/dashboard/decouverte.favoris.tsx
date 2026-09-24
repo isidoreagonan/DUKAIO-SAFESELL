@@ -4,6 +4,7 @@ import { BarChart3, ExternalLink, Heart, ImageOff, Loader2, Megaphone, Package, 
 import { DashboardShell } from "@/components/dashboard/shell";
 import { AdAnalysisDialog } from "@/components/discovery/analysis-dialog";
 import { FAVORITES_LIMIT, useFavorites, useRemoveFavorite, type Favorite, type FavoriteKind } from "@/lib/favorites";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/dashboard/decouverte/favoris")({
   head: () => ({
@@ -26,10 +27,10 @@ export const Route = createFileRoute("/_authenticated/dashboard/decouverte/favor
   component: FavoritesPage,
 });
 
-const SECTIONS: { kind: FavoriteKind; title: string; icon: typeof Store }[] = [
-  { kind: "store", title: "Boutiques enregistrées", icon: Store },
-  { kind: "product", title: "Produits enregistrés", icon: Package },
-  { kind: "ad", title: "Publicités enregistrées", icon: Megaphone },
+const SECTIONS_CONFIG: { kind: FavoriteKind; icon: typeof Store }[] = [
+  { kind: "store", icon: Store },
+  { kind: "product", icon: Package },
+  { kind: "ad", icon: Megaphone },
 ];
 
 function FavoriteCard({
@@ -39,6 +40,7 @@ function FavoriteCard({
   item: Favorite;
   onAnalyse: (adId: string) => void;
 }) {
+  const { dict } = useI18n();
   const remove = useRemoveFavorite();
   const { payload } = item;
 
@@ -57,12 +59,12 @@ function FavoriteCard({
           <div className="min-w-0 flex-1">
             <h3 className="line-clamp-2 min-h-[2.1rem] text-sm font-black leading-snug">{payload.title}</h3>
             <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
-              {[payload.subtitle, payload.domain].filter(Boolean).join(" · ") || "Sans détail"}
+              {[payload.subtitle, payload.domain].filter(Boolean).join(" · ") || dict.favoritesPage.noDetails}
             </p>
           </div>
           <button
             type="button"
-            aria-label="Retirer des favoris"
+            aria-label={dict.favoritesPage.removeFavorite}
             onClick={() => remove.mutate(item.id)}
             className="grid h-8 w-8 shrink-0 cursor-pointer place-items-center rounded-[4px] border border-border text-muted-foreground transition-colors hover:border-destructive/40 hover:text-destructive"
           >
@@ -76,12 +78,12 @@ function FavoriteCard({
 
         <dl className="mt-2 hidden grid-cols-2 gap-1.5 text-[10px] sm:grid sm:text-[11px]">
           <div className="rounded-[4px] bg-muted/50 px-2 py-1.5">
-            <dt className="text-muted-foreground">Pubs actives</dt>
+            <dt className="text-muted-foreground">{dict.favoritesPage.activeAds}</dt>
             <dd className="font-black">{payload.activeAds ?? "—"}</dd>
           </div>
           <div className="rounded-[4px] bg-muted/50 px-2 py-1.5">
-            <dt className="text-muted-foreground">Durée</dt>
-            <dd className="font-black">{payload.days ? `${payload.days} j` : "—"}</dd>
+            <dt className="text-muted-foreground">{dict.favoritesPage.duration}</dt>
+            <dd className="font-black">{payload.days ? `${payload.days} ${dict.favoritesPage.daysSuffix}` : "—"}</dd>
           </div>
         </dl>
 
@@ -92,7 +94,7 @@ function FavoriteCard({
               onClick={() => onAnalyse(payload.adId as string)}
               className="btn-3d flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-[6px] px-3 py-2 text-[12px] font-bold"
             >
-              <BarChart3 className="h-3.5 w-3.5" /> Analyse de l'annonce
+              <BarChart3 className="h-3.5 w-3.5" /> {dict.favoritesPage.adAnalysis}
             </button>
           ) : null}
           {payload.link ? (
@@ -102,7 +104,7 @@ function FavoriteCard({
               rel="noreferrer"
               className="flex w-full items-center justify-center gap-1.5 rounded-[6px] border border-border px-3 py-2 text-[12px] font-bold hover:bg-muted"
             >
-              Ouvrir la page <ExternalLink className="h-3 w-3" />
+              {dict.favoritesPage.openPage} <ExternalLink className="h-3 w-3" />
             </a>
           ) : null}
         </div>
@@ -112,16 +114,23 @@ function FavoriteCard({
 }
 
 function FavoritesPage() {
+  const { dict } = useI18n();
   const { data, isLoading } = useFavorites();
   const [openId, setOpenId] = useState<string | null>(null);
   const favorites = data ?? [];
 
+  const sectionTitleMap: Record<FavoriteKind, string> = {
+    store: dict.favoritesPage.savedStores,
+    product: dict.favoritesPage.savedProducts,
+    ad: dict.favoritesPage.savedAds,
+  };
+
   return (
     <DashboardShell>
       <div className="mb-5 border-b border-border pb-3">
-        <h1 className="text-xl font-black tracking-tight sm:text-2xl">Mes favoris</h1>
+        <h1 className="text-xl font-black tracking-tight sm:text-2xl">{dict.favoritesPage.title}</h1>
         <p className="text-[13px] text-muted-foreground sm:text-sm">
-          Les boutiques, produits et publicités que vous avez mis de côté dans la Découverte.
+          {dict.favoritesPage.subtitle}
         </p>
       </div>
 
@@ -132,25 +141,24 @@ function FavoritesPage() {
       ) : favorites.length === 0 ? (
         <div className="rounded-[6px] border border-dashed border-border bg-background px-6 py-14 text-center">
           <Heart className="mx-auto h-7 w-7 text-muted-foreground" />
-          <p className="mt-3 text-base font-black">Aucun favori pour l'instant</p>
+          <p className="mt-3 text-base font-black">{dict.favoritesPage.emptyTitle}</p>
           <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-            Appuyez sur le cœur d'une boutique, d'un produit ou d'une publicité pour la retrouver ici, dans la limite
-            de {FAVORITES_LIMIT} éléments.
+            {dict.favoritesPage.emptyDesc}
           </p>
         </div>
       ) : (
         <div className="space-y-6">
           <p className="text-xs text-muted-foreground">
-            {favorites.length} favori{favorites.length > 1 ? "s" : ""} sur {FAVORITES_LIMIT} possibles
+            {favorites.length} {favorites.length > 1 ? dict.favoritesPage.countPlural : dict.favoritesPage.countSingular} / {FAVORITES_LIMIT}
           </p>
-          {SECTIONS.map((section) => {
+          {SECTIONS_CONFIG.map((section) => {
             const items = favorites.filter((item) => item.kind === section.kind);
             if (items.length === 0) return null;
             return (
               <section key={section.kind}>
                 <h2 className="mb-2.5 flex items-center gap-2 text-sm font-black">
                   <section.icon className="h-4 w-4 text-primary" />
-                  {section.title}
+                  {sectionTitleMap[section.kind]}
                   <span className="rounded-[4px] bg-muted px-1.5 py-0.5 text-[11px] font-bold text-muted-foreground">
                     {items.length}
                   </span>

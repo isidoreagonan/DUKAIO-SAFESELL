@@ -60,17 +60,26 @@ export function MetaOfficialLogo({ className = "h-9 w-auto" }: { className?: str
   );
 }
 
+import { useI18n } from "@/lib/i18n";
+
 export function DiscoveryHeader({ updatedAt }: { updatedAt?: string | null }) {
   const { pathname } = useLocation();
+  const { dict } = useI18n();
+
+  const tabs = [
+    { title: dict.dashboardNav.stores, to: "/dashboard/decouverte/boutiques", icon: Store },
+    { title: dict.dashboardNav.products, to: "/dashboard/decouverte/produits", icon: Package },
+    { title: dict.dashboardNav.ads, to: "/dashboard/decouverte/publicites", icon: Megaphone },
+  ];
 
   const getSubtitle = () => {
     if (pathname.includes("publicites")) {
-      return "Parcourez toutes les publicités disponibles sur la plateforme";
+      return dict.discoveryPage.adsSubtitle;
     }
     if (pathname.includes("boutiques")) {
-      return "Parcourez toutes les boutiques disponibles sur la plateforme";
+      return dict.discoveryPage.storesSubtitle;
     }
-    return "Parcourez tous les produits disponibles sur la plateforme";
+    return dict.discoveryPage.productsSubtitle;
   };
 
   return (
@@ -83,7 +92,7 @@ export function DiscoveryHeader({ updatedAt }: { updatedAt?: string | null }) {
           </div>
           <div>
             <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-              Bibliothèque
+              {dict.dashboardNav.discovery}
             </h1>
             <p className="text-xs text-muted-foreground sm:text-sm">
               {getSubtitle()}
@@ -94,7 +103,7 @@ export function DiscoveryHeader({ updatedAt }: { updatedAt?: string | null }) {
 
       {/* 2. Onglets de Navigation */}
       <div className="flex border-b border-border gap-1 overflow-x-auto">
-        {TABS.map((tab) => {
+        {tabs.map((tab) => {
           const active = pathname.startsWith(tab.to);
           return (
             <Link

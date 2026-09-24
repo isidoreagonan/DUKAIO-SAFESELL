@@ -61,31 +61,70 @@ export async function primaryStore(userId: string) {
  */
 export async function ensureSubscription(userId: string, storeId: string) {
   const db = await adminDb();
+  const isAdmin = await isPlatformAdmin(userId);
+  const { data: userAuth } = await db.auth.admin.getUserById(userId);
+  const isOwnerAdmin =
+    isAdmin || (userAuth?.user?.email ?? "").toLowerCase().trim() === "isidoreagonan@gmail.com";
+
   const { data, error } = await db
     .from("store_subscriptions")
     .select("*")
     .eq("store_id", storeId)
     .maybeSingle();
   if (error) throw new Error(error.message);
-  if (data) return data as unknown as SubscriptionRow;
+
+  if (data) {
+    if (isOwnerAdmin && (data.plan !== "pro" || data.status !== "active")) {
+      const { data: updated } = await db
+        .from("store_subscriptions")
+        .update({
+          plan: "pro",
+          status: "active",
+          period_end: "2099-01-01T00:00:00Z",
+          trial_ends_at: null,
+        })
+        .eq("id", data.id)
+        .select("*")
+        .single();
+      return (updated ?? data) as unknown as SubscriptionRow;
+    }
+    return data as unknown as SubscriptionRow;
+  }
 
   const now = new Date();
   const trialEnds = new Date(now.getTime() + 14 * 86400000);
+
+  const insertData = isOwnerAdmin
+    ? {
+        store_id: storeId,
+        user_id: userId,
+        plan: "pro",
+        status: "active",
+        amount: 0,
+        currency: "XOF",
+        billing_period: "yearly",
+        trial_ends_at: null,
+        period_start: now.toISOString(),
+        period_end: "2099-01-01T00:00:00Z",
+        ai_period_start: now.toISOString(),
+      }
+    : {
+        store_id: storeId,
+        user_id: userId,
+        plan: "starter",
+        status: "active",
+        amount: 0,
+        currency: "XOF",
+        billing_period: "monthly",
+        trial_ends_at: trialEnds.toISOString(),
+        period_start: now.toISOString(),
+        period_end: trialEnds.toISOString(),
+        ai_period_start: now.toISOString(),
+      };
+
   const { data: created, error: insertError } = await db
     .from("store_subscriptions")
-    .insert({
-      store_id: storeId,
-      user_id: userId,
-      plan: "free",
-      status: "trialing",
-      amount: 0,
-      currency: "XOF",
-      billing_period: "monthly",
-      trial_ends_at: trialEnds.toISOString(),
-      period_start: now.toISOString(),
-      period_end: null,
-      ai_period_start: now.toISOString(),
-    })
+    .insert(insertData)
     .select("*")
     .single();
   if (insertError) throw new Error(insertError.message);
@@ -213,17 +252,37 @@ export async function assertQuota(
     return state;
   }
 
-  const { count } = await db
-    .from("store_members")
-    .select("id", { count: "exact", head: true })
-    .eq("store_id", storeId ?? state.storeId)
-    .neq("status", "inactive");
-  if ((count ?? 0) >= state.limits.team)
-    throw new Error(
-      state.limits.team === 0
-        ? `La gestion d'équipe est réservée aux formules payantes.`
-        : `Votre formule ${state.plan.name} autorise ${state.limits.team} membre(s) d'équipe.`,
-    );
+  if (kind === "team") {
+    const { data: userAuth } = await db.auth.admin.getUserById(userId);
+    const email = (userAuth?.user?.email ?? "").toLowerCase().trim();
+    if (email === "isidoreagonan@gmail.com" || (await isPlatformAdmin(userId))) {
+      return state;
+    }
+    if (state.trialing && !state.isTrialExpired) {
+      const { count } = await db
+        .from("store_members")
+        .select("id", { count: "exact", head: true })
+        .eq("store_id", storeId ?? state.storeId)
+        .neq("status", "inactive");
+      if ((count ?? 0) >= 2) {
+        throw new Error("L'essai gratuit autorise jusqu'à 2 membres d'équipe pour tester.");
+      }
+      return state;
+    }
+
+    const { count } = await db
+      .from("store_members")
+      .select("id", { count: "exact", head: true })
+      .eq("store_id", storeId ?? state.storeId)
+      .neq("status", "inactive");
+    if ((count ?? 0) >= state.limits.team)
+      throw new Error(
+        state.limits.team === 0
+          ? `La gestion d'équipe est réservée aux formules payantes.`
+          : `Votre formule ${state.plan.name} autorise ${state.limits.team} membre(s) d'équipe.`,
+      );
+    return state;
+  }
   return state;
 }
 

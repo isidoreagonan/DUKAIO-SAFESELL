@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ArrowRight,
   Lock,
@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { useDashboardStats, useStore, type Order } from "@/lib/store";
 import { useAuth, displayName } from "@/hooks/use-auth";
 import { useDiscoveryAccess } from "@/lib/entitlements";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/dashboard/")({
   head: () => ({
@@ -102,6 +103,7 @@ const DISCOVERY_CATEGORIES: {
 function DashboardHomePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { dict, isEn } = useI18n();
   const { data: store } = useStore();
   const { data: stats } = useDashboardStats(7);
   const discoveryAccess = useDiscoveryAccess();
@@ -109,7 +111,19 @@ function DashboardHomePage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
-  const firstName = displayName(user).split(" ")[0] || "Vendeur";
+  const firstName = displayName(user).split(" ")[0] || (isEn ? "Seller" : "Vendeur");
+
+  const categories = useMemo(
+    () => [
+      { ...DISCOVERY_CATEGORIES[0], title: dict.dashboardHome.womenFashion },
+      { ...DISCOVERY_CATEGORIES[1], title: dict.dashboardHome.menFashion },
+      { ...DISCOVERY_CATEGORIES[2], title: dict.dashboardHome.electronics },
+      { ...DISCOVERY_CATEGORIES[3], title: dict.dashboardHome.homeKitchen },
+      { ...DISCOVERY_CATEGORIES[4], title: dict.dashboardHome.beautyCare },
+      { ...DISCOVERY_CATEGORIES[5], title: dict.dashboardHome.allAds },
+    ],
+    [dict],
+  );
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -143,10 +157,13 @@ function DashboardHomePage() {
               </span>
               <div>
                 <p className="text-xs font-bold sm:text-sm">
-                  {pendingCount} commande{pendingCount > 1 ? "s" : ""} en attente de confirmation téléphonique (COD)
+                  {pendingCount}{" "}
+                  {pendingCount > 1
+                    ? dict.dashboardHome.pendingAlertPlural
+                    : dict.dashboardHome.pendingAlertSingular}
                 </p>
                 <p className="text-[11px] text-amber-900/80 dark:text-amber-300/80">
-                  Validez la livraison pour maximiser votre taux d'encaissement.
+                  {dict.dashboardHome.pendingAlertSubtitle}
                 </p>
               </div>
             </div>
@@ -154,7 +171,7 @@ function DashboardHomePage() {
               to="/dashboard/commandes"
               className="inline-flex items-center gap-1.5 rounded-[6px] bg-amber-600 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-amber-700"
             >
-              <span>Traiter</span>
+              <span>{dict.dashboardHome.processButton}</span>
               <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
@@ -165,10 +182,10 @@ function DashboardHomePage() {
         {/* ====================================================================== */}
         <div className="mx-auto max-w-2xl text-center space-y-2.5 pt-2 sm:pt-4">
           <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl lg:text-[32px]">
-            Trouvons votre prochain produit gagnant
+            {dict.dashboardHome.heroTitle}
           </h1>
           <p className="text-xs text-muted-foreground sm:text-sm">
-            Bienvenue, {firstName} · Recherchez parmi 1 100+ publicités gagnantes ou créez avec l'IA
+            {dict.dashboardHome.welcomePrefix}, {firstName} · {dict.dashboardHome.heroSubtitle}
           </p>
 
           <form onSubmit={handleSearchSubmit} className="relative pt-1 sm:pt-2">
@@ -180,7 +197,7 @@ function DashboardHomePage() {
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="ex : montre, sérum visage, écouteurs sans fil, masseur..."
+                placeholder={dict.dashboardHome.searchPlaceholder}
                 className="w-full bg-transparent px-2.5 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
               />
               {!discoveryAccess.loading && !discoveryAccess.allowed && (
@@ -202,7 +219,7 @@ function DashboardHomePage() {
                 ) : (
                   <Search className="h-3 w-3" />
                 )}
-                <span className="hidden sm:inline">Chercher</span>
+                <span className="hidden sm:inline">{dict.dashboardHome.searchButton}</span>
               </button>
             </div>
           </form>
@@ -215,24 +232,21 @@ function DashboardHomePage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <h2 className="text-sm font-bold text-foreground sm:text-base">
-                Découvrir des produits à vendre
+                {dict.dashboardHome.discoverTitle}
               </h2>
-              <span className="hidden sm:inline-block text-xs text-muted-foreground">
-                (Afrique francophone & international)
-              </span>
             </div>
             <Link
               to="/dashboard/decouverte/produits"
               className="inline-flex items-center gap-1 text-xs font-semibold text-primary transition-colors hover:underline"
             >
-              <span>Tout explorer</span>
+              <span>{dict.dashboardHome.seeAll}</span>
               <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
 
           {/* Grille desktop compacte / Scroll horizontal tactile fluide sur mobile */}
           <div className="flex gap-2.5 overflow-x-auto pb-1.5 pt-0.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden sm:grid sm:grid-cols-3 sm:overflow-visible sm:pb-0 lg:grid-cols-6">
-            {DISCOVERY_CATEGORIES.map((item) => (
+            {categories.map((item) => (
               <Link
                 key={item.title}
                 to={item.to}
@@ -274,7 +288,7 @@ function DashboardHomePage() {
         {/* ====================================================================== */}
         <section className="space-y-2.5">
           <h2 className="text-sm font-bold text-foreground sm:text-base">
-            Démarrage rapide
+            {dict.dashboardHome.quickStartTitle}
           </h2>
 
           <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
@@ -283,22 +297,22 @@ function DashboardHomePage() {
               <div className="min-w-0 space-y-1">
                 <div className="flex items-center gap-1.5">
                   <span className="inline-flex items-center gap-1 rounded-[4px] bg-primary/10 px-2 py-0.5 text-[10px] font-black uppercase text-primary">
-                    <Sparkles className="h-2.5 w-2.5" /> IA DUKAIO
+                    <Sparkles className="h-2.5 w-2.5" /> {dict.dashboardHome.aiCardBadge}
                   </span>
-                  <span className="text-[11px] font-medium text-muted-foreground">10s chrono</span>
+                  <span className="text-[11px] font-medium text-muted-foreground">{dict.dashboardHome.aiCardTime}</span>
                 </div>
                 <h3 className="text-xs font-bold text-foreground sm:text-sm truncate">
-                  Générer une page produit avec l'IA
+                  {dict.dashboardHome.aiCardTitle}
                 </h3>
                 <p className="text-[11px] text-muted-foreground line-clamp-1">
-                  Argumentaire percutant, avis clients & visuels COD prêts à vendre.
+                  {dict.dashboardHome.aiCardDesc}
                 </p>
               </div>
               <Link
                 to="/dashboard/produits/ia"
                 className="inline-flex shrink-0 items-center gap-1.5 rounded-[6px] bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground shadow-2xs transition-opacity hover:opacity-90"
               >
-                <span>Créer</span>
+                <span>{dict.dashboardHome.aiCardButton}</span>
                 <ArrowRight className="h-3 w-3" />
               </Link>
             </div>
@@ -308,15 +322,15 @@ function DashboardHomePage() {
               <div className="min-w-0 space-y-1">
                 <div className="flex items-center gap-1.5">
                   <span className="inline-flex items-center gap-1 rounded-[4px] bg-secondary px-2 py-0.5 text-[10px] font-black uppercase text-secondary-foreground">
-                    <Package className="h-2.5 w-2.5" /> Stock direct
+                    <Package className="h-2.5 w-2.5" /> {dict.dashboardHome.manualCardBadge}
                   </span>
-                  <span className="text-[11px] font-medium text-muted-foreground">Manuel</span>
+                  <span className="text-[11px] font-medium text-muted-foreground">{dict.dashboardHome.manualCardType}</span>
                 </div>
                 <h3 className="text-xs font-bold text-foreground sm:text-sm truncate">
-                  Ajouter vos propres produits
+                  {dict.dashboardHome.manualCardTitle}
                 </h3>
                 <p className="text-[11px] text-muted-foreground line-clamp-1">
-                  Ajoutez vos photos, vos variantes et fixez vos prix en FCFA.
+                  {dict.dashboardHome.manualCardDesc}
                 </p>
               </div>
               <Link
@@ -324,7 +338,7 @@ function DashboardHomePage() {
                 className="inline-flex shrink-0 items-center gap-1.5 rounded-[6px] border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground shadow-2xs transition-colors hover:bg-muted"
               >
                 <Plus className="h-3 w-3" />
-                <span>Ajouter</span>
+                <span>{dict.dashboardHome.manualCardButton}</span>
               </Link>
             </div>
           </div>
@@ -335,7 +349,7 @@ function DashboardHomePage() {
         {/* ====================================================================== */}
         <section className="space-y-2.5">
           <h2 className="text-sm font-bold text-foreground sm:text-base">
-            Configuration de votre boutique
+            {dict.dashboardHome.storeSetupTitle}
           </h2>
 
           <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
@@ -349,12 +363,12 @@ function DashboardHomePage() {
                   <Palette className="h-4 w-4" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-foreground truncate">Design de boutique</p>
-                  <p className="text-[10px] text-muted-foreground truncate">Couleurs & bannières</p>
+                  <p className="text-xs font-bold text-foreground truncate">{dict.dashboardHome.storeDesignTitle}</p>
+                  <p className="text-[10px] text-muted-foreground truncate">{dict.dashboardHome.storeDesignDesc}</p>
                 </div>
               </div>
               <span className="inline-flex shrink-0 items-center text-[11px] font-bold text-primary group-hover:underline">
-                Thèmes <ArrowRight className="ml-1 h-3 w-3" />
+                {dict.dashboardHome.storeDesignButton} <ArrowRight className="ml-1 h-3 w-3" />
               </span>
             </Link>
 
@@ -368,12 +382,12 @@ function DashboardHomePage() {
                   <Tag className="h-4 w-4" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-foreground truncate">Nom & Domaine</p>
-                  <p className="text-[10px] text-muted-foreground truncate">{store?.name || "Ma Marque"}</p>
+                  <p className="text-xs font-bold text-foreground truncate">{dict.dashboardHome.storeDomainTitle}</p>
+                  <p className="text-[10px] text-muted-foreground truncate">{store?.name || "My Store"}</p>
                 </div>
               </div>
               <span className="inline-flex shrink-0 items-center text-[11px] font-bold text-primary group-hover:underline">
-                Gérer <ArrowRight className="ml-1 h-3 w-3" />
+                {dict.dashboardHome.storeDomainButton} <ArrowRight className="ml-1 h-3 w-3" />
               </span>
             </Link>
 
@@ -387,12 +401,12 @@ function DashboardHomePage() {
                   <Truck className="h-4 w-4" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-foreground truncate">Paiement COD & WhatsApp</p>
-                  <p className="text-[10px] text-muted-foreground truncate">Cash on Delivery</p>
+                  <p className="text-xs font-bold text-foreground truncate">{dict.dashboardHome.storeCodTitle}</p>
+                  <p className="text-[10px] text-muted-foreground truncate">{dict.dashboardHome.storeCodDesc}</p>
                 </div>
               </div>
               <span className="inline-flex shrink-0 items-center text-[11px] font-bold text-primary group-hover:underline">
-                Livraisons <ArrowRight className="ml-1 h-3 w-3" />
+                {dict.dashboardHome.storeCodButton} <ArrowRight className="ml-1 h-3 w-3" />
               </span>
             </Link>
           </div>
@@ -407,9 +421,9 @@ function DashboardHomePage() {
       <DiscoveryPaywall
         open={paywallOpen}
         onClose={() => setPaywallOpen(false)}
-        title="Débloquez la recherche de produits gagnants"
-        description="La recherche par mots-clés et filtres avancés parmi 1 100+ publicités gagnantes est réservée aux formules Starter et Pro."
-        price="À partir de 7 900 FCFA/mois"
+        title={isEn ? "Unlock winning product discovery" : "Débloquez la recherche de produits gagnants"}
+        description={isEn ? "Keyword search and advanced filters across 1,100+ winning ads are reserved for Starter and Pro plans." : "La recherche par mots-clés et filtres avancés parmi 1 100+ publicités gagnantes est réservée aux formules Starter et Pro."}
+        price={isEn ? "Starting at 7,900 FCFA/month" : "À partir de 7 900 FCFA/mois"}
       />
     </DashboardShell>
   );

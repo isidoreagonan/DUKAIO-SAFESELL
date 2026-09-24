@@ -10,6 +10,7 @@ import { clearPendingAiDraft, readPendingAiDraft, type PendingAiDraft } from "@/
 import { cn } from "@/lib/utils";
 import { useConfirmDelete } from "@/components/ui/confirm-dialog";
 import { notifyError } from "@/components/ui/notice-dialog";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/dashboard/produits/")({
   head: () => ({
@@ -33,6 +34,7 @@ export const Route = createFileRoute("/_authenticated/dashboard/produits/")({
 });
 
 function MockCard() {
+  const { dict } = useI18n();
   return (
     <div className="relative mx-auto w-full max-w-[380px]">
       <div className="absolute inset-x-6 -bottom-3 h-16 rounded-[6px] border border-border bg-background/60" />
@@ -56,7 +58,7 @@ function MockCard() {
           </div>
         </div>
         <div className="btn-3d mt-4 grid place-items-center rounded-[6px] py-2.5 text-sm font-semibold">
-          Ajouter au panier
+          {dict.isEn ? "Add to cart" : "Ajouter au panier"}
         </div>
       </div>
     </div>
@@ -76,6 +78,7 @@ function AiDraftRow({
   draft: PendingAiDraft;
   onDiscard: () => void;
 }) {
+  const { dict } = useI18n();
   const confirmDelete = useConfirmDelete();
   const imageUrl = draft.draft.images?.[0];
 
@@ -96,11 +99,11 @@ function AiDraftRow({
           <p className="truncate text-sm font-bold text-foreground">{draft.draft.name}</p>
           <span className="inline-flex items-center gap-1 shrink-0 rounded-[4px] bg-primary/10 border border-primary/20 px-2 py-0.5 text-[11px] font-bold text-primary">
             <Sparkles className="h-3 w-3" />
-            Brouillon IA non enregistré
+            {dict.productsPage.pendingDraftTitle}
           </span>
         </div>
         <p className="mt-0.5 truncate text-xs text-muted-foreground">
-          {formatFcfa(Number(draft.draft.price ?? 0))} FCFA · Page de vente prête dans l'éditeur
+          {formatFcfa(Number(draft.draft.price ?? 0))} FCFA · {dict.isEn ? "Sales page ready in editor" : "Page de vente prête dans l'éditeur"}
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-2">
@@ -109,8 +112,8 @@ function AiDraftRow({
           className="btn-3d flex items-center gap-1.5 rounded-[6px] px-3 py-2 text-xs font-semibold"
         >
           <Sparkles className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Reprendre dans l'éditeur</span>
-          <span className="sm:hidden">Reprendre</span>
+          <span className="hidden sm:inline">{dict.productsPage.resumeInEditor}</span>
+          <span className="sm:hidden">{dict.productsPage.resumeShort}</span>
           <ArrowRight className="hidden sm:inline h-3.5 w-3.5 ml-0.5" />
         </Link>
         <button
@@ -125,10 +128,10 @@ function AiDraftRow({
               return;
             clearPendingAiDraft();
             onDiscard();
-            toast.success("Brouillon IA supprimé");
+            toast.success(dict.isEn ? "AI draft deleted" : "Brouillon IA supprimé");
           }}
           className="grid h-9 w-9 place-items-center rounded-[6px] border border-border text-muted-foreground hover:border-destructive/40 hover:text-destructive transition-colors"
-          title="Abandonner et supprimer ce brouillon IA"
+          title={dict.isEn ? "Discard and delete this AI draft" : "Abandonner et supprimer ce brouillon IA"}
         >
           <Trash2 className="h-4 w-4" />
         </button>
@@ -139,9 +142,19 @@ function AiDraftRow({
 
 function ProductRow({ product }: { product: Product }) {
   const { allowed: aiAllowed } = useAiAccess();
+  const { dict } = useI18n();
   const remove = useDeleteProduct();
   const confirmDelete = useConfirmDelete();
-  const status = statusLabel[product.status] ?? statusLabel["draft"]!;
+  const statusText =
+    product.status === "active"
+      ? dict.productsPage.statusActive
+      : product.status === "archived"
+        ? dict.productsPage.statusArchived
+        : dict.productsPage.statusDraft;
+  const statusCls =
+    product.status === "active"
+      ? "bg-accent text-accent-foreground"
+      : "bg-muted text-muted-foreground";
 
   return (
     <li className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-[6px] border border-border p-3 sm:gap-4 sm:p-4">
@@ -158,16 +171,16 @@ function ProductRow({ product }: { product: Product }) {
           <span
             className={cn(
               "shrink-0 rounded-[4px] px-2 py-0.5 text-[11px] font-semibold",
-              status.className,
+              statusCls,
             )}
           >
-            {status.label}
+            {statusText}
           </span>
         </div>
         <p className="mt-0.5 truncate text-xs text-muted-foreground">
           {formatFcfa(Number(product.price ?? 0))} FCFA
-          {product.track_quantity ? ` · ${product.quantity ?? 0} en stock` : ""}
-          {product.is_physical ? " · Physique" : " · Digital"}
+          {product.track_quantity ? ` · ${product.quantity ?? 0} ${dict.productsPage.inStock}` : ""}
+          {product.is_physical ? ` · ${dict.productsPage.physical}` : ` · ${dict.productsPage.digital}`}
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-1.5">
@@ -196,8 +209,8 @@ function ProductRow({ product }: { product: Product }) {
           onClick={async () => {
             if (!(await confirmDelete(`« ${product.name} »`))) return;
             remove.mutate(product.id, {
-              onSuccess: () => toast.success("Produit supprimé"),
-              onError: (e) => notifyError(e, "Suppression impossible"),
+              onSuccess: () => toast.success(dict.isEn ? "Product deleted" : "Produit supprimé"),
+              onError: (e) => notifyError(e, dict.isEn ? "Deletion failed" : "Suppression impossible"),
             });
           }}
           className="grid h-9 w-9 place-items-center rounded-[6px] border border-border text-muted-foreground hover:text-destructive"
@@ -211,6 +224,7 @@ function ProductRow({ product }: { product: Product }) {
 
 function ProduitsPage() {
   const { allowed: aiAllowed } = useAiAccess();
+  const { dict } = useI18n();
   const { data: products = [], isLoading } = useProducts();
   const [query, setQuery] = useState("");
   const [pendingAiDraft, setPendingAiDraftState] = useState<PendingAiDraft | null>(() =>
@@ -238,14 +252,14 @@ function ProduitsPage() {
       <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 sm:flex sm:justify-between">
         <div className="min-w-0">
           <h1 className="truncate text-2xl font-extrabold tracking-tight sm:text-3xl">
-            Produits{" "}
+            {dict.productsPage.title}{" "}
             <span className="font-display not-italic text-muted-foreground">
               · {products.length}
-              {showPendingDraft ? " (+1 brouillon IA)" : ""}
+              {showPendingDraft ? (dict.isEn ? " (+1 AI draft)" : " (+1 brouillon IA)") : ""}
             </span>
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Vos produits physiques et digitaux, au même endroit.
+            {dict.productsPage.subtitle}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -256,8 +270,8 @@ function ProduitsPage() {
             className="btn-3d inline-flex items-center gap-1.5 rounded-[6px] px-3 py-2 text-xs font-semibold"
           >
             <Plus className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Ajouter un produit</span>
-            <span className="sm:hidden">Ajouter</span>
+            <span className="hidden sm:inline">{dict.productsPage.addProduct}</span>
+            <span className="sm:hidden">{dict.isEn ? "Add" : "Ajouter"}</span>
           </Link>
         </div>
       </header>
@@ -267,10 +281,10 @@ function ProduitsPage() {
           <div className="mb-3 flex items-center justify-between">
             <h2 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-primary">
               <Sparkles className="h-3.5 w-3.5" />
-              Brouillon IA en attente d'enregistrement
+              {dict.productsPage.pendingDraftTitle}
             </h2>
             <span className="text-xs text-muted-foreground">
-              Non encore publié dans votre boutique
+              {dict.productsPage.pendingDraftSubtitle}
             </span>
           </div>
           <ul className="space-y-3">
@@ -289,7 +303,7 @@ function ProduitsPage() {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Rechercher un produit…"
+              placeholder={dict.productsPage.searchPlaceholder}
               className="h-11 w-full rounded-[6px] border border-border bg-muted/40 pl-9 pr-3 text-sm outline-none placeholder:text-muted-foreground focus:border-primary/50 focus:bg-background"
             />
           </label>
@@ -299,12 +313,12 @@ function ProduitsPage() {
             ))}
           </ul>
           {filtered.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">Aucun résultat.</p>
+            <p className="py-8 text-center text-sm text-muted-foreground">{dict.productsPage.noResults}</p>
           ) : null}
         </section>
       ) : isLoading ? (
         <section className="mt-6 rounded-[6px] border border-border bg-background p-10 text-center text-sm text-muted-foreground">
-          Chargement de vos produits…
+          {dict.productsPage.loading}
         </section>
       ) : (
         <section className="relative mt-6 overflow-hidden rounded-[6px] border border-border bg-background p-6 sm:p-10">
@@ -316,38 +330,38 @@ function ProduitsPage() {
             <MockCard />
 
             <h2 className="mt-10 text-3xl font-extrabold tracking-tight sm:text-4xl">
-              Votre premier produit
+              {dict.productsPage.emptyTitle}
               <br />
-              <span className="font-display text-muted-foreground italic">en un clin d'œil</span>
+              <span className="font-display text-muted-foreground italic">{dict.productsPage.emptyAccent}</span>
             </h2>
             <p className="mx-auto mt-3 max-w-md text-sm text-muted-foreground sm:text-base">
               {aiAllowed
-                ? "Uploadez une photo et DUKAIO AI génère une page de vente pro — titre, prix, description et sections. Ou créez tout à la main."
-                : "Créez votre fiche à la main, ou découvrez DUKAIO AI qui rédige vos textes et crée vos visuels à votre place."}
+                ? dict.productsPage.emptyDescWithAi
+                : dict.productsPage.emptyDescManual}
             </p>
 
             <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <DukaioAiButton
                 to="/dashboard/produits/ia"
-                label="Générer avec DUKAIO AI"
+                label={dict.productsPage.generateWithAi}
                 className="btn-3d w-full justify-center border-0 px-5 py-3 sm:w-auto"
               />
               <Link
                 to="/dashboard/produits/nouveau"
                 className="btn-3d inline-flex w-full items-center justify-center gap-2 rounded-[6px] border border-border px-5 py-3 text-sm font-semibold sm:w-auto"
               >
-                <Plus className="h-4 w-4" /> Créer manuellement
+                <Plus className="h-4 w-4" /> {dict.productsPage.createManually}
               </Link>
             </div>
 
             <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
               {aiAllowed ? (
                 <span className="inline-flex items-center gap-1.5 rounded-[4px] border border-border bg-background px-3 py-1.5">
-                  <ImageIcon className="h-3.5 w-3.5" /> Photo → IA
+                  <ImageIcon className="h-3.5 w-3.5" /> {dict.productsPage.badgePhotoAi}
                 </span>
               ) : null}
               <span className="inline-flex items-center gap-1.5 rounded-[4px] border border-border bg-background px-3 py-1.5">
-                <Pencil className="h-3.5 w-3.5" /> Manuel
+                <Pencil className="h-3.5 w-3.5" /> {dict.productsPage.badgeManual}
               </span>
             </div>
           </div>
@@ -356,9 +370,9 @@ function ProduitsPage() {
 
       <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
         {[
-          { t: "Produits digitaux", d: "Fichiers livrés automatiquement après paiement." },
-          { t: "Stock & variantes", d: "Tailles, couleurs et quantités suivies en temps réel." },
-          { t: "SEO intégré", d: "Titre et description optimisés pour Google." },
+          { t: dict.productsPage.featureDigitalTitle, d: dict.productsPage.featureDigitalDesc },
+          { t: dict.productsPage.featureStockTitle, d: dict.productsPage.featureStockDesc },
+          { t: dict.productsPage.featureSeoTitle, d: dict.productsPage.featureSeoDesc },
         ].map((c) => (
           <section
             key={c.t}

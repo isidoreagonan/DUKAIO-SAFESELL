@@ -20,6 +20,8 @@ import { Route as ConfidentialiteRouteImport } from './routes/confidentialite'
 import { Route as ConnexionRouteImport } from './routes/connexion'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DecouverteRouteImport } from './routes/decouverte'
+import { Route as EnRouteImport } from './routes/en'
+import { Route as FrRouteImport } from './routes/fr'
 import { Route as InscriptionRouteImport } from './routes/inscription'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LogoPreviewRouteImport } from './routes/logo-preview'
@@ -148,6 +150,16 @@ const ContactRoute = ContactRouteImport.update({
 const DecouverteRoute = DecouverteRouteImport.update({
   id: '/decouverte',
   path: '/decouverte',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EnRoute = EnRouteImport.update({
+  id: '/en',
+  path: '/en',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FrRoute = FrRouteImport.update({
+  id: '/fr',
+  path: '/fr',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InscriptionRoute = InscriptionRouteImport.update({
@@ -577,6 +589,8 @@ export interface FileRoutesByFullPath {
   '/connexion': typeof ConnexionRoute
   '/contact': typeof ContactRoute
   '/decouverte': typeof DecouverteRoute
+  '/en': typeof EnRoute
+  '/fr': typeof FrRoute
   '/inscription': typeof InscriptionRoute
   '/login': typeof LoginRoute
   '/logo-preview': typeof LogoPreviewRoute
@@ -664,6 +678,8 @@ export interface FileRoutesByTo {
   '/connexion': typeof ConnexionRoute
   '/contact': typeof ContactRoute
   '/decouverte': typeof DecouverteRoute
+  '/en': typeof EnRoute
+  '/fr': typeof FrRoute
   '/inscription': typeof InscriptionRoute
   '/login': typeof LoginRoute
   '/logo-preview': typeof LogoPreviewRoute
@@ -751,6 +767,8 @@ export interface FileRoutesById {
   '/connexion': typeof ConnexionRoute
   '/contact': typeof ContactRoute
   '/decouverte': typeof DecouverteRoute
+  '/en': typeof EnRoute
+  '/fr': typeof FrRoute
   '/inscription': typeof InscriptionRoute
   '/login': typeof LoginRoute
   '/logo-preview': typeof LogoPreviewRoute
@@ -840,6 +858,8 @@ export interface FileRouteTypes {
     | '/connexion'
     | '/contact'
     | '/decouverte'
+    | '/en'
+    | '/fr'
     | '/inscription'
     | '/login'
     | '/logo-preview'
@@ -927,6 +947,8 @@ export interface FileRouteTypes {
     | '/connexion'
     | '/contact'
     | '/decouverte'
+    | '/en'
+    | '/fr'
     | '/inscription'
     | '/login'
     | '/logo-preview'
@@ -1013,6 +1035,8 @@ export interface FileRouteTypes {
     | '/connexion'
     | '/contact'
     | '/decouverte'
+    | '/en'
+    | '/fr'
     | '/inscription'
     | '/login'
     | '/logo-preview'
@@ -1102,6 +1126,8 @@ export interface RootRouteChildren {
   ConnexionRoute: typeof ConnexionRoute
   ContactRoute: typeof ContactRoute
   DecouverteRoute: typeof DecouverteRoute
+  EnRoute: typeof EnRoute
+  FrRoute: typeof FrRoute
   InscriptionRoute: typeof InscriptionRoute
   LoginRoute: typeof LoginRoute
   LogoPreviewRoute: typeof LogoPreviewRoute
@@ -1215,6 +1241,20 @@ declare module '@tanstack/react-router' {
       path: '/decouverte'
       fullPath: '/decouverte'
       preLoaderRoute: typeof DecouverteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/en': {
+      id: '/en'
+      path: '/en'
+      fullPath: '/en'
+      preLoaderRoute: typeof EnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/fr': {
+      id: '/fr'
+      path: '/fr'
+      fullPath: '/fr'
+      preLoaderRoute: typeof FrRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/inscription': {
@@ -1886,6 +1926,8 @@ const rootRouteChildren: RootRouteChildren = {
   ConnexionRoute: ConnexionRoute,
   ContactRoute: ContactRoute,
   DecouverteRoute: DecouverteRoute,
+  EnRoute: EnRoute,
+  FrRoute: FrRoute,
   InscriptionRoute: InscriptionRoute,
   LoginRoute: LoginRoute,
   LogoPreviewRoute: LogoPreviewRoute,

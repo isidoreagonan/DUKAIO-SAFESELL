@@ -47,6 +47,9 @@ export const Route = createFileRoute("/")({
         loaderData?.store?.description?.slice(0, 155) ??
         `Découvrez les produits de ${name} et commandez en ligne en quelques clics.`;
       const title = `${name} — Boutique en ligne`;
+      const favicon =
+        loaderData?.store?.favicon_url ||
+        (loaderData?.store?.theme_published as any)?.global?.faviconUrl;
       return {
         meta: [
           { title },
@@ -56,6 +59,12 @@ export const Route = createFileRoute("/")({
           { property: "og:type", content: "website" },
           { name: "twitter:card", content: "summary_large_image" },
         ],
+        links: favicon
+          ? [
+              { rel: "icon", href: favicon },
+              { rel: "apple-touch-icon", href: favicon },
+            ]
+          : undefined,
       };
     }
     const meta = pageMeta(

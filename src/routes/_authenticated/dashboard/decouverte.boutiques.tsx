@@ -74,7 +74,10 @@ const PLATFORMS = [
   { value: "dukaio", label: "DUKAIO" },
 ];
 
+import { useI18n } from "@/lib/i18n";
+
 function DiscoveryStoresPage() {
+  const { dict } = useI18n();
   const [filters, setFilters] = useState<StoreFilters>({ sort: "traction" });
   const [term, setTerm] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
@@ -84,6 +87,14 @@ function DiscoveryStoresPage() {
   const { data: facets } = useDiscoveryFacets();
   const locked = !access.allowed;
   const { data: stores, isLoading } = useDiscoveryAdvertisers(filters);
+
+  const presets = [
+    { value: "traction" as const, label: dict.discoveryPage.recommended, icon: Star, tone: "text-amber-500" },
+    { value: "ads" as const, label: dict.discoveryPage.activeAds, icon: Megaphone, tone: "text-blue-500" },
+    { value: "duration" as const, label: "Longue diffusion", icon: Flame, tone: "text-orange-500" },
+    { value: "products" as const, label: dict.dashboardNav.products, icon: Package, tone: "text-emerald-600" },
+    { value: "recent" as const, label: dict.discoveryPage.recent, icon: CalendarDays, tone: "text-slate-500" },
+  ];
 
   const set = <K extends keyof StoreFilters>(key: K, value: StoreFilters[K]) =>
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -115,9 +126,9 @@ function DiscoveryStoresPage() {
           value: term,
           onChange: setTerm,
           onSubmit: () => set("search", term.trim() || undefined),
-          placeholder: "Rechercher une boutique ou un produit (brosse, téléphone…)",
+          placeholder: dict.discoveryPage.searchStores,
         }}
-        presets={{ value: filters.sort ?? "traction", onChange: (value) => set("sort", value), options: PRESETS }}
+        presets={{ value: filters.sort ?? "traction", onChange: (value) => set("sort", value), options: presets }}
         sorts={{ value: filters.sort ?? "traction", onChange: (value) => set("sort", value), options: SORTS }}
         onReset={() => {
           setFilters({ sort: "traction" });

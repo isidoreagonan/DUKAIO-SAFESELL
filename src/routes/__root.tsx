@@ -14,6 +14,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { ConfirmProvider } from "@/components/ui/confirm-dialog";
 import { NoticeHost } from "@/components/ui/notice-dialog";
 import { PlatformTrackingHost } from "@/components/platform-tracking-host";
+import { I18nProvider } from "@/lib/i18n";
 
 function NotFoundComponent() {
   return (
@@ -146,13 +147,15 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ConfirmProvider>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
-      </ConfirmProvider>
-      <NoticeHost />
-      <PlatformTrackingHost />
-      <Toaster />
+      <I18nProvider>
+        <ConfirmProvider>
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <Outlet />
+        </ConfirmProvider>
+        <NoticeHost />
+        <PlatformTrackingHost />
+        <Toaster />
+      </I18nProvider>
     </QueryClientProvider>
   );
 }

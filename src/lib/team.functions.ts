@@ -28,7 +28,9 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
     const { assertQuota } = await import("@/lib/subscription.server");
     await assertQuota(context.userId, "team", data.storeId);
 
-    const { data: store } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: store } = await supabaseAdmin
       .from("store_settings")
       .select("id, store_name")
       .eq("id", data.storeId)
@@ -38,7 +40,7 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
     const email = data.email.trim().toLowerCase();
     const inviteToken = token();
 
-    const { data: member, error } = await context.supabase
+    const { data: member, error } = await supabaseAdmin
       .from("store_members")
       .upsert(
         {
@@ -77,6 +79,38 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
     return { id: member.id, link };
   });
 
+/** Détails publics d'une invitation pour la page /rejoindre */
+export const getInviteDetails = createServerFn({ method: "GET" })
+  .inputValidator((data: unknown) => z.object({ token: z.string().min(10).max(120) }).parse(data))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: member } = await supabaseAdmin
+      .from("store_members")
+      .select("id, email, full_name, role, permissions, status, store_id, store_settings(store_name)")
+      .eq("invite_token", data.token)
+      .maybeSingle();
+
+    if (!member) {
+      return { valid: false, reason: "Invitation introuvable ou expirée" as const };
+    }
+
+    if (member.status === "active") {
+      return { valid: false, reason: "Cette invitation a déjà été acceptée." as const };
+    }
+
+    const store = member.store_settings as { store_name: string } | null;
+    return {
+      valid: true,
+      email: member.email,
+      fullName: member.full_name,
+      role: member.role,
+      permissions: member.permissions,
+      storeName: store?.store_name ?? "la boutique",
+      status: member.status,
+    };
+  });
+
 /** Accepte une invitation avec le jeton reçu par e-mail. */
 export const acceptTeamInvite = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -86,14 +120,14 @@ export const acceptTeamInvite = createServerFn({ method: "POST" })
 
     const { data: member } = await supabaseAdmin
       .from("store_members")
-      .select("id, email, status, store_id, store_settings(store_name)")
+      .select("id, email, status, store_id, role, permissions, store_settings(store_name)")
       .eq("invite_token", data.token)
       .maybeSingle();
     if (!member) throw new Error("Invitation introuvable ou expirée");
 
     const email = typeof context.claims["email"] === "string" ? context.claims["email"] : "";
-    if (email.toLowerCase() !== member.email.toLowerCase()) {
-      throw new Error("Cette invitation a été envoyée à une autre adresse e-mail");
+    if (email.toLowerCase().trim() !== member.email.toLowerCase().trim()) {
+      throw new Error(`Cette invitation a été envoyée à ${member.email}. Vous êtes actuellement connecté avec ${email}.`);
     }
 
     const { error } = await supabaseAdmin
@@ -103,14 +137,18 @@ export const acceptTeamInvite = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
 
     /* Un membre invité ne crée pas de boutique : on referme la mise en route
-       pour qu'il accède directement au tableau de bord au lieu d'y rester bloqué. */
+       pour qu'il accède directement au tableau de bord. */
     await supabaseAdmin
       .from("profiles")
       .update({ onboarding_completed: true, onboarding_completed_at: new Date().toISOString() })
       .eq("id", context.userId);
 
     const store = member.store_settings as { store_name: string } | null;
-    return { storeName: store?.store_name ?? "la boutique" };
+    return {
+      storeId: member.store_id,
+      storeName: store?.store_name ?? "la boutique",
+      role: member.role,
+    };
   });
 
 /** Invitations en attente pour l'adresse e-mail connectée. */

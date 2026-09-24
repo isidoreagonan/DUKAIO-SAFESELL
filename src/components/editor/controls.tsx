@@ -10,6 +10,7 @@ import { MediaLibraryDialog } from "@/components/editor/MediaLibraryDialog";
 import { cn } from "@/lib/utils";
 import { iconLabels, iconNames, themeIcons } from "@/theme/icons";
 import type { Field, ListItemField, SettingsValue } from "@/theme/types";
+import { useI18n } from "@/lib/i18n";
 
 /* ---------- primitives ---------- */
 
@@ -153,6 +154,7 @@ export function ImageUploader({
   onChange: (v: string) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const { isEn } = useI18n();
 
   return (
     <div className="space-y-1.5">
@@ -167,7 +169,13 @@ export function ImageUploader({
         </div>
         <div className="min-w-0 flex-1 space-y-1.5">
           <p className="truncate text-xs text-muted-foreground">
-            {value ? "Visuel de votre bibliothèque" : "Aucune image sélectionnée"}
+            {value
+              ? isEn
+                ? "Image from your library"
+                : "Visuel de votre bibliothèque"
+              : isEn
+                ? "No image selected"
+                : "Aucune image sélectionnée"}
           </p>
           <div className="flex gap-2">
             <button
@@ -175,7 +183,7 @@ export function ImageUploader({
               onClick={() => setOpen(true)}
               className="inline-flex items-center gap-1.5 rounded-[6px] border border-border px-2 py-1 text-xs hover:bg-accent"
             >
-              <ImageIcon size={12} /> Bibliothèque média
+              <ImageIcon size={12} /> {isEn ? "Media library" : "Bibliothèque média"}
             </button>
             {value && (
               <button
@@ -183,7 +191,7 @@ export function ImageUploader({
                 onClick={() => onChange("")}
                 className="rounded-[6px] px-2 py-1 text-xs text-destructive hover:bg-destructive/10"
               >
-                Retirer
+                {isEn ? "Remove" : "Retirer"}
               </button>
             )}
           </div>
@@ -205,6 +213,7 @@ export function IconPicker({
   value: string;
   onChange: (v: string) => void;
 }) {
+  const { isEn } = useI18n();
   const [query, setQuery] = useState("");
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -231,7 +240,7 @@ export function IconPicker({
             />
             <Input
               value={query}
-              placeholder="Rechercher une icône"
+              placeholder={isEn ? "Search an icon" : "Rechercher une icône"}
               onChange={(e) => setQuery(e.target.value)}
               className="pl-7 text-xs"
             />
