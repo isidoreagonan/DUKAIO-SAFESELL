@@ -218,6 +218,31 @@ function planLabel(plan: string, trialing?: boolean, trialDaysLeft?: number) {
   return "Free";
 }
 
+function roleLabel(role: string) {
+  const labels: Record<string, string> = {
+    closer: "Closer",
+    courier: "Livreur",
+    products: "Produits",
+    admin: "Admin",
+    owner: "Propriétaire",
+  };
+  return labels[role] ?? role;
+}
+
+function RoleBadge({ role, className }: { role: string; className?: string }) {
+  return (
+    <span
+      title={`Rôle : ${roleLabel(role)}`}
+      className={cn(
+        "inline-flex shrink-0 items-center justify-center rounded-[4px] border border-sky-500/40 bg-sky-500/15 px-1.5 py-0.5 text-[9.5px] font-black uppercase tracking-wider text-sky-600 dark:text-sky-400",
+        className,
+      )}
+    >
+      {roleLabel(role)}
+    </span>
+  );
+}
+
 function PlanBadge({ compact = false, className }: { compact?: boolean; className?: string }) {
   const { loading, plan, trialing, trialDaysLeft } = useAiAccess();
   if (loading) return null;
@@ -246,6 +271,7 @@ function TopUserMenu() {
   const name = displayName(user);
   const { data: isAdmin } = useIsAdmin();
   const { plan, trialing, trialDaysLeft } = useAiAccess();
+  const { isOwner, role } = useCurrentRole();
   const startTour = useTourLauncher();
   const label = planLabel(plan, trialing, trialDaysLeft);
 
@@ -273,26 +299,10 @@ function TopUserMenu() {
             <span className="block truncate text-xs font-semibold leading-tight">{name}</span>
             <span className="block truncate text-[10px] text-muted-foreground">{user?.email ?? "—"}</span>
           </span>
-          <span
-            className={cn(
-              "hidden rounded-[4px] px-1.5 py-0.5 text-[10px] font-black uppercase sm:inline-flex",
-              trialing
-                ? "border border-amber-500/40 bg-amber-500/15 text-amber-600 dark:text-amber-400"
-                : "bg-primary/10 text-primary",
-            )}
-          >
-            {label}
-          </span>
-          <ChevronDown className="hidden h-3.5 w-3.5 shrink-0 text-muted-foreground sm:block" />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <div className="px-2 py-1.5">
-          <div className="flex items-center gap-2">
-            <p className="min-w-0 flex-1 truncate text-sm font-semibold">{name}</p>
+          {isOwner ? (
             <span
               className={cn(
-                "rounded-[4px] px-1.5 py-0.5 text-[10px] font-black uppercase",
+                "hidden rounded-[4px] px-1.5 py-0.5 text-[10px] font-black uppercase sm:inline-flex",
                 trialing
                   ? "border border-amber-500/40 bg-amber-500/15 text-amber-600 dark:text-amber-400"
                   : "bg-primary/10 text-primary",
@@ -300,6 +310,30 @@ function TopUserMenu() {
             >
               {label}
             </span>
+          ) : (
+            <RoleBadge role={role} className="hidden sm:inline-flex" />
+          )}
+          <ChevronDown className="hidden h-3.5 w-3.5 shrink-0 text-muted-foreground sm:block" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <div className="px-2 py-1.5">
+          <div className="flex items-center gap-2">
+            <p className="min-w-0 flex-1 truncate text-sm font-semibold">{name}</p>
+            {isOwner ? (
+              <span
+                className={cn(
+                  "rounded-[4px] px-1.5 py-0.5 text-[10px] font-black uppercase",
+                  trialing
+                    ? "border border-amber-500/40 bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                    : "bg-primary/10 text-primary",
+                )}
+              >
+                {label}
+              </span>
+            ) : (
+              <RoleBadge role={role} />
+            )}
           </div>
           <p className="truncate text-xs text-muted-foreground">{user?.email ?? "—"}</p>
         </div>
@@ -309,11 +343,13 @@ function TopUserMenu() {
             <User className="mr-2 h-4 w-4" /> {dict.dashboard.profile}
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link to="/dashboard/parametres" search={{ tab: "abonnement" }} className="cursor-pointer">
-            <Crown className="mr-2 h-4 w-4" /> {dict.dashboard.subscription}
-          </Link>
-        </DropdownMenuItem>
+        {isOwner && (
+          <DropdownMenuItem asChild>
+            <Link to="/dashboard/parametres" search={{ tab: "abonnement" }} className="cursor-pointer">
+              <Crown className="mr-2 h-4 w-4" /> {dict.dashboard.subscription}
+            </Link>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem asChild>
           <Link to="/dashboard/parametres" className="cursor-pointer">
             <Settings className="mr-2 h-4 w-4" /> {dict.dashboard.settings}
@@ -580,6 +616,8 @@ function SidebarUser({
     );
   }
 
+  const { isOwner, role } = useCurrentRole();
+
   return (
     <div className="space-y-1 border-t border-chrome-border p-2">
       <div className="flex min-w-0 items-center justify-between gap-2 rounded-[4px] bg-chrome-panel p-2">
@@ -589,7 +627,11 @@ function SidebarUser({
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-1.5">
             <span className="truncate text-xs font-semibold leading-tight text-chrome-foreground">{name}</span>
-            <PlanBadge className="px-1 py-[1px] text-[8px]" />
+            {isOwner ? (
+              <PlanBadge className="px-1 py-[1px] text-[8px]" />
+            ) : (
+              <RoleBadge role={role} className="px-1 py-[1px] text-[8px]" />
+            )}
           </div>
           <span className="block truncate text-[10px] text-chrome-muted">{user?.email ?? "—"}</span>
         </div>
@@ -773,7 +815,8 @@ export function NavContent({
 
 function TrialBanner() {
   const { loading, trialing, trialDaysLeft, aiLeft } = useAiAccess();
-  if (loading || !trialing) return null;
+  const { isOwner } = useCurrentRole();
+  if (loading || !trialing || !isOwner) return null;
 
   return (
     <div className="border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-xs text-amber-900 dark:text-amber-200">

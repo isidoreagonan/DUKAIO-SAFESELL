@@ -4,6 +4,25 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 > **Note d'environnement :** Ce projet a été initialement généré avec Lovable, mais a été entièrement migré sur Antigravity. Il n'est plus synchronisé avec Lovable Cloud et utilise désormais exclusivement la propre instance Supabase de l'utilisateur.
 
+## [24/09/2026] - Interface Dashboard Adaptée par Rôle (Membres d'Équipe)
+
+### Ajouté
+- **`RoleBadge` component** (`src/components/dashboard/shell.tsx`) : nouveau badge sky-blue affichant le rôle des membres invités (`CLOSER`, `LIVREUR`, `PRODUITS`, `ADMIN`) dans la sidebar et le menu utilisateur en en-tête.
+- **`roleLabel()` helper** (`src/components/dashboard/shell.tsx`) : mappe les codes internes de rôle vers des libellés lisibles en français.
+
+### Modifié
+- **`TrialBanner`** (`src/components/dashboard/shell.tsx`) : le bandeau d'essai gratuit 14 jours est désormais masqué pour les membres non-propriétaires. Seul le propriétaire de la boutique le voit.
+- **`TopUserMenu`** (`src/components/dashboard/shell.tsx`) :
+  - Les membres voient un `RoleBadge` (ex: `CLOSER`) à la place du badge de formule (Free / Starter / Pro).
+  - Le lien "Abonnement" dans le menu déroulant est masqué pour les non-propriétaires.
+- **`SidebarUser`** (`src/components/dashboard/shell.tsx`) : badge plan remplacé par badge rôle pour les membres dans la sidebar.
+- **Dashboard Home** (`src/routes/_authenticated/dashboard/index.tsx`) :
+  - Section **"Démarrage rapide"** (création IA + ajout manuel produit) : masquée pour les rôles non-admin.
+  - Section **"Configuration boutique"** (design, nom/marque, COD/livraisons) : masquée pour les rôles non-admin.
+  - Import de `useCurrentRole` ajouté depuis `@/lib/store`.
+
+---
+
 ## [24/09/2026] - Système Multilingue International (Français 🇫🇷 / English 🇬🇧), Drapeaux Graphiques PC & Traduction Complète de Toutes les Pages Clés
 
 ### Internationalisation (i18n) & Expérience Utilisateur

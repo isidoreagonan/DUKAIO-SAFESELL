@@ -16,7 +16,7 @@ import { DashboardShell } from "@/components/dashboard/shell";
 import { OrderDialog } from "@/components/dashboard/order-dialog";
 import { DiscoveryPaywall } from "@/components/discovery/paywall-dialog";
 import { cn } from "@/lib/utils";
-import { useDashboardStats, useStore, type Order } from "@/lib/store";
+import { useDashboardStats, useStore, useCurrentRole, type Order } from "@/lib/store";
 import { useAuth, displayName } from "@/hooks/use-auth";
 import { useDiscoveryAccess } from "@/lib/entitlements";
 import { useI18n } from "@/lib/i18n";
@@ -112,6 +112,7 @@ function DashboardHomePage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   const firstName = displayName(user).split(" ")[0] || (isEn ? "Seller" : "Vendeur");
+  const { isOwner, isAdmin } = useCurrentRole();
 
   const categories = useMemo(
     () => [
@@ -284,8 +285,9 @@ function DashboardHomePage() {
         </section>
 
         {/* ====================================================================== */}
-        {/* 4. ACTIONS RAPIDES DE CRÉATION : 2 cartes horizontales compactes       */}
+        {/* 4. ACTIONS RAPIDES DE CRÉATION (propriétaires et admins seulement)      */}
         {/* ====================================================================== */}
+        {isAdmin && (
         <section className="space-y-2.5">
           <h2 className="text-sm font-bold text-foreground sm:text-base">
             {dict.dashboardHome.quickStartTitle}
@@ -343,10 +345,12 @@ function DashboardHomePage() {
             </div>
           </div>
         </section>
+        )}
 
         {/* ====================================================================== */}
-        {/* 5. CONFIGURATION ESSENTIELLE : 3 raccourcis élégants et compacts       */}
+        {/* 5. CONFIGURATION ESSENTIELLE (propriétaires et admins seulement)       */}
         {/* ====================================================================== */}
+        {isAdmin && (
         <section className="space-y-2.5">
           <h2 className="text-sm font-bold text-foreground sm:text-base">
             {dict.dashboardHome.storeSetupTitle}
@@ -411,6 +415,7 @@ function DashboardHomePage() {
             </Link>
           </div>
         </section>
+        )}
       </div>
 
       <OrderDialog
