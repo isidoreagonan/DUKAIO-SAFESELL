@@ -6,19 +6,22 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export const notifyOrderStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({ orderId: z.string().uuid(), status: z.string() }).parse(data))
-  .handler(async ({ data, context }) => {
-    const { data: order } = await context.supabase
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: order } = await supabaseAdmin
       .from("orders")
       .select("order_number, customer_email, store_id")
       .eq("id", data.orderId)
       .maybeSingle();
     if (!order?.customer_email) return { sent: false };
 
-    const { data: store } = await context.supabase
+    const { data: store } = await supabaseAdmin
       .from("store_settings")
       .select("store_name, email_notifications")
       .eq("id", order.store_id ?? "")
       .maybeSingle();
+
+    if (store?.email_notifications === false) return { sent: false };
 
     const { sendStatusEmail } = await import("@/lib/order-emails.server");
     try {

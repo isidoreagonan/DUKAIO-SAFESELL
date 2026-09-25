@@ -281,6 +281,7 @@ export type OrderResult =
 export const submitOrder = createServerFn({ method: "POST" })
   .inputValidator((data) => orderInput.parse(data))
   .handler(async ({ data }): Promise<OrderResult> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const sb = publicClient();
     const handle = normalizeHandle(data.handle);
     const { data: stores } = await sb
@@ -296,7 +297,6 @@ export const submitOrder = createServerFn({ method: "POST" })
     const { data: planKey } = await sb.rpc("effective_plan_key", { _store_id: store.id });
     const isPaid = planKey === "starter" || planKey === "pro";
     if (!isPaid) {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const { data: subRow } = await supabaseAdmin
         .from("store_subscriptions")
         .select("trial_ends_at")
@@ -350,7 +350,6 @@ export const submitOrder = createServerFn({ method: "POST" })
 
     /* Fiche client réelle (visible dans le dashboard du vendeur). */
     let customerId: string | null = null;
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const existing = await supabaseAdmin
       .from("customers")
       .select("id")
@@ -453,18 +452,37 @@ export const submitOrder = createServerFn({ method: "POST" })
         })),
       };
 
-      let sellerEmail = store.contact_email;
+      let sellerEmail = store.contact_email?.trim() || null;
+      if (!sellerEmail && store.user_id) {
+        try {
+          const owner = await supabaseAdmin.auth.admin.getUserById(store.user_id);
+          sellerEmail = owner.data?.user?.email ?? null;
+        } catch (e) {
+          console.error("[order-email:get-owner]", e);
+        }
+      }
       if (!sellerEmail) {
-        const owner = await supabaseAdmin.auth.admin.getUserById(store.user_id);
-        sellerEmail = owner.data.user?.email ?? null;
+        try {
+          const { data: adminMember } = await supabaseAdmin
+            .from("store_members")
+            .select("email")
+            .eq("store_id", store.id)
+            .eq("role", "admin")
+            .not("email", "is", null)
+            .limit(1)
+            .maybeSingle();
+          if (adminMember?.email) sellerEmail = adminMember.email;
+        } catch {
+          // ignore
+        }
       }
       if (sellerEmail && store.email_notifications !== false) {
         await sendSellerOrderEmail(sellerEmail, payload).catch((error) =>
           console.error("[order-email:seller]", error),
         );
       }
-      if (data.customer.email) {
-        await sendCustomerOrderEmail(data.customer.email, payload).catch((error) =>
+      if (data.customer.email?.trim()) {
+        await sendCustomerOrderEmail(data.customer.email.trim(), payload).catch((error) =>
           console.error("[order-email:customer]", error),
         );
       }

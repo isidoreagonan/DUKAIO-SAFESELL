@@ -355,12 +355,31 @@ export const updateStoreOrderStatus = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin.from("orders").update(updatePayload).eq("id", data.orderId);
     if (error) throw error;
 
-    // Envoi silencieux de l'e-mail de statut si possible
+    // Envoi de l'e-mail de mise à jour de statut au client si adresse présente
     try {
-      const { notifyOrderStatus } = await import("@/lib/order-emails.functions");
-      await notifyOrderStatus({ data: { orderId: data.orderId, status: data.status } });
-    } catch {
-      // Non bloquant
+      const { data: orderData } = await supabaseAdmin
+        .from("orders")
+        .select("order_number, customer_email, store_id")
+        .eq("id", data.orderId)
+        .maybeSingle();
+
+      if (orderData?.customer_email?.trim()) {
+        const { data: storeData } = await supabaseAdmin
+          .from("store_settings")
+          .select("store_name, email_notifications")
+          .eq("id", orderData.store_id ?? "")
+          .maybeSingle();
+
+        if (storeData?.email_notifications !== false) {
+          const { sendStatusEmail } = await import("@/lib/order-emails.server");
+          await sendStatusEmail(orderData.customer_email.trim(), data.status, {
+            orderNumber: orderData.order_number,
+            storeName: storeData?.store_name ?? "Votre boutique",
+          });
+        }
+      }
+    } catch (err) {
+      console.error("[order-status-email]", err);
     }
 
     return { success: true };

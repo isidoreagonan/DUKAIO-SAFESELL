@@ -182,18 +182,37 @@ export async function placeOrder(opts: {
       })),
     };
 
-    let sellerEmail = store.contact_email;
+    let sellerEmail = store.contact_email?.trim() || null;
+    if (!sellerEmail && store.user_id) {
+      try {
+        const owner = await supabaseAdmin.auth.admin.getUserById(store.user_id);
+        sellerEmail = owner.data?.user?.email ?? null;
+      } catch (e) {
+        console.error("[order-email:get-owner]", e);
+      }
+    }
     if (!sellerEmail) {
-      const owner = await supabaseAdmin.auth.admin.getUserById(store.user_id);
-      sellerEmail = owner.data.user?.email ?? null;
+      try {
+        const { data: adminMember } = await supabaseAdmin
+          .from("store_members")
+          .select("email")
+          .eq("store_id", store.id)
+          .eq("role", "admin")
+          .not("email", "is", null)
+          .limit(1)
+          .maybeSingle();
+        if (adminMember?.email) sellerEmail = adminMember.email;
+      } catch {
+        // ignore
+      }
     }
     if (sellerEmail && store.email_notifications !== false) {
       await sendSellerOrderEmail(sellerEmail, payload).catch((error) =>
         console.error("[order-email:seller]", error),
       );
     }
-    if (customer.email) {
-      await sendCustomerOrderEmail(customer.email, payload).catch((error) =>
+    if (customer.email?.trim()) {
+      await sendCustomerOrderEmail(customer.email.trim(), payload).catch((error) =>
         console.error("[order-email:customer]", error),
       );
     }

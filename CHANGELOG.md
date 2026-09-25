@@ -4,6 +4,18 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 > **Note d'environnement :** Ce projet a été initialement généré avec Lovable, mais a été entièrement migré sur Antigravity. Il n'est plus synchronisé avec Lovable Cloud et utilise désormais exclusivement la propre instance Supabase de l'utilisateur.
 
+## [25/09/2026] - Rétablissement des E-mails Transactionnels de Commande et de Mise à Jour de Statut
+
+### Corrigé
+- **E-mails de confirmation de commande et de vente (`src/lib/storefront.functions.ts` & `src/lib/orders.server.ts`)** :
+  - **Problème résolu :** Lors d'une commande sur une boutique en ligne, ni le client ni le vendeur ne recevaient d'e-mail de confirmation.
+  - **Cause identifiée :** Dans `submitOrder`, `supabaseAdmin` était importé dans une portée fermée (`if (!isPaid)`). Pour les boutiques payantes ou hors de cette condition, la tentative d'accès à `supabaseAdmin` levait une `ReferenceError` silencieuse qui interrompait le bloc avant l'envoi de l'e-mail au vendeur et au client.
+  - **Correction :** `supabaseAdmin` est désormais disponible dans toute la portée du handler. La résolution de l'adresse du vendeur a été renforcée (contact direct, compte propriétaire auth Supabase avec `?.` sécurisé, et repli sur l'équipe admin de la boutique). L'e-mail acheteur et l'e-mail vendeur sont désormais tous deux expédiés de manière fiable via Resend (`commandes@dukaio.com`).
+- **E-mails de suivi de statut de livraison au client (`src/lib/stores.functions.ts` & `src/lib/order-emails.functions.ts`)** :
+  - **Problème résolu :** Lorsque le vendeur mettait à jour le statut d'une commande (ex: « Confirmée », « En livraison », « Livrée »), aucun e-mail de notification n'était envoyé au client.
+  - **Cause identifiée :** La fonction serveur `updateStoreOrderStatus` tentait d'appeler en interne une seconde fonction serveur (`notifyOrderStatus`) dotée d'un middleware d'authentification Bearer HTTP, ce qui échouait lors de l'appel direct intra-serveur. De plus, les requêtes étaient soumises aux politiques RLS de Supabase.
+  - **Correction :** L'envoi de l'e-mail de notification de statut (`sendStatusEmail`) est désormais déclenché directement depuis le contexte serveur avec `supabaseAdmin` et `order-emails.server`, garantissant un envoi instantané et fiable dès que le statut change dans le dashboard.
+
 ## [25/09/2026] - Chargement Instantané (0ms) des Boutiques au Dashboard et Requête Client Directe
 
 ### Performance & Optimisation
