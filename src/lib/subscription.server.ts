@@ -146,8 +146,8 @@ export async function ensureSubscription(userId: string, storeId: string) {
     : {
         store_id: storeId,
         user_id: userId,
-        plan: "starter",
-        status: "active",
+        plan: "free",
+        status: "trialing",
         amount: 0,
         currency: "XOF",
         billing_period: "monthly",

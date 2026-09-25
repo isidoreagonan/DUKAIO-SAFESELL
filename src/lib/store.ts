@@ -27,6 +27,7 @@ async function currentUserId() {
 }
 
 /* Boutique active : le vendeur peut en posséder plusieurs (formule Pro). */
+/* Boutique active : le vendeur peut en posséder plusieurs (formule Pro). */
 const ACTIVE_KEY = "dukaio.activeStore";
 
 export function activeStoreId(userId?: string | null): string | null {
@@ -35,7 +36,7 @@ export function activeStoreId(userId?: string | null): string | null {
     const userScoped = window.localStorage.getItem(`${ACTIVE_KEY}.${userId}`);
     if (userScoped) return userScoped;
   }
-  return window.localStorage.getItem(ACTIVE_KEY);
+  return null;
 }
 
 export function setActiveStoreId(id: string, userId?: string | null) {
@@ -50,10 +51,12 @@ export function clearActiveStoreStorage() {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.removeItem(ACTIVE_KEY);
+    window.localStorage.removeItem("dukaio.cachedStores");
+    window.localStorage.removeItem("dukaio.cachedActiveStore");
     const keysToRemove: string[] = [];
     for (let i = 0; i < window.localStorage.length; i++) {
       const key = window.localStorage.key(i);
-      if (key && key.startsWith(`${ACTIVE_KEY}.`)) {
+      if (key && (key.startsWith(ACTIVE_KEY) || key.startsWith("dukaio."))) {
         keysToRemove.push(key);
       }
     }
@@ -104,22 +107,9 @@ export function useStores() {
     queryKey: ["stores"],
     queryFn: async (): Promise<AccessibleStore[]> => {
       const list = await listStores(await currentUserId());
-      if (typeof window !== "undefined" && list.length > 0) {
-        try {
-          window.localStorage.setItem("dukaio.cachedStores", JSON.stringify(list));
-        } catch {}
-      }
       return list;
     },
-    initialData: () => {
-      if (typeof window === "undefined") return undefined;
-      try {
-        const cached = window.localStorage.getItem("dukaio.cachedStores");
-        if (cached) return JSON.parse(cached) as AccessibleStore[];
-      } catch {}
-      return undefined;
-    },
-    staleTime: 3 * 60_000,
+    staleTime: 5_000,
   });
 }
 
@@ -132,13 +122,8 @@ export function useStore() {
       const stores = await listStores(userId);
       if (stores.length) {
         const wanted = activeStoreId(userId);
-        const found = stores.find((s) => s.id === wanted) ?? stores[0]!;
+        const found = (wanted && stores.find((s) => s.id === wanted)) || stores[0]!;
         setActiveStoreId(found.id, userId);
-        if (typeof window !== "undefined") {
-          try {
-            window.localStorage.setItem("dukaio.cachedActiveStore", JSON.stringify(found));
-          } catch {}
-        }
         return found;
       }
 
@@ -159,19 +144,13 @@ export function useStore() {
           .select("*")
           .single();
         if (createError) throw createError;
-        setActiveStoreId(created.id);
-        const newStore: AccessibleStore = {
+        setActiveStoreId(created.id, userId);
+        return {
           ...created,
           isOwner: true,
           memberRole: "owner",
           memberPermissions: ["*"],
         };
-        if (typeof window !== "undefined") {
-          try {
-            window.localStorage.setItem("dukaio.cachedActiveStore", JSON.stringify(newStore));
-          } catch {}
-        }
-        return newStore;
       } catch (err) {
         console.warn("[useStore] Could not auto-create store:", err);
         return {
@@ -187,15 +166,7 @@ export function useStore() {
         } as unknown as AccessibleStore;
       }
     },
-    initialData: () => {
-      if (typeof window === "undefined") return undefined;
-      try {
-        const cached = window.localStorage.getItem("dukaio.cachedActiveStore");
-        if (cached) return JSON.parse(cached) as AccessibleStore;
-      } catch {}
-      return undefined;
-    },
-    staleTime: 3 * 60_000,
+    staleTime: 5_000,
   });
 }
 
@@ -294,9 +265,10 @@ export function useUpdateStore() {
  * l'arrivée du multi-boutique (store_id vide).
  */
 async function scope() {
-  const stores = await listStores(await currentUserId());
-  const wanted = activeStoreId();
-  const active = stores.find((s) => s.id === wanted) ?? stores[0];
+  const userId = await currentUserId();
+  const stores = await listStores(userId);
+  const wanted = activeStoreId(userId);
+  const active = (wanted && stores.find((s) => s.id === wanted)) || stores[0];
   return { id: active?.id ?? null, primary: !!active && active.id === stores[0]?.id };
 }
 

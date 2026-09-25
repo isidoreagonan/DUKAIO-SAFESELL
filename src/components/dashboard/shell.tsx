@@ -292,9 +292,9 @@ function tourSlug(title: string) {
 
 
 function planLabel(plan: string, trialing?: boolean, trialDaysLeft?: number) {
+  if (trialing) return trialDaysLeft ? `Essai ${trialDaysLeft}j` : "Essai";
   if (plan === "pro") return "Pro";
   if (plan === "starter") return "Starter";
-  if (trialing) return trialDaysLeft ? `Essai ${trialDaysLeft}j` : "Essai";
   return "Free";
 }
 

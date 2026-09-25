@@ -4,6 +4,20 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 > **Note d'environnement :** Ce projet a été initialement généré avec Lovable, mais a été entièrement migré sur Antigravity. Il n'est plus synchronisé avec Lovable Cloud et utilise désormais exclusivement la propre instance Supabase de l'utilisateur.
 
+## [25/09/2026] - Correction de l'Attribution de l'Essai Gratuit 14 Jours et de l'Isolation Multi-Boutiques
+
+### Corrigé
+- **Attribution automatique de l'essai gratuit 14 jours (`src/lib/subscription.server.ts` & `src/components/dashboard/shell.tsx`)** :
+  - **Problème résolu :** Tout nouveau compte marchand se voyait attribuer par erreur la formule payante `Starter` (`status: "active"`, `plan: "starter"`), ce qui désactivait le statut d'essai gratuit et affichait le badge orange « STARTER » au lieu de « ESSAI 14J ».
+  - **Correction :** La création d'une nouvelle boutique initialise désormais correctement l'abonnement en mode essai : `plan: "free"`, `status: "trialing"`, et `trial_ends_at` fixé à +14 jours.
+  - Dans l'en-tête et la barre latérale (`shell.tsx`), la priorité d'affichage est désormais donnée au statut d'essai (`trialing`) affichant le badge ambre `Essai 14j`.
+  - La base de données a été corrigée pour rétablir immédiatement le compte test en cours en statut d'essai 14 jours.
+- **Isolation des boutiques entre comptes et suppression des fuites de cache (`src/lib/store.ts`)** :
+  - **Problème résolu :** Lorsqu'un marchand invitait un closer ou testait plusieurs comptes dans le même navigateur, `useStores()` et `useStore()` chargeaient un cache global `localStorage` (`dukaio.cachedStores` et `dukaio.cachedActiveStore`) partagé sans distinction d'utilisateur, avec un délai de péremption de 3 minutes (`staleTime: 3 * 60_000`). L'administrateur ou le nouveau compte se retrouvait bloqué sur la boutique du closer (ex. TECHNOVA) au lieu de voir ses propres boutiques (DUKAIO, Lumezia).
+  - **Correction :** Suppression totale de l'hydratation non sécurisée par `initialData` depuis `localStorage`. `useStores()` et `useStore()` requêtent désormais toujours les boutiques de l'utilisateur authentifié.
+  - `activeStoreId()` est désormais strictement cloisonné par `userId` (`dukaio.activeStore.[userId]`).
+  - La fonction de déconnexion `clearActiveStoreStorage()` nettoie l'intégralité des clés de stockage local liées aux boutiques.
+
 ## [25/09/2026] - Refonte Simplifiée et Centrée du Parcours Onboarding
 
 ### Modifié
