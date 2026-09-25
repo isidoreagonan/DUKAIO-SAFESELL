@@ -48,20 +48,7 @@ export const Route = createFileRoute("/_authenticated/dashboard/collections")({
   component: CollectionsPage,
 });
 
-function CollectionMock() {
-  return (
-    <div>
-      <span className="grid h-8 w-8 place-items-center rounded-[6px] bg-surface-tint text-primary">
-        <Layers className="h-4 w-4" />
-      </span>
-      <div className="mt-3 grid grid-cols-3 gap-2">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="h-14 rounded-[6px] bg-muted" />
-        ))}
-      </div>
-    </div>
-  );
-}
+
 
 type FormState = {
   name: string;
@@ -144,7 +131,7 @@ function CollectionsPage() {
         actions={
           <button
             onClick={openNew}
-            className="btn-3d inline-flex items-center gap-2 rounded-[6px] px-3.5 py-2.5 text-sm font-semibold"
+            className="inline-flex items-center gap-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors cursor-pointer"
           >
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">Nouvelle collection</span>
@@ -161,33 +148,17 @@ function CollectionsPage() {
         </div>
       ) : collections.length === 0 ? (
         <ModuleEmptyState
-          badgeIcon={Layers}
-          mock={<CollectionMock />}
-          title="Organisez votre boutique"
-          titleAccent="en collections"
-          text="Regroupez vos produits par thème pour aider vos clients à s'y retrouver — et cibler vos promos et offres."
+          icon={Layers}
+          title="Aucune collection"
+          description="Regroupez vos produits par thème pour faciliter la navigation de vos clients."
           action={
-            <>
-              <button
-                onClick={openNew}
-                className="btn-3d inline-flex w-full items-center justify-center gap-2 rounded-[6px] px-5 py-3 text-sm font-semibold sm:w-auto"
-              >
-                <Plus className="h-4 w-4" /> Créer une collection
-              </button>
-              <Link
-                to="/dashboard/produits"
-                className="btn-3d inline-flex w-full items-center justify-center gap-2 rounded-[6px] border border-border px-5 py-3 text-sm font-semibold sm:w-auto"
-              >
-                Voir mes produits
-              </Link>
-            </>
+            <button
+              onClick={openNew}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white px-5 py-2.5 text-sm font-semibold shadow-sm transition-colors cursor-pointer"
+            >
+              <Plus className="h-4 w-4" /> Créer une collection
+            </button>
           }
-          chips={[
-            { icon: Layers, label: "Regrouper" },
-            { icon: LayoutGrid, label: "Rayons" },
-            { icon: Filter, label: "Filtrer" },
-          ]}
-          footnote="Une collection sert de rayon dans votre boutique et de cible pour vos codes promo et offres."
         />
       ) : (
         <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -312,14 +283,14 @@ function CollectionsPage() {
           <DialogFooter>
             <button
               onClick={() => setOpen(false)}
-              className="btn-3d inline-flex items-center justify-center rounded-[6px] border border-border px-4 py-2.5 text-sm font-semibold"
+              className="inline-flex items-center justify-center rounded-xl border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted transition-colors cursor-pointer"
             >
               Annuler
             </button>
             <button
               onClick={submit}
               disabled={save.isPending}
-              className="btn-3d inline-flex items-center justify-center rounded-[6px] px-4 py-2.5 text-sm font-semibold disabled:opacity-60"
+              className="inline-flex items-center justify-center rounded-xl bg-orange-600 hover:bg-orange-500 text-white px-5 py-2.5 text-sm font-semibold shadow-sm transition-colors cursor-pointer disabled:opacity-60"
             >
               {save.isPending ? "Enregistrement…" : editing ? "Enregistrer" : "Créer"}
             </button>

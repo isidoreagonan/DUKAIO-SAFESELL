@@ -24,22 +24,7 @@ import {
   type Campaign,
 } from "@/lib/email-marketing";
 
-function EmailMock() {
-  return (
-    <div>
-      <div className="flex items-center gap-3">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[6px] bg-surface-tint text-primary">
-          <Mail className="h-4 w-4" />
-        </span>
-        <div className="flex-1 space-y-2">
-          <div className="h-2 w-3/4 rounded-[4px] bg-muted" />
-          <div className="h-2 w-1/2 rounded-[4px] bg-muted" />
-        </div>
-      </div>
-      <div className="mt-4 h-8 w-32 rounded-[6px] bg-primary/20" />
-    </div>
-  );
-}
+
 
 function CampaignCard({ campaign }: { campaign: Campaign }) {
   const send = useSendCampaign();
@@ -126,7 +111,7 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
             type="button"
             onClick={() => void doSend()}
             disabled={send.isPending}
-            className="btn-3d inline-flex items-center gap-2 rounded-[6px] px-3.5 py-2 text-xs font-bold disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white px-3.5 py-2 text-xs font-semibold shadow-sm transition-colors cursor-pointer disabled:opacity-60"
           >
             <Send className="h-3.5 w-3.5" />
             {send.isPending ? "Envoi..." : "Envoyer"}
@@ -136,16 +121,16 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
           type="button"
           onClick={doTest}
           disabled={test.isPending}
-          className="btn-3d inline-flex items-center gap-2 rounded-[6px] border border-border px-3.5 py-2 text-xs font-bold disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-200 hover:bg-stone-50 dark:hover:bg-stone-700 px-3.5 py-2 text-xs font-semibold shadow-sm transition-colors cursor-pointer disabled:opacity-60"
         >
-          <FlaskConical className="h-3.5 w-3.5" />
+          <FlaskConical className="h-3.5 w-3.5 text-orange-500" />
           {test.isPending ? "Envoi..." : "M'envoyer un test"}
         </button>
         {!sent && (
           <Link
             to="/dashboard/marketing/emails/$id"
             params={{ id: campaign.id }}
-            className="btn-3d inline-flex items-center gap-2 rounded-[6px] border border-border px-3.5 py-2 text-xs font-bold"
+            className="inline-flex items-center gap-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-200 hover:bg-stone-50 dark:hover:bg-stone-700 px-3.5 py-2 text-xs font-semibold shadow-sm transition-colors cursor-pointer"
           >
             <Pencil className="h-3.5 w-3.5" /> Modifier
           </Link>
@@ -153,7 +138,7 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
         <button
           type="button"
           onClick={() => void drop()}
-          className="btn-3d ml-auto inline-flex items-center justify-center rounded-[6px] border border-border px-3 py-2 text-muted-foreground"
+          className="btn-3d ml-auto inline-flex items-center justify-center rounded-xl border border-border px-3 py-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
           aria-label="Supprimer"
         >
           <Trash2 className="h-3.5 w-3.5" />
@@ -171,7 +156,7 @@ export function EmailCampaignsTab({ storeId }: { storeId: string | undefined }) 
     <Link
       to="/dashboard/marketing/emails/$id"
       params={{ id: "nouveau" }}
-      className="btn-3d inline-flex items-center gap-2 rounded-[6px] px-4 py-2.5 text-sm font-bold"
+      className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white px-5 py-2.5 text-sm font-semibold shadow-sm transition-colors cursor-pointer"
     >
       <Plus className="h-4 w-4" /> Nouvelle campagne
     </Link>
@@ -179,22 +164,12 @@ export function EmailCampaignsTab({ storeId }: { storeId: string | undefined }) 
 
   if (!isLoading && campaigns.length === 0) {
     return (
-      <>
-        <ModuleEmptyState
-          badgeIcon={Mail}
-          mock={<EmailMock />}
-          title="E-mail"
-          titleAccent="marketing"
-          text="Écrivez un e-mail, choisissez vos clients (tous, meilleurs clients, inactifs, une ville) et envoyez. Vous voyez ensuite les ouvertures et les clics."
-          action={newButton}
-          chips={[
-            { icon: Users, label: "Audiences ciblées" },
-            { icon: Eye, label: "Suivi des ouvertures" },
-            { icon: MousePointerClick, label: "Suivi des clics" },
-          ]}
-          footnote="Les e-mails partent depuis DUKAIO aux couleurs de votre boutique."
-        />
-      </>
+      <ModuleEmptyState
+        icon={Mail}
+        title="Aucune campagne e-mail"
+        description="Envoyez des offres et des promotions ciblées directement dans la boîte de réception de vos clients."
+        action={newButton}
+      />
     );
   }
 

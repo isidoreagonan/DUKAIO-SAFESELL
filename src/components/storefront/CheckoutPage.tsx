@@ -1,10 +1,163 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeft, CheckCircle2, Loader2, ShieldCheck, Ticket, Truck } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2, ShieldCheck, Ticket, Truck, Search, MapPin, PencilLine } from "lucide-react";
 import { z } from "zod";
 import { useShop } from "@/lib/shop";
 import { money } from "@/lib/pricing";
 import { visitorSession } from "@/lib/abandoned";
 import { trackAbandonedCart } from "@/lib/abandoned.functions";
+
+type NominatimResult = {
+  place_id: number;
+  display_name: string;
+  lat: string;
+  lon: string;
+};
+
+/** Champ adresse avec autocompletion Nominatim (OpenStreetMap). */
+function AddressAutocomplete({
+  value,
+  onChange,
+  onBlur,
+  country,
+  error,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onBlur?: () => void;
+  country?: string | null;
+  error?: string;
+}) {
+  const [query, setQuery] = useState(value);
+  const [results, setResults] = useState<NominatimResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [manual, setManual] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Sync external value changes (e.g. form reset)
+  useEffect(() => {
+    setQuery(value);
+  }, [value]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const search = (q: string) => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (q.trim().length < 3) { setResults([]); setOpen(false); return; }
+    timerRef.current = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const countryCode = country ? `&countrycodes=${country.toLowerCase()}` : "";
+        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&accept-language=fr${countryCode}`;
+        const res = await fetch(url, { headers: { "Accept-Language": "fr" } });
+        const data: NominatimResult[] = await res.json();
+        setResults(data);
+        setOpen(data.length > 0);
+      } catch {
+        setResults([]);
+      } finally {
+        setLoading(false);
+      }
+    }, 400);
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = e.target.value;
+    setQuery(v);
+    onChange(v);
+    if (!manual) search(v);
+  };
+
+  const pick = (result: NominatimResult) => {
+    const short = result.display_name.split(",").slice(0, 3).join(",").trim();
+    setQuery(short);
+    onChange(short);
+    setResults([]);
+    setOpen(false);
+    onBlur?.();
+  };
+
+  if (manual) {
+    return (
+      <div>
+        <input
+          value={query}
+          onChange={(e) => { setQuery(e.target.value); onChange(e.target.value); }}
+          onBlur={onBlur}
+          placeholder="Quartier, rue, repere..."
+          maxLength={300}
+          className="mt-1 w-full rounded-[var(--radius)] border border-border bg-card px-3 py-2.5 text-sm outline-none focus:border-[var(--rose)]"
+        />
+        <button
+          type="button"
+          onClick={() => setManual(false)}
+          className="mt-1 flex items-center gap-1 text-[11px] font-semibold text-[var(--rose)] hover:underline"
+        >
+          <Search className="h-3 w-3" /> Rechercher automatiquement
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div ref={containerRef} className="relative">
+      <div className="relative mt-1">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+        <input
+          value={query}
+          onChange={handleChange}
+          onBlur={onBlur}
+          onFocus={() => results.length > 0 && setOpen(true)}
+          placeholder="Rechercher votre adresse..."
+          maxLength={300}
+          className="w-full rounded-[var(--radius)] border border-border bg-card py-2.5 pl-9 pr-3 text-sm outline-none focus:border-[var(--rose)]"
+        />
+        {loading && (
+          <Loader2 className="absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin text-muted-foreground" />
+        )}
+      </div>
+
+      {open && results.length > 0 && (
+        <ul className="absolute z-50 mt-1 w-full overflow-hidden rounded-[var(--radius)] border border-border bg-card shadow-lg">
+          {results.map((r) => (
+            <li key={r.place_id}>
+              <button
+                type="button"
+                onClick={() => pick(r)}
+                className="flex w-full items-start gap-2 px-3 py-2.5 text-left text-sm hover:bg-muted/60 transition-colors"
+              >
+                <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--rose)]" />
+                <span className="line-clamp-2">{r.display_name}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <button
+        type="button"
+        onClick={() => setManual(true)}
+        className="mt-1 flex items-center gap-1 text-[11px] font-semibold text-muted-foreground hover:text-foreground hover:underline transition-colors"
+      >
+        <PencilLine className="h-3 w-3" /> Entrer l'adresse manuellement
+      </button>
+
+      {error && (
+        <span className="block text-[11px] font-semibold text-destructive">{error}</span>
+      )}
+    </div>
+  );
+}
 
 const DIAL_CODES: Record<string, string> = {
   BJ: "+229",
@@ -269,17 +422,13 @@ export function CheckoutPage() {
 
           <label className="block">
             <span className="text-xs font-semibold">Adresse *</span>
-            <input
-              {...field("address")}
-              placeholder="Quartier, rue, repère..."
-              maxLength={300}
-              className={inputClass}
+            <AddressAutocomplete
+              value={form.address}
+              onChange={(v) => setForm((c) => ({ ...c, address: v }))}
+              onBlur={remember}
+              country={store.country}
+              error={errors["address"]}
             />
-            {errors["address"] && (
-              <span className="text-[11px] font-semibold text-destructive">
-                {errors["address"]}
-              </span>
-            )}
           </label>
           </div>
 

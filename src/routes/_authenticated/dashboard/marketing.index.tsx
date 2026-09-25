@@ -79,37 +79,7 @@ const TABS = [
 
 type TabKey = (typeof TABS)[number]["key"];
 
-function PromoMock() {
-  return (
-    <div className="flex items-stretch gap-3">
-      <span className="grid w-14 shrink-0 place-items-center rounded-[6px] bg-surface-tint text-primary">
-        <Percent className="h-5 w-5" />
-      </span>
-      <div className="flex flex-1 flex-col items-center justify-center gap-2 py-2">
-        <p className="font-display text-2xl text-emerald-600">-20%</p>
-        <div className="h-2 w-16 rounded-[4px] bg-emerald-500/25" />
-      </div>
-    </div>
-  );
-}
 
-function OfferMock() {
-  return (
-    <div>
-      <div className="flex items-center gap-3">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[6px] bg-surface-tint text-primary">
-          <Package className="h-4 w-4" />
-        </span>
-        <span className="rounded-[4px] bg-emerald-500/15 px-2 py-0.5 text-xs font-bold text-emerald-600">
-          -15%
-        </span>
-      </div>
-      <div className="mt-4 h-1.5 w-full rounded-[4px] bg-muted">
-        <div className="h-1.5 w-2/3 rounded-[4px] bg-primary" />
-      </div>
-    </div>
-  );
-}
 
 function ProductSelect({
   value,
@@ -346,14 +316,14 @@ function CodesTab({ storeId, products }: { storeId: string | undefined; products
         <DialogFooter>
           <button
             onClick={() => setOpen(false)}
-            className="btn-3d inline-flex items-center justify-center rounded-[6px] border border-border px-4 py-2.5 text-sm font-semibold"
+            className="inline-flex items-center justify-center rounded-xl border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted transition-colors cursor-pointer"
           >
             Annuler
           </button>
           <button
             onClick={submit}
             disabled={save.isPending}
-            className="btn-3d inline-flex items-center justify-center rounded-[6px] px-4 py-2.5 text-sm font-semibold disabled:opacity-60"
+            className="inline-flex items-center justify-center rounded-xl bg-orange-600 hover:bg-orange-500 text-white px-5 py-2.5 text-sm font-semibold shadow-sm transition-colors cursor-pointer disabled:opacity-60"
           >
             {save.isPending ? "Enregistrement…" : editing ? "Enregistrer" : "Créer le code"}
           </button>
@@ -370,25 +340,17 @@ function CodesTab({ storeId, products }: { storeId: string | undefined; products
     return (
       <>
         <ModuleEmptyState
-          badgeIcon={Ticket}
-          mock={<PromoMock />}
-          title="Votre premier code promo"
-          titleAccent="n'attend qu'un clic"
-          text="Offrez une réduction ciblée à vos clients et suivez son impact sur vos ventes — en quelques secondes."
+          icon={Ticket}
+          title="Aucun code promo"
+          description="Créez votre premier code de réduction pour inciter vos visiteurs à commander."
           action={
             <button
               onClick={() => openNew()}
-              className="btn-3d inline-flex w-full items-center justify-center gap-2 rounded-[6px] px-5 py-3 text-sm font-semibold sm:w-auto"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white px-5 py-2.5 text-sm font-semibold shadow-sm transition-colors cursor-pointer"
             >
               <Plus className="h-4 w-4" /> Créer un code promo
             </button>
           }
-          chips={[
-            { icon: Percent, label: "% ou fixe" },
-            { icon: Package, label: "Ciblé produit" },
-            { icon: CalendarClock, label: "Durée limitée" },
-          ]}
-          footnote="Le code s'applique au panier et au paiement — chaque utilisation est suivie automatiquement."
         />
         {dialog}
       </>
@@ -400,7 +362,7 @@ function CodesTab({ storeId, products }: { storeId: string | undefined; products
       <div className="mt-6 flex justify-end">
         <button
           onClick={() => openNew()}
-          className="btn-3d inline-flex items-center gap-2 rounded-[6px] px-3.5 py-2.5 text-sm font-semibold"
+          className="inline-flex items-center gap-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors cursor-pointer"
         >
           <Plus className="h-4 w-4" /> Nouveau code
         </button>
@@ -993,14 +955,14 @@ function OffresTab({
         <DialogFooter>
           <button
             onClick={() => setOpen(false)}
-            className="btn-3d inline-flex items-center justify-center rounded-[6px] border border-border px-4 py-2.5 text-sm font-semibold"
+            className="inline-flex items-center justify-center rounded-xl border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted transition-colors cursor-pointer"
           >
             Annuler
           </button>
           <button
             onClick={submit}
             disabled={save.isPending}
-            className="btn-3d inline-flex items-center justify-center rounded-[6px] px-4 py-2.5 text-sm font-semibold disabled:opacity-60"
+            className="inline-flex items-center justify-center rounded-xl bg-orange-600 hover:bg-orange-500 text-white px-5 py-2.5 text-sm font-semibold shadow-sm transition-colors cursor-pointer disabled:opacity-60"
           >
             {save.isPending ? "Enregistrement…" : editing ? "Enregistrer" : "Créer l'offre"}
           </button>
@@ -1017,25 +979,17 @@ function OffresTab({
     return (
       <>
         <ModuleEmptyState
-          badgeIcon={Gift}
-          mock={<OfferMock />}
-          title="Votre première offre"
-          titleAccent="booste le panier moyen"
-          text="Récompensez les achats en volume — packs, paliers, article offert — et regardez le panier moyen grimper."
+          icon={Gift}
+          title="Aucune offre ou pack"
+          description="Augmentez votre panier moyen en récompensant les achats multiples sur vos produits phares."
           action={
             <Link
               to="/dashboard/marketing/offres/nouveau"
-              className="btn-3d inline-flex w-full items-center justify-center gap-2 rounded-[6px] px-5 py-3 text-sm font-semibold sm:w-auto"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white px-5 py-2.5 text-sm font-semibold shadow-sm transition-colors cursor-pointer"
             >
-              <Plus className="h-4 w-4" /> Choisir un modèle d'offre
+              <Plus className="h-4 w-4" /> Créer une offre / pack
             </Link>
           }
-          chips={[
-            { icon: Package, label: "Packs quantité" },
-            { icon: Gift, label: "Article offert" },
-            { icon: TrendingUp, label: "Paliers de remise" },
-          ]}
-          footnote="L'offre s'applique toute seule sur la fiche produit — aucun code à saisir pour le client."
         />
         {dialog}
       </>
@@ -1047,7 +1001,7 @@ function OffresTab({
       <div className="mt-6 flex justify-end">
         <Link
           to="/dashboard/marketing/offres/nouveau"
-          className="btn-3d inline-flex items-center gap-2 rounded-[6px] px-3.5 py-2.5 text-sm font-semibold"
+          className="inline-flex items-center gap-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors cursor-pointer"
         >
           <Plus className="h-4 w-4" /> Nouvelle offre
         </Link>

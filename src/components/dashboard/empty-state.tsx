@@ -1,68 +1,118 @@
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
+import { Sparkles } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-/** Bloc "état vide" premium partagé par les modules du tableau de bord. */
+export interface ModuleEmptyStateProps {
+  icon?: LucideIcon;
+  badgeIcon?: LucideIcon; // compatibilité
+  badgeLabel?: string;
+  mock?: ReactNode;
+  title: string;
+  titleAccent?: string;
+  description?: string;
+  text?: string; // compatibilité
+  action?: ReactNode;
+  chips?: { icon: LucideIcon; label: string }[];
+  footnote?: string;
+  steps?: { title: string; desc: string; done?: boolean }[];
+  tip?: string;
+  guideTitle?: string;
+  className?: string;
+}
+
+/**
+ * État vide épuré et professionnel avec fond quadrillé discret et carte flottante 3D (Style exact référence).
+ */
 export function ModuleEmptyState({
-  badgeIcon: BadgeIcon,
-  mock,
+  icon,
+  badgeIcon,
   title,
   titleAccent,
+  description,
   text,
   action,
-  chips,
-  footnote,
-}: {
-  badgeIcon: LucideIcon;
-  mock: ReactNode;
-  title: string;
-  titleAccent: string;
-  text: string;
-  action: ReactNode;
-  chips: { icon: LucideIcon; label: string }[];
-  footnote: string;
-}) {
+  className,
+}: ModuleEmptyStateProps) {
+  const Icon = icon || badgeIcon || Sparkles;
+  const desc = description || text;
+
   return (
-    <section className="relative mt-6 overflow-hidden rounded-[8px] border border-border bg-background p-6 sm:p-10">
+    <div
+      className={cn(
+        "relative mt-6 flex min-h-[380px] flex-col items-center justify-center overflow-hidden rounded-2xl border border-stone-200/80 bg-white p-8 text-center sm:p-14 dark:border-stone-800 dark:bg-stone-950",
+        className,
+      )}
+    >
+      {/* Grille d'arrière-plan discrète (exactement comme dans la capture de référence) */}
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-64 opacity-70"
-        style={{ background: "var(--gradient-soft)" }}
+        className="pointer-events-none absolute inset-0 opacity-[0.55] dark:opacity-[0.12]"
+        style={{
+          backgroundImage: `
+            linear-gradient(to right, #e5e7eb 1px, transparent 1px),
+            linear-gradient(to bottom, #e5e7eb 1px, transparent 1px)
+          `,
+          backgroundSize: "36px 36px",
+        }}
       />
-      <div className="relative mx-auto max-w-2xl text-center">
-        <div className="relative mx-auto w-full max-w-[380px]">
-          <div className="absolute inset-x-6 -bottom-3 h-16 rounded-[6px] border border-border bg-background/60" />
-          <div className="absolute inset-x-3 -bottom-1.5 h-16 rounded-[6px] border border-border bg-background/80" />
-          <div className="relative rounded-[6px] border border-border bg-background p-4">
-            <span className="absolute -right-3 -top-3 grid h-10 w-10 place-items-center rounded-[6px] bg-[image:var(--gradient-brand)] text-primary-foreground">
-              <BadgeIcon className="h-4 w-4" />
-            </span>
-            {mock}
+
+      <div className="relative z-10 flex flex-col items-center">
+        {/* Illustration moderne épurée : 3 cartes superposées avec effet de profondeur */}
+        <div className="relative mb-6 flex h-24 w-64 items-center justify-center select-none">
+          {/* Carte arrière supérieure */}
+          <div className="absolute -top-1 h-12 w-48 rounded-xl border border-stone-200/60 bg-stone-50/70 px-3 flex items-center gap-2.5 opacity-50 dark:border-stone-800 dark:bg-stone-900/60">
+            <div className="grid h-6 w-6 shrink-0 place-items-center rounded-lg border border-stone-200/60 bg-white text-stone-400 dark:border-stone-700 dark:bg-stone-800">
+              <Icon className="h-3 w-3" />
+            </div>
+            <div className="flex-1 space-y-1">
+              <div className="h-1.5 w-20 rounded-full bg-stone-200 dark:bg-stone-700" />
+              <div className="h-1.5 w-12 rounded-full bg-stone-200/60 dark:bg-stone-800" />
+            </div>
+          </div>
+
+          {/* Carte arrière inférieure */}
+          <div className="absolute -bottom-1 h-12 w-48 rounded-xl border border-stone-200/60 bg-stone-50/70 px-3 flex items-center gap-2.5 opacity-50 dark:border-stone-800 dark:bg-stone-900/60">
+            <div className="grid h-6 w-6 shrink-0 place-items-center rounded-lg border border-stone-200/60 bg-white text-stone-400 dark:border-stone-700 dark:bg-stone-800">
+              <Icon className="h-3 w-3" />
+            </div>
+            <div className="flex-1 space-y-1">
+              <div className="h-1.5 w-20 rounded-full bg-stone-200 dark:bg-stone-700" />
+              <div className="h-1.5 w-12 rounded-full bg-stone-200/60 dark:bg-stone-800" />
+            </div>
+          </div>
+
+          {/* Carte centrale principale flottante */}
+          <div className="relative z-10 flex h-14 w-56 items-center gap-3 rounded-2xl border border-stone-200/90 bg-white px-3.5 shadow-xl shadow-stone-900/5 dark:border-stone-700 dark:bg-stone-900 dark:shadow-black/30">
+            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-xl border border-stone-200 bg-stone-50 text-stone-700 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-200 shadow-sm">
+              <Icon className="h-4 w-4" />
+            </div>
+            <div className="flex-1 space-y-1.5">
+              <div className="h-2 w-24 rounded-full bg-stone-200 dark:bg-stone-700" />
+              <div className="h-1.5 w-14 rounded-full bg-stone-200/70 dark:bg-stone-700/70" />
+            </div>
           </div>
         </div>
 
-        <h2 className="mt-10 text-3xl font-extrabold tracking-tight sm:text-4xl">
-          {title}
-          <br />
-          <span className="font-display text-muted-foreground italic">{titleAccent}</span>
-        </h2>
-        <p className="mx-auto mt-3 max-w-md text-sm text-muted-foreground sm:text-base">{text}</p>
+        {/* Titre simple et net */}
+        <h3 className="text-lg font-bold tracking-tight text-stone-900 sm:text-xl dark:text-white">
+          {title} {titleAccent ? titleAccent : null}
+        </h3>
 
-        <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">{action}</div>
+        {/* Sous-titre court et clair */}
+        {desc && (
+          <p className="mt-1.5 max-w-sm text-sm text-stone-500 dark:text-stone-400">
+            {desc}
+          </p>
+        )}
 
-        <div className="mt-6 grid gap-2 sm:grid-cols-3">
-          {chips.map((c) => (
-            <span
-              key={c.label}
-              className="flex flex-col items-center gap-1.5 rounded-[6px] border border-border bg-background px-3 py-3 text-xs text-muted-foreground"
-            >
-              <c.icon className="h-4 w-4" />
-              {c.label}
-            </span>
-          ))}
-        </div>
-
-        <p className="mx-auto mt-5 max-w-md text-xs text-muted-foreground">{footnote}</p>
+        {/* Bouton d'action orange net et épuré */}
+        {action && (
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5">
+            {action}
+          </div>
+        )}
       </div>
-    </section>
+    </div>
   );
 }
 
@@ -81,7 +131,7 @@ export function ModuleHeader({
   return (
     <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 sm:flex sm:justify-between">
       <div className="min-w-0">
-        <h1 className="truncate text-2xl font-extrabold tracking-tight sm:text-3xl">
+        <h1 className="truncate text-2xl font-extrabold tracking-tight sm:text-3xl font-display">
           {title}
           {count ? (
             <span className="font-display not-italic text-muted-foreground"> · {count}</span>

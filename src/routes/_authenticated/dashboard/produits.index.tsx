@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ImageIcon, Sparkles, Plus, Pencil, Star, Trash2, Search, ArrowRight } from "lucide-react";
+import { ImageIcon, Sparkles, Plus, Pencil, Star, Trash2, Search, ArrowRight, ShoppingBag } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { DashboardShell } from "@/components/dashboard/shell";
@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { useConfirmDelete } from "@/components/ui/confirm-dialog";
 import { notifyError } from "@/components/ui/notice-dialog";
 import { useI18n } from "@/lib/i18n";
+import { ModuleEmptyState } from "@/components/dashboard/empty-state";
 
 export const Route = createFileRoute("/_authenticated/dashboard/produits/")({
   head: () => ({
@@ -33,37 +34,7 @@ export const Route = createFileRoute("/_authenticated/dashboard/produits/")({
   component: ProduitsPage,
 });
 
-function MockCard() {
-  const { dict } = useI18n();
-  return (
-    <div className="relative mx-auto w-full max-w-[380px]">
-      <div className="absolute inset-x-6 -bottom-3 h-16 rounded-[6px] border border-border bg-background/60" />
-      <div className="absolute inset-x-3 -bottom-1.5 h-16 rounded-[6px] border border-border bg-background/80" />
-      <div className="relative rounded-[6px] border border-border bg-background p-4">
-        <span className="absolute -right-3 -top-3 grid h-10 w-10 place-items-center rounded-[4px] bg-[image:var(--gradient-brand)] text-primary-foreground">
-          <Sparkles className="h-4 w-4" />
-        </span>
-        <div className="flex items-start gap-3">
-          <span className="grid h-16 w-16 shrink-0 place-items-center rounded-[6px] bg-surface-tint text-primary">
-            <ImageIcon className="h-6 w-6" />
-          </span>
-          <div className="min-w-0 flex-1 space-y-2">
-            <div className="h-2.5 w-3/4 rounded-[4px] bg-muted" />
-            <div className="flex gap-0.5 text-primary">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star key={i} className="h-3.5 w-3.5 fill-current" />
-              ))}
-            </div>
-            <div className="h-4 w-24 rounded-[4px] bg-brand-ink" />
-          </div>
-        </div>
-        <div className="btn-3d mt-4 grid place-items-center rounded-[6px] py-2.5 text-sm font-semibold">
-          {dict.isEn ? "Add to cart" : "Ajouter au panier"}
-        </div>
-      </div>
-    </div>
-  );
-}
+
 
 const statusLabel: Record<string, { label: string; className: string }> = {
   active: { label: "Actif", className: "bg-accent text-accent-foreground" },
@@ -267,9 +238,9 @@ function ProduitsPage() {
           <DukaioAiButton to="/dashboard/produits/ia" label="DUKAIO AI" shortLabel="IA" />
           <Link
             to="/dashboard/produits/nouveau"
-            className="btn-3d inline-flex items-center gap-1.5 rounded-[6px] px-3 py-2 text-xs font-semibold"
+            className="inline-flex items-center gap-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors cursor-pointer"
           >
-            <Plus className="h-3.5 w-3.5" />
+            <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">{dict.productsPage.addProduct}</span>
             <span className="sm:hidden">{dict.isEn ? "Add" : "Ajouter"}</span>
           </Link>
@@ -321,68 +292,27 @@ function ProduitsPage() {
           {dict.productsPage.loading}
         </section>
       ) : (
-        <section className="relative mt-6 overflow-hidden rounded-[6px] border border-border bg-background p-6 sm:p-10">
-          <div
-            className="pointer-events-none absolute inset-x-0 top-0 h-64 opacity-70"
-            style={{ background: "var(--gradient-soft)" }}
-          />
-          <div className="relative mx-auto max-w-2xl text-center">
-            <MockCard />
-
-            <h2 className="mt-10 text-3xl font-extrabold tracking-tight sm:text-4xl">
-              {dict.productsPage.emptyTitle}
-              <br />
-              <span className="font-display text-muted-foreground italic">{dict.productsPage.emptyAccent}</span>
-            </h2>
-            <p className="mx-auto mt-3 max-w-md text-sm text-muted-foreground sm:text-base">
-              {aiAllowed
-                ? dict.productsPage.emptyDescWithAi
-                : dict.productsPage.emptyDescManual}
-            </p>
-
-            <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
+        <ModuleEmptyState
+          icon={ShoppingBag}
+          title="Aucun produit pour le moment"
+          description="Créez votre première page produit en quelques secondes avec l'IA ou ajoutez vos articles manuellement."
+          action={
+            <div className="flex flex-wrap items-center justify-center gap-2.5">
               <DukaioAiButton
                 to="/dashboard/produits/ia"
                 label={dict.productsPage.generateWithAi}
-                className="btn-3d w-full justify-center border-0 px-5 py-3 sm:w-auto"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white px-5 py-2.5 text-sm font-semibold shadow-sm transition-colors cursor-pointer"
               />
               <Link
                 to="/dashboard/produits/nouveau"
-                className="btn-3d inline-flex w-full items-center justify-center gap-2 rounded-[6px] border border-border px-5 py-3 text-sm font-semibold sm:w-auto"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-orange-200 dark:border-orange-900/50 bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-300 hover:bg-orange-100 dark:hover:bg-orange-900/40 px-5 py-2.5 text-sm font-semibold shadow-sm transition-colors cursor-pointer"
               >
                 <Plus className="h-4 w-4" /> {dict.productsPage.createManually}
               </Link>
             </div>
-
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
-              {aiAllowed ? (
-                <span className="inline-flex items-center gap-1.5 rounded-[4px] border border-border bg-background px-3 py-1.5">
-                  <ImageIcon className="h-3.5 w-3.5" /> {dict.productsPage.badgePhotoAi}
-                </span>
-              ) : null}
-              <span className="inline-flex items-center gap-1.5 rounded-[4px] border border-border bg-background px-3 py-1.5">
-                <Pencil className="h-3.5 w-3.5" /> {dict.productsPage.badgeManual}
-              </span>
-            </div>
-          </div>
-        </section>
+          }
+        />
       )}
-
-      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
-        {[
-          { t: dict.productsPage.featureDigitalTitle, d: dict.productsPage.featureDigitalDesc },
-          { t: dict.productsPage.featureStockTitle, d: dict.productsPage.featureStockDesc },
-          { t: dict.productsPage.featureSeoTitle, d: dict.productsPage.featureSeoDesc },
-        ].map((c) => (
-          <section
-            key={c.t}
-            className="rounded-[6px] border border-border bg-background p-5"
-          >
-            <p className="text-sm font-bold">{c.t}</p>
-            <p className="mt-1.5 text-sm text-muted-foreground">{c.d}</p>
-          </section>
-        ))}
-      </div>
     </DashboardShell>
   );
 }

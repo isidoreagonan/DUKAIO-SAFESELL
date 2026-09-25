@@ -73,6 +73,7 @@ import { Route as SHandleProduitsRouteImport } from './routes/s.$handle.produits
 import { Route as AuthenticatedDashboardClientsIndexRouteImport } from './routes/_authenticated/dashboard/clients.index'
 import { Route as AuthenticatedDashboardClientsSegmentsRouteImport } from './routes/_authenticated/dashboard/clients.segments'
 import { Route as AuthenticatedDashboardCommandesIndexRouteImport } from './routes/_authenticated/dashboard/commandes.index'
+import { Route as AuthenticatedDashboardCommandesIdRouteImport } from './routes/_authenticated/dashboard/commandes.$id'
 import { Route as AuthenticatedDashboardCommandesPaniersRouteImport } from './routes/_authenticated/dashboard/commandes.paniers'
 import { Route as AuthenticatedDashboardDecouverteIndexRouteImport } from './routes/_authenticated/dashboard/decouverte.index'
 import { Route as AuthenticatedDashboardDecouverteBoutiquesRouteImport } from './routes/_authenticated/dashboard/decouverte.boutiques'
@@ -442,6 +443,12 @@ const AuthenticatedDashboardCommandesIndexRoute =
     path: '/dashboard/commandes/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedDashboardCommandesIdRoute =
+  AuthenticatedDashboardCommandesIdRouteImport.update({
+    id: '/dashboard/commandes/$id',
+    path: '/dashboard/commandes/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDashboardCommandesPaniersRoute =
   AuthenticatedDashboardCommandesPaniersRouteImport.update({
     id: '/dashboard/commandes/paniers',
@@ -640,6 +647,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/': typeof AuthenticatedDashboardIndexRoute
   '/s/$handle/': typeof SHandleIndexRoute
   '/dashboard/clients/segments': typeof AuthenticatedDashboardClientsSegmentsRoute
+  '/dashboard/commandes/$id': typeof AuthenticatedDashboardCommandesIdRoute
   '/dashboard/commandes/paniers': typeof AuthenticatedDashboardCommandesPaniersRoute
   '/dashboard/decouverte/boutiques': typeof AuthenticatedDashboardDecouverteBoutiquesRoute
   '/dashboard/decouverte/favoris': typeof AuthenticatedDashboardDecouverteFavorisRoute
@@ -727,6 +735,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardIndexRoute
   '/s/$handle': typeof SHandleIndexRoute
   '/dashboard/clients/segments': typeof AuthenticatedDashboardClientsSegmentsRoute
+  '/dashboard/commandes/$id': typeof AuthenticatedDashboardCommandesIdRoute
   '/dashboard/commandes/paniers': typeof AuthenticatedDashboardCommandesPaniersRoute
   '/dashboard/decouverte/boutiques': typeof AuthenticatedDashboardDecouverteBoutiquesRoute
   '/dashboard/decouverte/favoris': typeof AuthenticatedDashboardDecouverteFavorisRoute
@@ -818,6 +827,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/': typeof AuthenticatedDashboardIndexRoute
   '/s/$handle/': typeof SHandleIndexRoute
   '/_authenticated/dashboard/clients/segments': typeof AuthenticatedDashboardClientsSegmentsRoute
+  '/_authenticated/dashboard/commandes/$id': typeof AuthenticatedDashboardCommandesIdRoute
   '/_authenticated/dashboard/commandes/paniers': typeof AuthenticatedDashboardCommandesPaniersRoute
   '/_authenticated/dashboard/decouverte/boutiques': typeof AuthenticatedDashboardDecouverteBoutiquesRoute
   '/_authenticated/dashboard/decouverte/favoris': typeof AuthenticatedDashboardDecouverteFavorisRoute
@@ -909,6 +919,7 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/s/$handle/'
     | '/dashboard/clients/segments'
+    | '/dashboard/commandes/$id'
     | '/dashboard/commandes/paniers'
     | '/dashboard/decouverte/boutiques'
     | '/dashboard/decouverte/favoris'
@@ -996,6 +1007,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/s/$handle'
     | '/dashboard/clients/segments'
+    | '/dashboard/commandes/$id'
     | '/dashboard/commandes/paniers'
     | '/dashboard/decouverte/boutiques'
     | '/dashboard/decouverte/favoris'
@@ -1086,6 +1098,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/'
     | '/s/$handle/'
     | '/_authenticated/dashboard/clients/segments'
+    | '/_authenticated/dashboard/commandes/$id'
     | '/_authenticated/dashboard/commandes/paniers'
     | '/_authenticated/dashboard/decouverte/boutiques'
     | '/_authenticated/dashboard/decouverte/favoris'
@@ -1614,6 +1627,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardCommandesIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/dashboard/commandes/$id': {
+      id: '/_authenticated/dashboard/commandes/$id'
+      path: '/dashboard/commandes/$id'
+      fullPath: '/dashboard/commandes/$id'
+      preLoaderRoute: typeof AuthenticatedDashboardCommandesIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard/commandes/paniers': {
       id: '/_authenticated/dashboard/commandes/paniers'
       path: '/dashboard/commandes/paniers'
@@ -1840,6 +1860,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardParametresRoute: typeof AuthenticatedDashboardParametresRoute
   AuthenticatedDashboardIndexRoute: typeof AuthenticatedDashboardIndexRoute
   AuthenticatedDashboardClientsSegmentsRoute: typeof AuthenticatedDashboardClientsSegmentsRoute
+  AuthenticatedDashboardCommandesIdRoute: typeof AuthenticatedDashboardCommandesIdRoute
   AuthenticatedDashboardCommandesPaniersRoute: typeof AuthenticatedDashboardCommandesPaniersRoute
   AuthenticatedDashboardDecouverteBoutiquesRoute: typeof AuthenticatedDashboardDecouverteBoutiquesRoute
   AuthenticatedDashboardDecouverteFavorisRoute: typeof AuthenticatedDashboardDecouverteFavorisRoute
@@ -1868,6 +1889,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardIndexRoute: AuthenticatedDashboardIndexRoute,
   AuthenticatedDashboardClientsSegmentsRoute:
     AuthenticatedDashboardClientsSegmentsRoute,
+  AuthenticatedDashboardCommandesIdRoute:
+    AuthenticatedDashboardCommandesIdRoute,
   AuthenticatedDashboardCommandesPaniersRoute:
     AuthenticatedDashboardCommandesPaniersRoute,
   AuthenticatedDashboardDecouverteBoutiquesRoute:

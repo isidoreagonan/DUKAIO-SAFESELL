@@ -297,7 +297,7 @@ function EmailComposerPage() {
             type="button"
             onClick={() => doSave()}
             disabled={save.isPending}
-            className="btn-white-3d inline-flex items-center gap-2 rounded-[6px] border border-border px-3.5 py-2 text-xs font-bold disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-200 hover:bg-stone-50 dark:hover:bg-stone-700 px-3.5 py-2 text-xs font-semibold shadow-sm transition-colors cursor-pointer disabled:opacity-60"
           >
             <Save className="h-3.5 w-3.5" /> Enregistrer
           </button>
@@ -305,16 +305,16 @@ function EmailComposerPage() {
             type="button"
             onClick={doTest}
             disabled={test.isPending || save.isPending}
-            className="btn-white-3d inline-flex items-center gap-2 rounded-[6px] border border-border px-3.5 py-2 text-xs font-bold disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-200 hover:bg-stone-50 dark:hover:bg-stone-700 px-3.5 py-2 text-xs font-semibold shadow-sm transition-colors cursor-pointer disabled:opacity-60"
           >
-            <FlaskConical className="h-3.5 w-3.5" /> M'envoyer un test
+            <FlaskConical className="h-3.5 w-3.5 text-orange-500" /> M'envoyer un test
           </button>
           {!sent && (
             <button
               type="button"
               onClick={doSend}
               disabled={send.isPending || save.isPending}
-              className="btn-3d inline-flex items-center gap-2 rounded-[6px] px-4 py-2.5 text-sm font-bold disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white px-4 py-2 text-sm font-semibold shadow-sm transition-colors cursor-pointer disabled:opacity-60"
             >
               <Send className="h-4 w-4" /> {send.isPending ? "Envoi..." : "Envoyer"}
             </button>

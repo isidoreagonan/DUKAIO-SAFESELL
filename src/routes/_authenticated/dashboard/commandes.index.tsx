@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Search, Download, ChevronDown, CalendarDays, MoreVertical, ShoppingCart } from "lucide-react";
+import { Search, Download, ChevronDown, CalendarDays, ShoppingCart, ArrowRight } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard/shell";
-import { OrderDialog } from "@/components/dashboard/order-dialog";
 import { cn } from "@/lib/utils";
-import { useOrders, useOrderItemCounts, formatFcfa, type Order } from "@/lib/store";
+import { useOrders, useOrderItemCounts, formatFcfa } from "@/lib/store";
 import { ORDER_STATUSES, statusMeta, type OrderStatus } from "@/lib/order-status";
+import { ModuleEmptyState } from "@/components/dashboard/empty-state";
+import { ExternalLink, ShoppingBag } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard/commandes/")({
   head: () => ({
@@ -87,7 +88,6 @@ function CommandesPage() {
   const [city, setCity] = useState("all");
   const [period, setPeriod] = useState<string>("all");
   const [q, setQ] = useState("");
-  const [selected, setSelected] = useState<Order | null>(null);
 
   const cities = useMemo(
     () => [...new Set(commandes.map((o) => o.shipping_city).filter(Boolean) as string[])].sort(),
@@ -122,7 +122,7 @@ function CommandesPage() {
     return [...map.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1));
   }, [rows]);
 
-  const current = selected ? (commandes.find((o) => o.id === selected.id) ?? null) : null;
+
 
   function exportCsv() {
     const csv = [
@@ -164,15 +164,15 @@ function CommandesPage() {
         <div className="flex shrink-0 items-center gap-2">
           <Link
             to="/dashboard/commandes/paniers"
-            className="btn-3d inline-flex items-center gap-2 rounded-[6px] border border-border px-3.5 py-2.5 text-sm font-semibold"
+            className="inline-flex items-center gap-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-200 hover:border-orange-500 hover:text-orange-600 px-3.5 py-2.5 text-sm font-semibold shadow-sm transition-colors cursor-pointer"
           >
-            <ShoppingCart className="h-4 w-4" />
+            <ShoppingCart className="h-4 w-4 text-orange-500" />
             <span className="hidden sm:inline">Paniers abandonnés</span>
             <span className="sm:hidden">Paniers</span>
           </Link>
           <button
             onClick={exportCsv}
-            className="btn-3d inline-flex items-center gap-2 rounded-[6px] border border-border px-3.5 py-2.5 text-sm font-semibold"
+            className="inline-flex items-center gap-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-200 hover:bg-stone-50 dark:hover:bg-stone-700 px-3.5 py-2.5 text-sm font-semibold shadow-sm transition-colors cursor-pointer"
           >
             <Download className="h-4 w-4" />
             <span className="hidden sm:inline">Exporter</span>
@@ -215,19 +215,37 @@ function CommandesPage() {
         />
       </div>
 
-      {rows.length === 0 ? (
+      {commandes.length === 0 && !isLoading ? (
+        <ModuleEmptyState
+          icon={ShoppingCart}
+          title="Aucune commande pour le moment"
+          description="Vos ventes apparaîtront automatiquement dès la première commande passée en boutique."
+          action={
+            <div className="flex flex-wrap items-center justify-center gap-2.5">
+              <Link
+                to="/dashboard/produits"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white px-5 py-2.5 text-sm font-semibold shadow-sm transition-colors cursor-pointer"
+              >
+                <ShoppingBag className="h-4 w-4" /> Gérer mes produits
+              </Link>
+              <Link
+                to="/dashboard/boutique"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-orange-200 dark:border-orange-900/50 bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-300 hover:bg-orange-100 dark:hover:bg-orange-900/40 px-5 py-2.5 text-sm font-semibold shadow-sm transition-colors cursor-pointer"
+              >
+                <ExternalLink className="h-4 w-4" /> Personnaliser ma vitrine
+              </Link>
+            </div>
+          }
+        />
+      ) : rows.length === 0 ? (
         <section className="mt-6 rounded-[8px] border border-dashed border-border bg-background p-12 text-center">
           <p className="text-sm font-semibold">
             {isLoading
               ? "Chargement de vos commandes…"
-              : commandes.length === 0
-                ? "Aucune commande pour le moment."
-                : "Aucune commande ne correspond à ces filtres."}
+              : "Aucune commande ne correspond à ces filtres."}
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            {commandes.length === 0
-              ? "Vos ventes apparaîtront ici dès la première commande passée en boutique."
-              : "Essayez un autre statut, une autre ville ou une autre période."}
+            Essayez un autre statut, une autre ville ou une autre période.
           </p>
         </section>
       ) : null}
@@ -244,9 +262,10 @@ function CommandesPage() {
                 const articles = counts[o.id] ?? 1;
                 return (
                   <li key={o.id}>
-                    <button
-                      onClick={() => setSelected(o)}
-                      className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-start gap-3 rounded-[8px] border border-border bg-background p-4 text-left transition-colors hover:border-primary/40"
+                    <Link
+                      to="/dashboard/commandes/$id"
+                      params={{ id: o.id }}
+                      className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-start gap-3 rounded-[8px] border border-border bg-background p-4 text-left transition-colors hover:border-orange-400/60 hover:shadow-sm"
                     >
                       <div className="min-w-0">
                         <p className="truncate text-sm font-bold uppercase">
@@ -294,9 +313,9 @@ function CommandesPage() {
                         >
                           {meta.label}
                         </span>
-                        <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
                       </span>
-                    </button>
+                    </Link>
                   </li>
                 );
               })}
@@ -305,7 +324,6 @@ function CommandesPage() {
         ))}
       </div>
 
-      <OrderDialog order={current} onOpenChange={(open) => !open && setSelected(null)} />
     </DashboardShell>
   );
 }

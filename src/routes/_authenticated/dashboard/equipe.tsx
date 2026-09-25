@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { DashboardShell } from "@/components/dashboard/shell";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/lib/store";
+import { ModuleEmptyState, ModuleHeader } from "@/components/dashboard/empty-state";
 import {
   STATUS_META,
   useRemoveMember,
@@ -189,81 +190,112 @@ function EquipePage() {
   return (
     <DashboardShell>
       <div className="mx-auto w-full max-w-6xl space-y-6">
-        <header className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-extrabold tracking-tight">{dict.teamPage.title}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">{dict.teamPage.subtitle}</p>
-          </div>
-          <button
-            onClick={openInvite}
-            className="btn-3d inline-flex items-center gap-2 rounded-[6px] bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground"
-          >
-            <UserPlus className="h-4 w-4" /> {dict.teamPage.addMember}
-          </button>
-        </header>
-
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {FILTERS.map((f) => (
+        <ModuleHeader
+          title={dict.teamPage.title}
+          count={String(members.length)}
+          description={dict.teamPage.subtitle}
+          actions={
             <button
-              key={f.value}
-              onClick={() => setFilter(f.value)}
-              className={cn(
-                "rounded-[6px] border bg-card px-4 py-3 text-left transition-colors",
-                filter === f.value
-                  ? "border-primary shadow-[inset_0_0_0_1px_var(--color-primary)]"
-                  : "border-border hover:border-primary/40",
-              )}
+              onClick={openInvite}
+              className="inline-flex items-center gap-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors cursor-pointer"
             >
-              <span className="text-xl font-extrabold">{counts[f.value]}</span>
-              <span className="ml-2 text-sm text-muted-foreground">{f.label}</span>
+              <UserPlus className="h-4 w-4" /> {dict.teamPage.addMember}
             </button>
-          ))}
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative min-w-0 flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder={dict.teamPage.searchPlaceholder}
-              className="w-full rounded-[6px] border border-border bg-card py-2.5 pl-10 pr-3 text-sm outline-none focus:border-primary"
-            />
-          </div>
-          <div className="flex overflow-hidden rounded-[6px] border border-border">
-            {[
-              { value: "list" as const, icon: Rows3, label: "Vue liste" },
-              { value: "grid" as const, icon: LayoutGrid, label: "Vue grille" },
-            ].map((v) => (
-              <button
-                key={v.value}
-                aria-label={v.label}
-                aria-pressed={view === v.value}
-                onClick={() => setView(v.value)}
-                className={cn(
-                  "px-3 py-2.5",
-                  view === v.value ? "bg-accent text-accent-foreground" : "text-muted-foreground",
-                )}
-              >
-                <v.icon className="h-4 w-4" />
-              </button>
-            ))}
-          </div>
-        </div>
+          }
+        />
 
         {isLoading ? (
-          <div className="rounded-[6px] border border-border bg-card p-10 text-center text-sm text-muted-foreground">
+          <div className="rounded-2xl border border-stone-200/80 bg-white p-12 text-center text-sm text-stone-500">
             {dict.teamPage.pending}…
           </div>
-        ) : rows.length === 0 ? (
-          <EmptyState
-            onInvite={openInvite}
-            filtered={members.length > 0}
-            title={dict.teamPage.emptyTitle}
-            desc={dict.teamPage.emptyDesc}
-            buttonLabel={dict.teamPage.addMember}
+        ) : members.length === 0 ? (
+          <ModuleEmptyState
+            icon={UserPlus}
+            title={dict.teamPage.emptyTitle || "Aucun membre dans l'équipe"}
+            description={
+              dict.teamPage.emptyDesc ||
+              "Invitez vos collaborateurs et closers à gérer votre boutique."
+            }
+            action={
+              <button
+                onClick={openInvite}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white px-5 py-2.5 text-sm font-semibold shadow-sm transition-colors cursor-pointer"
+              >
+                <UserPlus className="h-4 w-4" /> {dict.teamPage.addMember}
+              </button>
+            }
           />
-        ) : view === "list" ? (
+        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {FILTERS.map((f) => (
+                <button
+                  key={f.value}
+                  onClick={() => setFilter(f.value)}
+                  className={cn(
+                    "rounded-xl border bg-card px-4 py-3 text-left transition-colors cursor-pointer",
+                    filter === f.value
+                      ? "border-orange-500 shadow-[inset_0_0_0_1px_#f97316] bg-orange-50/20"
+                      : "border-border hover:border-orange-300",
+                  )}
+                >
+                  <span className="text-xl font-extrabold">{counts[f.value]}</span>
+                  <span className="ml-2 text-sm text-muted-foreground">{f.label}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative min-w-0 flex-1">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder={dict.teamPage.searchPlaceholder}
+                  className="w-full rounded-xl border border-border bg-card py-2.5 pl-10 pr-3 text-sm outline-none focus:border-orange-500"
+                />
+              </div>
+              <div className="flex overflow-hidden rounded-xl border border-border">
+                {[
+                  { value: "list" as const, icon: Rows3, label: "Vue liste" },
+                  { value: "grid" as const, icon: LayoutGrid, label: "Vue grille" },
+                ].map((v) => (
+                  <button
+                    key={v.value}
+                    aria-label={v.label}
+                    aria-pressed={view === v.value}
+                    onClick={() => setView(v.value)}
+                    className={cn(
+                      "px-3 py-2.5 cursor-pointer",
+                      view === v.value ? "bg-accent text-accent-foreground font-semibold" : "text-muted-foreground hover:bg-muted/50",
+                    )}
+                  >
+                    <v.icon className="h-4 w-4" />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {rows.length === 0 ? (
+              <div className="rounded-2xl border border-stone-200/80 bg-white dark:bg-stone-900 dark:border-stone-800 p-10 text-center">
+                <p className="text-base font-bold text-stone-900 dark:text-stone-100">
+                  Aucun membre ne correspond à cette sélection
+                </p>
+                <p className="mt-1 text-sm text-stone-500">
+                  Essayez de modifier votre mot-clé ou d'afficher tous les statuts.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilter("all");
+                    setQ("");
+                  }}
+                  className="mt-4 inline-flex items-center gap-2 rounded-xl border border-stone-200 bg-white px-4 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-50 transition-colors cursor-pointer"
+                >
+                  Afficher tous les membres
+                </button>
+              </div>
+            ) : view === "list" ? (
           <div className="overflow-hidden rounded-[6px] border border-border bg-card">
             <table className="w-full text-sm">
               <thead className="bg-muted/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
@@ -380,6 +412,8 @@ function EquipePage() {
             ))}
           </div>
         )}
+          </>
+        )}
       </div>
 
       {inviteOpen && store ? (
@@ -408,49 +442,7 @@ function EquipePage() {
   );
 }
 
-function EmptyState({
-  onInvite,
-  filtered,
-  title,
-  desc,
-  buttonLabel,
-}: {
-  onInvite: () => void;
-  filtered: boolean;
-  title: string;
-  desc: string;
-  buttonLabel: string;
-}) {
-  return (
-    <div className="rounded-[6px] border border-border bg-gradient-to-b from-accent/50 to-card px-6 py-16 text-center">
-      <div className="mx-auto grid h-16 w-16 place-items-center rounded-[10px] border border-border bg-card">
-        <PhoneCall className="h-7 w-7 text-primary" />
-      </div>
-      <h2 className="mt-6 text-2xl font-extrabold leading-tight sm:text-3xl">{title}</h2>
-      <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground">
-        {filtered ? "Aucun membre ne correspond à cette recherche." : desc}
-      </p>
-      <button
-        onClick={onInvite}
-        className="btn-3d mt-6 inline-flex items-center gap-2 rounded-[6px] bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground"
-      >
-        <UserPlus className="h-4 w-4" /> {buttonLabel}
-      </button>
-      <div className="mx-auto mt-8 grid max-w-2xl gap-3 sm:grid-cols-3">
-        {[
-          { icon: PhoneCall, label: "Appels clients" },
-          { icon: BadgeCheck, label: "Confirmation COD" },
-          { icon: ShieldCheck, label: "Accès limités" },
-        ].map((f) => (
-          <div key={f.label} className="rounded-[6px] border border-border bg-card px-4 py-4">
-            <f.icon className="mx-auto h-5 w-5 text-muted-foreground" />
-            <p className="mt-2 text-sm font-medium">{f.label}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
+
 
 function Dialog({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) {
   return (
@@ -647,7 +639,7 @@ function InviteDialog({ storeId, onClose }: { storeId: string; onClose: () => vo
           <button
             onClick={submit}
             disabled={sending}
-            className="btn-3d inline-flex items-center gap-2 rounded-[6px] bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white px-5 py-2.5 text-sm font-semibold shadow-sm transition-colors cursor-pointer disabled:opacity-60"
           >
             <Send className="h-4 w-4" />
             {sending ? "Envoi…" : dict.teamPage.sendInvite}
@@ -742,7 +734,7 @@ function ManageDialog({
           </button>
           <button
             onClick={() => onSave({ role, permissions, status })}
-            className="btn-3d rounded-[6px] bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground"
+            className="inline-flex items-center gap-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white px-5 py-2.5 text-sm font-semibold shadow-sm transition-colors cursor-pointer"
           >
             {dict.teamPage.saveChanges}
           </button>

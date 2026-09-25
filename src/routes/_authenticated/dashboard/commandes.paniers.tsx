@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Mail, ShoppingCart, Trash2, Phone, MapPin, Clock } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Mail, ShoppingCart, Trash2, Phone, MapPin, Clock, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { DashboardShell } from "@/components/dashboard/shell";
 import { ModuleEmptyState, ModuleHeader } from "@/components/dashboard/empty-state";
@@ -46,19 +46,7 @@ function ago(date: string) {
   return `il y a ${Math.round(hours / 24)} j`;
 }
 
-function CartMock() {
-  return (
-    <div className="flex items-center gap-3">
-      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[6px] bg-surface-tint text-primary">
-        <ShoppingCart className="h-4 w-4" />
-      </span>
-      <div className="flex-1 space-y-2">
-        <div className="h-2 w-2/3 rounded-[4px] bg-muted" />
-        <div className="h-2 w-1/3 rounded-[4px] bg-muted" />
-      </div>
-    </div>
-  );
-}
+
 
 function CartRow({ cart, onLocked }: { cart: AbandonedCart; onLocked: () => void }) {
   const items = cartItems(cart);
@@ -146,7 +134,7 @@ function CartRow({ cart, onLocked }: { cart: AbandonedCart; onLocked: () => void
           type="button"
           onClick={relaunch}
           disabled={!cart.email || ordered || recover.isPending}
-          className="btn-3d inline-flex items-center gap-2 rounded-[6px] px-3.5 py-2 text-xs font-bold disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white px-4 py-2 text-xs font-semibold shadow-sm transition-colors cursor-pointer disabled:opacity-50"
         >
           <Mail className="h-3.5 w-3.5" />
           {recover.isPending ? "Envoi..." : "Relancer par e-mail"}
@@ -181,7 +169,16 @@ function AbandonedPage() {
     <DashboardShell>
       <ModuleHeader
         title="Paniers abandonnés"
+        count={String(carts.length)}
         description="Les clients qui ont commencé une commande sans la terminer. Relancez-les par e-mail."
+        actions={
+          <Link
+            to="/dashboard/commandes"
+            className="inline-flex items-center gap-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-200 hover:border-orange-500 hover:text-orange-600 px-3.5 py-2.5 text-sm font-semibold shadow-sm transition-colors cursor-pointer"
+          >
+            ← Commandes
+          </Link>
+        }
       />
 
       <DiscoveryPaywall
@@ -220,17 +217,17 @@ function AbandonedPage() {
 
       {!isLoading && carts.length === 0 ? (
         <ModuleEmptyState
-          badgeIcon={ShoppingCart}
-          mock={<CartMock />}
-          title="Aucun panier"
-          titleAccent="abandonné"
-          text="Dès qu'un visiteur commence une commande sans la finir, il apparaît ici avec ses coordonnées et vous pouvez le relancer par e-mail."
-          action={null}
-          chips={[
-            { icon: Mail, label: "Relance en un clic" },
-            { icon: Clock, label: "Suivi en temps réel" },
-          ]}
-          footnote="Les paniers sont enregistrés dès que le client laisse son e-mail ou son téléphone."
+          icon={ShoppingCart}
+          title="Aucun panier abandonné"
+          description="Dès qu'un visiteur commence une commande sans la finaliser, vous pourrez le relancer ici."
+          action={
+            <Link
+              to="/dashboard/produits"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white px-5 py-2.5 text-sm font-semibold shadow-sm transition-colors cursor-pointer"
+            >
+              <ShoppingCart className="h-4 w-4" /> Voir mes produits
+            </Link>
+          }
         />
       ) : (
         <>
