@@ -140,10 +140,11 @@ export function StoreCard({ store, onAnalyse }: { store: DiscoveryStore; onAnaly
 
       <div className="mt-auto flex items-center gap-1.5 pt-1.5">
         <button
+          type="button"
           onClick={() => onAnalyse(store.topAdId)}
-          className="btn-3d flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-[6px] px-2 py-1.5 text-[11px] font-bold sm:text-xs"
+          className="btn-3d flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-[6px] px-2.5 py-1.5 text-[11px] font-bold text-white sm:text-xs"
         >
-          <BarChart3 className="h-3 w-3 shrink-0" /> <span className="truncate">Analyser</span>
+          <BarChart3 className="h-3 w-3 shrink-0 text-white" /> <span className="truncate">Analyser</span>
         </button>
         <FavoriteButton
           size="sm"

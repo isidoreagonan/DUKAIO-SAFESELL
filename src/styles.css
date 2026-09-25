@@ -392,3 +392,75 @@
   background: transparent !important;
 }
 
+/* ==========================================================================
+   BOUTONS PRINCIPAUX (STYLE SIMPLE, CHIC, SANS BOUNCE NI 3D)
+   Design épuré et moderne : fond orange sobre et élégant, texte blanc,
+   aucun effet de saut ou de décollage (pas de bounce/translate au survol),
+   simple transition de couleur au hover.
+   ========================================================================== */
+.btn-3d {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background-color: #f97316;
+  color: #ffffff !important;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.btn-3d svg {
+  color: #ffffff !important;
+}
+
+.btn-3d:hover {
+  background-color: #ea580c;
+  transform: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+.btn-3d:active {
+  background-color: #c2410c;
+  transform: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+/* Boutons secondaires avec bordure explicite */
+.btn-3d[class*="border-border"],
+.btn-3d.btn-secondary {
+  background-color: var(--background) !important;
+  color: var(--foreground) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.btn-3d[class*="border-border"] svg,
+.btn-3d.btn-secondary svg {
+  color: inherit !important;
+}
+
+.btn-3d[class*="border-border"]:hover,
+.btn-3d.btn-secondary:hover {
+  background-color: var(--muted) !important;
+  transform: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+.btn-3d[class*="border-border"]:active,
+.btn-3d.btn-secondary:active {
+  background-color: var(--muted) !important;
+  transform: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+

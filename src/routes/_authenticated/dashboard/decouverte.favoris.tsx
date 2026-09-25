@@ -92,9 +92,10 @@ function FavoriteCard({
             <button
               type="button"
               onClick={() => onAnalyse(payload.adId as string)}
-              className="btn-3d flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-[6px] px-3 py-2 text-[12px] font-bold"
+              className="btn-3d flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-[6px] px-3 py-2 text-[12px] font-bold text-white"
             >
-              <BarChart3 className="h-3.5 w-3.5" /> {dict.favoritesPage.adAnalysis}
+              <BarChart3 className="h-3.5 w-3.5 text-white" />
+              <span>{dict.favoritesPage.adAnalysis}</span>
             </button>
           ) : null}
           {payload.link ? (

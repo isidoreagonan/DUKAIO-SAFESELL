@@ -121,10 +121,12 @@ export function AdCard({ ad, onAnalyse }: { ad: DiscoveryAd; onAnalyse: (id: str
         </span>
         <div className="flex items-center gap-1.5">
           <button
+            type="button"
             onClick={() => onAnalyse(ad.id)}
-            className="btn-3d flex cursor-pointer items-center gap-1.5 rounded-[6px] px-2.5 py-1.5 text-[12px] font-bold"
+            className="btn-3d flex cursor-pointer items-center gap-1.5 rounded-[6px] px-3 py-1.5 text-[12px] font-bold text-white"
           >
-            <BarChart3 className="h-3.5 w-3.5" /> Analyser
+            <BarChart3 className="h-3.5 w-3.5 text-white" />
+            <span>Analyser</span>
           </button>
           <FavoriteButton
             size="sm"

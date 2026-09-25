@@ -481,10 +481,12 @@ function DiscoveryProductsPage() {
 
                     <div className="mt-auto flex gap-2 pt-2 sm:pt-3">
                       <button
+                        type="button"
                         onClick={() => setOpenId(product.id)}
-                        className="btn-3d flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-[6px] px-3 py-2 text-[12px] font-bold"
+                        className="btn-3d flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-[6px] px-3 py-2 text-[12px] font-bold text-white"
                       >
-                        <BarChart3 className="h-3.5 w-3.5" /> Analyser
+                        <BarChart3 className="h-3.5 w-3.5 text-white" />
+                        <span>Analyser</span>
                       </button>
                       <FavoriteButton
                         size="sm"
