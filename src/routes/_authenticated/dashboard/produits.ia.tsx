@@ -1083,7 +1083,7 @@ function ProduitIaPage() {
                     type="button"
                     onClick={() => void analyse()}
                     disabled={busy !== null || !productUrl.trim()}
-                    className="btn-3d w-full h-11 inline-flex justify-center items-center gap-2 rounded-[8px] text-sm font-semibold disabled:opacity-60 disabled:grayscale"
+                    className="btn-3d w-full h-11 inline-flex justify-center items-center gap-2 rounded-[8px] bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-60 disabled:grayscale"
                   >
                     {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                     {dict.aiCreatePage.generateButton}
@@ -1153,9 +1153,9 @@ function ProduitIaPage() {
                       <button
                         type="button"
                         onClick={() => setGalleryPickerOpen(true)}
-                        className="w-full inline-flex justify-center items-center gap-2 rounded-[8px] border border-border bg-background px-4 py-2.5 text-sm font-semibold hover:bg-muted transition-colors shadow-sm"
+                        className="w-full inline-flex justify-center items-center gap-2 rounded-[8px] bg-primary text-primary-foreground px-4 py-2.5 text-sm font-semibold hover:bg-primary/90 transition-colors shadow-sm"
                       >
-                        <Images className="h-4 w-4 text-muted-foreground" />
+                        <Images className="h-4 w-4" />
                         {dict.aiCreatePage.pickFromGallery}
                       </button>
                     </div>

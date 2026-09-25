@@ -4,7 +4,15 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 > **Note d'environnement :** Ce projet a été initialement généré avec Lovable, mais a été entièrement migré sur Antigravity. Il n'est plus synchronisé avec Lovable Cloud et utilise désormais exclusivement la propre instance Supabase de l'utilisateur.
 
-## [25/09/2026] - Fiabilisation de l'Autocomplétion d'Adresse (Page de Commande)
+## [25/09/2026] - Boutons Orange sur la Page de Création IA (Generate page & Choose media)
+
+### Modifié
+- **`produits.ia.tsx` (`src/routes/_authenticated/dashboard/produits.ia.tsx`)** : mise en orange des deux boutons d'action principaux pour correspondre à la charte DUKAIO.
+  - **Bouton "Generate page"** : passage de `btn-3d` sans couleur de fond vers `bg-primary text-primary-foreground` (orange officiel DUKAIO).
+  - **Bouton "Choose from media library"** : remplacement du style gris/blanc (`bg-background border-border`) par `bg-primary text-primary-foreground hover:bg-primary/90` (orange DUKAIO avec effet hover légèrement plus sombre).
+  - L'icône `<Images>` du bouton "Choose media" a également été passée en blanc (`text-primary-foreground` hérité) pour un contraste optimal.
+
+
 
 ### Corrigé
 - **`AddressAutocomplete` (`src/components/storefront/CheckoutPage.tsx`)** : correction des défaillances intermittentes de la recherche d'adresse automatique.
