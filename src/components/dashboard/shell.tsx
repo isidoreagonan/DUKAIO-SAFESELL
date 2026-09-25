@@ -53,6 +53,7 @@ import { toast } from "sonner";
 import { HelpWelcomeDialog } from "@/components/dashboard/help-welcome-dialog";
 import { GuidedTour, useTourLauncher } from "@/components/dashboard/guided-tour";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
+import { CreatorHubWidget } from "@/components/dashboard/creator-hub-widget";
 
 type NavIconProps = React.SVGProps<SVGSVGElement> & {
   active?: boolean;
@@ -1226,6 +1227,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           <main className="mx-auto w-full max-w-[1400px] px-4 py-5 sm:px-5">{children}</main>
         </div>
         <AiJobBanner />
+        <CreatorHubWidget />
       </div>
     </div>
   );

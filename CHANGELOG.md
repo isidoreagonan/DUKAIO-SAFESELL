@@ -4,6 +4,15 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 > **Note d'environnement :** Ce projet a été initialement généré avec Lovable, mais a été entièrement migré sur Antigravity. Il n'est plus synchronisé avec Lovable Cloud et utilise désormais exclusivement la propre instance Supabase de l'utilisateur.
 
+## [25/09/2026] - Widget Hub Créateur (Support, Nouveautés, Aide & Messages)
+- **`CreatorHubWidget` (`src/components/dashboard/creator-hub-widget.tsx`)** :
+  - **Bouton flottant officiel avec casque support client** : cercle orange vibrant aux couleurs DUKAIO (`bg-gradient-to-tr from-orange-600 via-orange-500 to-amber-500`) avec micro-casque de support client (`Headphones`) en blanc pur, ombre portée lumineuse et pastille animée de disponibilité en direct.
+  - **Positionnement absolu garanti par React Portal** : monté directement sur `document.body` à `fixed bottom-6 right-6 z-[9999]`, garantissant qu'il reste toujours ancré dans le coin inférieur droit de l'écran sans jamais déborder ni chevaucher la barre latérale ou la carte profil.
+  - **Vrai logo DUKAIO dans l'en-tête** : intégration du logo officiel `/dukaio-icon.png` à côté du titre *DUKAIO Hub*.
+  - **Têtes de l'équipe Support africaine** : intégration des photos des 3 membres de l'équipe support (homme et femmes avec micro-casques) remplaçant les initiales `DA`, `ST`, `IA`, avec statut *Support en ligne*.
+  - **Barre de défilement masquée** : suppression de la barre grise native du navigateur (`[scrollbar-width:none] [&::-webkit-scrollbar]:hidden`) tout en conservant une navigation fluide au scroll / touch.
+  - **Intégration** : monté directement dans `DashboardShell` pour être accessible partout sans rechargement.
+
 ## [24/09/2026] - Correction État Sous-Menus & Icônes Remplies Blanc (Style Shopall)
 
 ### Corrigé

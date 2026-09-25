@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Preview DUKAIO Chat Bubble Icon</title>
+  <style>
+    body {
+      background: #09090b;
+      color: white;
+      font-family: system-ui, -apple-system, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      gap: 32px;
+    }
+    .preview-card {
+      background: #18181b;
+      border: 1px solid #27272a;
+      border-radius: 20px;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+    }
+    .grid-demo {
+      display: flex;
+      gap: 40px;
+      align-items: center;
+    }
+    .glow-wrap {
+      filter: drop-shadow(0 12px 28px rgba(234, 88, 12, 0.45)) drop-shadow(0 2px 8px rgba(251, 146, 60, 0.3));
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), filter 0.2s ease;
+      cursor: pointer;
+    }
+    .glow-wrap:hover {
+      transform: scale(1.08);
+      filter: drop-shadow(0 16px 36px rgba(234, 88, 12, 0.6)) drop-shadow(0 4px 12px rgba(251, 146, 60, 0.45));
+    }
+    .glow-wrap:active {
+      transform: scale(0.96);
+    }
+  </style>
+</head>
+<body>
+  <h2>DUKAIO Chat Mascot Bubble Icon - Preview</h2>
+  <div class="preview-card">
+    <div class="grid-demo">
+      <!-- 64px size (Launcher size) -->
+      <div class="glow-wrap" style="width: 64px; height: 64px;">
+        <svg viewBox="0 0 100 100" width="64" height="64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="dukaioBubbleGrad" x1="18" y1="18" x2="82" y2="84" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#FB923C" />
+              <stop offset="45%" stop-color="#EA580C" />
+              <stop offset="100%" stop-color="#C2410C" />
+            </linearGradient>
+            <linearGradient id="dukaioBubbleSheen" x1="50" y1="18" x2="50" y2="52" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.28" />
+              <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
+            </linearGradient>
+          </defs>
+
+          <!-- Outer Bubble with Crisp tail -->
+          <path
+            d="M 50 16
+               C 74 16 83 25 83 47
+               C 83 58 81 67 76 72
+               L 76 86
+               L 56 77.5
+               C 54 78 52 78.2 50 78.2
+               C 26 78.2 17 66 17 47
+               C 17 25 26 16 50 16 Z"
+            fill="url(#dukaioBubbleGrad)"
+          />
+
+          <!-- Inner Sheen / Glass Highlight -->
+          <path
+            d="M 50 17.5
+               C 72 17.5 81 24.5 81.5 42
+               C 74 28 63 21.5 50 21.5
+               C 37 21.5 26 28 18.5 42
+               C 19 24.5 28 17.5 50 17.5 Z"
+            fill="url(#dukaioBubbleSheen)"
+          />
+
+          <!-- Pill Eyes (Crisp White Capsules) -->
+          <rect x="34.5" y="35" width="11" height="26" rx="5.5" fill="#FFFFFF" />
+          <rect x="54.5" y="35" width="11" height="26" rx="5.5" fill="#FFFFFF" />
+        </svg>
+      </div>
+
+      <!-- 48px size -->
+      <div class="glow-wrap" style="width: 48px; height: 48px;">
+        <svg viewBox="0 0 100 100" width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="dukaioBubbleGrad48" x1="18" y1="18" x2="82" y2="84" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#FB923C" />
+              <stop offset="45%" stop-color="#EA580C" />
+              <stop offset="100%" stop-color="#C2410C" />
+            </linearGradient>
+            <linearGradient id="dukaioBubbleSheen48" x1="50" y1="18" x2="50" y2="52" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.28" />
+              <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
+            </linearGradient>
+          </defs>
+          <path
+            d="M 50 16
+               C 74 16 83 25 83 47
+               C 83 58 81 67 76 72
+               L 76 86
+               L 56 77.5
+               C 54 78 52 78.2 50 78.2
+               C 26 78.2 17 66 17 47
+               C 17 25 26 16 50 16 Z"
+            fill="url(#dukaioBubbleGrad48)"
+          />
+          <path
+            d="M 50 17.5
+               C 72 17.5 81 24.5 81.5 42
+               C 74 28 63 21.5 50 21.5
+               C 37 21.5 26 28 18.5 42
+               C 19 24.5 28 17.5 50 17.5 Z"
+            fill="url(#dukaioBubbleSheen48)"
+          />
+          <rect x="34.5" y="35" width="11" height="26" rx="5.5" fill="#FFFFFF" />
+          <rect x="54.5" y="35" width="11" height="26" rx="5.5" fill="#FFFFFF" />
+        </svg>
+      </div>
+
+      <!-- 32px size -->
+      <div class="glow-wrap" style="width: 32px; height: 32px;">
+        <svg viewBox="0 0 100 100" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="dukaioBubbleGrad32" x1="18" y1="18" x2="82" y2="84" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#FB923C" />
+              <stop offset="45%" stop-color="#EA580C" />
+              <stop offset="100%" stop-color="#C2410C" />
+            </linearGradient>
+          </defs>
+          <path
+            d="M 50 16
+               C 74 16 83 25 83 47
+               C 83 58 81 67 76 72
+               L 76 86
+               L 56 77.5
+               C 54 78 52 78.2 50 78.2
+               C 26 78.2 17 66 17 47
+               C 17 25 26 16 50 16 Z"
+            fill="url(#dukaioBubbleGrad32)"
+          />
+          <rect x="34.5" y="35" width="11" height="26" rx="5.5" fill="#FFFFFF" />
+          <rect x="54.5" y="35" width="11" height="26" rx="5.5" fill="#FFFFFF" />
+        </svg>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
