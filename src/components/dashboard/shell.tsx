@@ -25,6 +25,7 @@ import {
   Users,
   UsersRound,
   X,
+  Headphones,
   type LucideIcon,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -1144,6 +1145,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [helpWelcomeOpen, setHelpWelcomeOpen] = useState(false);
+  const [creatorHubOpen, setCreatorHubOpen] = useState(false);
   const { data: store } = useStore();
   const { dict } = useI18n();
   const publicStoreUrl = store?.subdomain
@@ -1214,8 +1216,28 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                 <Store className="h-4 w-4 text-primary" />
                 {dict.dashboard.viewStore}
               </a>
-              <LanguageSwitcher variant="minimal" />
+              <LanguageSwitcher variant="minimal" className="hidden sm:inline-flex" />
               <NotificationsBell />
+
+              {/* Bouton Support & Centre d'aide DUKAIO (Mobile uniquement, masqué sur PC) */}
+              <button
+                type="button"
+                onClick={() => setCreatorHubOpen((prev) => !prev)}
+                aria-label="Centre d'aide & Support client DUKAIO"
+                title="Support client & Centre d'aide DUKAIO"
+                className={cn(
+                  "relative grid h-10 w-10 cursor-pointer place-items-center rounded-[6px] border border-border bg-white text-stone-700 transition-colors hover:border-orange-500/50 hover:bg-orange-50/50 hover:text-orange-600 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-orange-500/30 sm:hidden",
+                  creatorHubOpen && "border-orange-500/60 bg-orange-50 text-orange-600",
+                )}
+              >
+                <Headphones className="h-4 w-4 stroke-[2.2] transition-transform hover:scale-105" />
+                {/* Pastille verte statut en direct */}
+                <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500 border border-white" />
+                </span>
+              </button>
+
               <TopUserMenu />
             </div>
           </div>
@@ -1227,7 +1249,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           <main className="mx-auto w-full max-w-[1400px] px-4 py-5 sm:px-5">{children}</main>
         </div>
         <AiJobBanner />
-        <CreatorHubWidget />
+        <CreatorHubWidget open={creatorHubOpen} onOpenChange={setCreatorHubOpen} />
       </div>
     </div>
   );

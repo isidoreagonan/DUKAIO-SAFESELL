@@ -10,7 +10,7 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
   - **Positionnement absolu garanti par React Portal** : monté directement sur `document.body` à `fixed bottom-6 right-6 z-[9999]`, garantissant qu'il reste toujours ancré dans le coin inférieur droit de l'écran sans jamais déborder ni chevaucher la barre latérale ou la carte profil.
   - **Vrai logo DUKAIO dans l'en-tête** : intégration du logo officiel `/dukaio-icon.png` à côté du titre *DUKAIO Hub*.
   - **Têtes de l'équipe Support africaine** : intégration des photos des 3 membres de l'équipe support (homme et femmes avec micro-casques) remplaçant les initiales `DA`, `ST`, `IA`, avec statut *Support en ligne*.
-  - **Barre de défilement masquée** : suppression de la barre grise native du navigateur (`[scrollbar-width:none] [&::-webkit-scrollbar]:hidden`) tout en conservant une navigation fluide au scroll / touch.
+  - **Mode Plein Écran Mobile natif (`inset-0 h-[100dvh]`)** : sur smartphone, le widget s'ouvre en plein écran fluide comme dans l'application native de référence, avec en-tête chaleureux ambre/doré, prise en compte des encoches (`safe-area-inset-top`), bouton de fermeture `X`, cartes réactives bien aérées et barre de navigation 4 onglets en bas avec espacement sécurisé (`safe-area-inset-bottom`). Sur tablette/ordinateur, il conserve son format popover compact et élégant (`sm:w-[410px] sm:h-[620px]`).
   - **Intégration** : monté directement dans `DashboardShell` pour être accessible partout sans rechargement.
 
 ## [24/09/2026] - Correction État Sous-Menus & Icônes Remplies Blanc (Style Shopall)

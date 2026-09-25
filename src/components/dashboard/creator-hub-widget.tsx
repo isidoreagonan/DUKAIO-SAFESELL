@@ -160,14 +160,65 @@ type SupportTicket = {
   status: "open" | "done";
 };
 
-export function CreatorHubWidget() {
+export interface CreatorHubWidgetProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function openCreatorHub(tab?: HubTab) {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("dukaio:open-support", { detail: { tab } }));
+  }
+}
+
+export function closeCreatorHub() {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("dukaio:close-support"));
+  }
+}
+
+export function CreatorHubWidget({ open: controlledOpen, onOpenChange }: CreatorHubWidgetProps = {}) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const isOpen = isControlled ? controlledOpen : internalOpen;
+
+  const setIsOpen = (value: boolean | ((prev: boolean) => boolean)) => {
+    const nextVal = typeof value === "function" ? value(isOpen) : value;
+    if (onOpenChange) {
+      onOpenChange(nextVal);
+    }
+    if (!isControlled) {
+      setInternalOpen(nextVal);
+    }
+  };
+
   const [activeTab, setActiveTab] = useState<HubTab>("home");
+
+  useEffect(() => {
+    const handleOpen = (e?: any) => {
+      setIsOpen(true);
+      if (e?.detail?.tab) {
+        setActiveTab(e.detail.tab);
+      }
+    };
+    const handleClose = () => setIsOpen(false);
+    const handleToggle = () => setIsOpen((prev) => !prev);
+
+    window.addEventListener("dukaio:open-support", handleOpen as EventListener);
+    window.addEventListener("dukaio:close-support", handleClose);
+    window.addEventListener("dukaio:toggle-support", handleToggle);
+
+    return () => {
+      window.removeEventListener("dukaio:open-support", handleOpen as EventListener);
+      window.removeEventListener("dukaio:close-support", handleClose);
+      window.removeEventListener("dukaio:toggle-support", handleToggle);
+    };
+  }, [isOpen]);
   const [selectedGuide, setSelectedGuide] = useState<HelpGuide | null>(null);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
   const [newsFilter, setNewsFilter] = useState<string>("all");
@@ -318,15 +369,16 @@ export function CreatorHubWidget() {
   return createPortal(
     <>
       {/* ── BOUTON FLOTTANT (LAUNCHER CASQUE SUPPORT ORANGE) ── */}
+      {/* Totalement masqué sur mobile (<sm) pour libérer l'espace et éviter les clics involontaires */}
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
         aria-label={isOpen ? "Fermer le centre d'aide" : "Ouvrir le centre d'assistance et nouveautés DUKAIO"}
         className={cn(
-          "fixed bottom-6 right-6 z-[9999] flex h-14 w-14 cursor-pointer items-center justify-center rounded-full shadow-2xl transition-all duration-300 select-none",
+          "hidden sm:flex fixed bottom-6 right-6 z-[9999] cursor-pointer items-center justify-center rounded-full shadow-2xl transition-all duration-300 select-none",
           isOpen
-            ? "bg-stone-900 text-white hover:bg-stone-800 hover:scale-105 active:scale-95 shadow-stone-950/40"
-            : "bg-gradient-to-tr from-orange-600 via-orange-500 to-amber-500 text-white shadow-xl shadow-orange-500/45 hover:shadow-orange-500/65 hover:scale-110 active:scale-95 border-2 border-white/25",
+            ? "h-14 w-14 bg-stone-900 text-white hover:bg-stone-800 hover:scale-105 active:scale-95 shadow-stone-950/40"
+            : "h-14 w-14 bg-gradient-to-tr from-orange-600 via-orange-500 to-amber-500 text-white shadow-xl shadow-orange-500/45 hover:shadow-orange-500/65 hover:scale-110 active:scale-95 border-2 border-white/25",
         )}
       >
         {isOpen ? (
@@ -343,12 +395,15 @@ export function CreatorHubWidget() {
         )}
       </button>
 
-      {/* ── FENÊTRE DU POPOVER (WIDGET) ── */}
+      {/* ── FENÊTRE DU WIDGET (PLEIN ÉCRAN SUR MOBILE, POPOVER ÉLÉGANT SUR DESKTOP) ── */}
       {isOpen && (
         <div
           className={cn(
-            "fixed bottom-24 right-4 sm:right-6 z-[9999] flex flex-col overflow-hidden rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950 text-stone-900 dark:text-stone-100 shadow-2xl shadow-black/25 transition-all",
-            "w-[calc(100vw-32px)] sm:w-[395px] h-[580px] max-h-[calc(100dvh-120px)]",
+            "fixed z-[9999] flex flex-col overflow-hidden bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 shadow-2xl transition-all duration-200",
+            // Mobile: Plein écran total (100dvh)
+            "inset-0 h-[100dvh] w-full rounded-none border-0",
+            // Desktop / Tablette: Popover en bas à droite
+            "sm:inset-auto sm:bottom-24 sm:right-6 sm:w-[410px] sm:h-[620px] sm:max-h-[calc(100dvh-120px)] sm:rounded-2xl sm:border sm:border-stone-200 dark:sm:border-stone-800 sm:shadow-black/25",
           )}
         >
           {/* ══ CORPS DES ONGLETS (Barre de défilement masquée) ══ */}
@@ -358,25 +413,25 @@ export function CreatorHubWidget() {
             {/* ────────────────────────────────────────────────────────── */}
             {activeTab === "home" && (
               <div className="flex flex-col min-h-full">
-                {/* Header dégradé élégant */}
-                <div className="relative shrink-0 bg-gradient-to-br from-amber-500 via-orange-500 to-orange-600 p-5 text-white shadow-inner">
-                  {/* Top bar avec vrai logo DUKAIO et bouton fermer */}
+                {/* Header dégradé jaune/or solaire (Style mobile DUKAIO) */}
+                <div className="relative shrink-0 bg-gradient-to-b from-amber-400 via-amber-400 to-amber-500 p-5 pt-[max(env(safe-area-inset-top),1.25rem)] text-stone-950 shadow-sm">
+                  {/* Top bar avec logo DUKAIO et bouton fermer */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                       <img
                         src="/dukaio-icon.png"
                         alt="DUKAIO"
-                        className="h-7 w-7 rounded-lg shadow-sm object-contain ring-1 ring-white/30"
+                        className="h-8 w-8 rounded-xl shadow-sm object-contain ring-1 ring-black/10 bg-white/40 backdrop-blur-sm p-0.5"
                       />
-                      <span className="text-xs font-black tracking-wider uppercase text-white/95">DUKAIO Hub</span>
+                      <span className="text-xs font-black tracking-wider uppercase text-stone-950/90">DUKAIO Hub</span>
                     </div>
                     <button
                       type="button"
                       onClick={() => setIsOpen(false)}
                       aria-label="Fermer"
-                      className="grid h-7 w-7 cursor-pointer place-items-center rounded-full bg-black/15 text-white transition-colors hover:bg-black/30"
+                      className="grid h-8 w-8 cursor-pointer place-items-center rounded-full bg-black/10 text-stone-900 transition-colors hover:bg-black/20"
                     >
-                      <X className="h-4 w-4" />
+                      <X className="h-5 w-5" />
                     </button>
                   </div>
 
@@ -386,31 +441,31 @@ export function CreatorHubWidget() {
                       <img
                         src="/team-avatar-1.png"
                         alt="Support DUKAIO"
-                        className="h-10 w-10 rounded-full border-2 border-white object-cover shadow-md ring-1 ring-orange-500/40"
+                        className="h-11 w-11 rounded-full border-2 border-white object-cover shadow-md"
                       />
                       <img
                         src="/team-avatar-2.png"
                         alt="Support DUKAIO"
-                        className="h-10 w-10 rounded-full border-2 border-white object-cover shadow-md ring-1 ring-orange-500/40"
+                        className="h-11 w-11 rounded-full border-2 border-white object-cover shadow-md"
                       />
                       <img
                         src="/team-avatar-3.png"
                         alt="Support DUKAIO"
-                        className="h-10 w-10 rounded-full border-2 border-white object-cover shadow-md ring-1 ring-orange-500/40"
+                        className="h-11 w-11 rounded-full border-2 border-white object-cover shadow-md"
                       />
                     </div>
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-black/25 px-2.5 py-1 text-[11px] font-semibold text-white/95 backdrop-blur-sm shadow-sm">
-                      <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-black/15 px-2.5 py-1 text-[11px] font-bold text-stone-950 shadow-sm">
+                      <span className="h-2 w-2 rounded-full bg-emerald-600 animate-pulse" />
                       Support en ligne
                     </span>
                   </div>
 
                   {/* Message de bienvenue */}
-                  <div className="mt-3">
-                    <h2 className="text-xl font-black leading-tight tracking-tight">
+                  <div className="mt-3.5">
+                    <h2 className="text-2xl font-black leading-tight tracking-tight text-stone-950">
                       Bonjour {userName} 👋
                     </h2>
-                    <p className="mt-1 text-xs text-white/90 leading-relaxed font-medium">
+                    <p className="mt-1 text-sm font-bold text-stone-900 leading-snug">
                       Comment pouvons-nous vous aider aujourd'hui ?
                     </p>
                   </div>
@@ -1110,8 +1165,8 @@ export function CreatorHubWidget() {
             </div>
           )}
 
-          {/* ══ BOTTOM NAVIGATION BAR (4 ONGLETS) ══ */}
-          <div className="shrink-0 border-t border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950 px-2 py-2 grid grid-cols-4 gap-1">
+          {/* ══ BOTTOM NAVIGATION BAR (4 ONGLETS AVEC SAFE-AREA MOBILE) ══ */}
+          <div className="shrink-0 border-t border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-950 px-2 pt-2 pb-[max(env(safe-area-inset-bottom),0.75rem)] grid grid-cols-4 gap-1 select-none">
             <button
               type="button"
               onClick={() => {
@@ -1120,18 +1175,18 @@ export function CreatorHubWidget() {
                 setSelectedAnnouncement(null);
               }}
               className={cn(
-                "flex flex-col items-center justify-center gap-1 py-1 rounded-lg transition-colors cursor-pointer select-none",
+                "flex flex-col items-center justify-center gap-1 py-1.5 rounded-xl transition-all cursor-pointer",
                 activeTab === "home"
-                  ? "text-orange-600 dark:text-orange-400 font-bold"
+                  ? "text-stone-950 dark:text-white font-black"
                   : "text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 font-medium",
               )}
             >
               <Home
-                className="h-4 w-4"
+                className="h-5 w-5 transition-transform"
                 fill={activeTab === "home" ? "currentColor" : "none"}
-                strokeWidth={1.5}
+                strokeWidth={activeTab === "home" ? 2 : 1.75}
               />
-              <span className="text-[10px]">Accueil</span>
+              <span className="text-[11px]">Accueil</span>
             </button>
 
             <button
@@ -1142,20 +1197,20 @@ export function CreatorHubWidget() {
                 setSelectedAnnouncement(null);
               }}
               className={cn(
-                "flex flex-col items-center justify-center gap-1 py-1 rounded-lg transition-colors cursor-pointer select-none relative",
+                "flex flex-col items-center justify-center gap-1 py-1.5 rounded-xl transition-all cursor-pointer relative",
                 activeTab === "messages"
-                  ? "text-orange-600 dark:text-orange-400 font-bold"
+                  ? "text-stone-950 dark:text-white font-black"
                   : "text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 font-medium",
               )}
             >
               <MessageSquare
-                className="h-4 w-4"
+                className="h-5 w-5 transition-transform"
                 fill={activeTab === "messages" ? "currentColor" : "none"}
-                strokeWidth={1.5}
+                strokeWidth={activeTab === "messages" ? 2 : 1.75}
               />
-              <span className="text-[10px]">Messages</span>
+              <span className="text-[11px]">Messages</span>
               {tickets.filter((t) => t.status === "open").length > 0 && (
-                <span className="absolute top-0.5 right-4 h-1.5 w-1.5 rounded-full bg-orange-600" />
+                <span className="absolute top-1 right-6 h-2 w-2 rounded-full bg-orange-600 ring-2 ring-white dark:ring-stone-950" />
               )}
             </button>
 
@@ -1167,19 +1222,19 @@ export function CreatorHubWidget() {
                 setSelectedAnnouncement(null);
               }}
               className={cn(
-                "flex flex-col items-center justify-center gap-1 py-1 rounded-lg transition-colors cursor-pointer select-none relative",
+                "flex flex-col items-center justify-center gap-1 py-1.5 rounded-xl transition-all cursor-pointer relative",
                 activeTab === "news"
-                  ? "text-orange-600 dark:text-orange-400 font-bold"
+                  ? "text-stone-950 dark:text-white font-black"
                   : "text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 font-medium",
               )}
             >
               <Megaphone
-                className="h-4 w-4"
+                className="h-5 w-5 transition-transform"
                 fill={activeTab === "news" ? "currentColor" : "none"}
-                strokeWidth={1.5}
+                strokeWidth={activeTab === "news" ? 2 : 1.75}
               />
-              <span className="text-[10px]">Nouveautés</span>
-              <span className="absolute top-0.5 right-4 h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[11px]">Nouveautés</span>
+              <span className="absolute top-1 right-5 h-2 w-2 rounded-full bg-emerald-500 animate-pulse ring-2 ring-white dark:ring-stone-950" />
             </button>
 
             <button
@@ -1190,18 +1245,18 @@ export function CreatorHubWidget() {
                 setSelectedAnnouncement(null);
               }}
               className={cn(
-                "flex flex-col items-center justify-center gap-1 py-1 rounded-lg transition-colors cursor-pointer select-none",
+                "flex flex-col items-center justify-center gap-1 py-1.5 rounded-xl transition-all cursor-pointer",
                 activeTab === "help"
-                  ? "text-orange-600 dark:text-orange-400 font-bold"
+                  ? "text-stone-950 dark:text-white font-black"
                   : "text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 font-medium",
               )}
             >
               <HelpCircle
-                className="h-4 w-4"
+                className="h-5 w-5 transition-transform"
                 fill={activeTab === "help" ? "currentColor" : "none"}
-                strokeWidth={1.5}
+                strokeWidth={activeTab === "help" ? 2 : 1.75}
               />
-              <span className="text-[10px]">Aide</span>
+              <span className="text-[11px]">Aide</span>
             </button>
           </div>
         </div>
