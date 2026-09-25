@@ -12,6 +12,7 @@ import { ShopProvider } from "@/lib/shop";
 import { CartDrawer } from "@/components/storefront/CartDrawer";
 import { CheckoutPage } from "@/components/storefront/CheckoutPage";
 import { Catalog } from "@/components/site/Catalog";
+import { defaultGlobal } from "@/theme/build";
 import { storePath, storefrontQuery } from "@/lib/storefront";
 import { useTrackVisit } from "@/lib/visits";
 import { DukaioLogo } from "@/components/brand/logo";
@@ -52,11 +53,20 @@ export function Storefront({ handle, page, productId }: StorefrontProps) {
   }, [data, productId]);
 
   const resolvedProductId = productId ?? product?.id;
-  const previewGlobal =
-    theme && themePage === "product" && resolvedProductId
+
+  /* Seule une vraie page produit dédiée (avec identifiant précis ou boutique mono-produit)
+     applique la palette / typographie spécifique au produit.
+     La page catalogue (/produits), la page commande (/commande) et l'accueil
+     suivent TOUJOURS la charte globale de la boutique (palette choisie à l'onboarding / éditeur). */
+  const isDedicatedProduct =
+    !showCatalog && !showCheckout && themePage === "product" && Boolean(productId || (data?.products.length ?? 0) <= 1);
+
+  const activeGlobal =
+    theme && isDedicatedProduct && resolvedProductId
       ? (theme.productGlobals?.[resolvedProductId] ?? theme.global)
-      : theme?.global;
-  useFontLoader([previewGlobal?.headingFont ?? "", previewGlobal?.bodyFont ?? ""]);
+      : (theme?.global ?? defaultGlobal);
+
+  useFontLoader([activeGlobal?.headingFont ?? "", activeGlobal?.bodyFont ?? ""]);
 
   const catalogPath = (data?.products.length ?? 0) > 1 ? "/produits" : "/produit";
 
@@ -252,10 +262,6 @@ export function Storefront({ handle, page, productId }: StorefrontProps) {
     );
   }
 
-  const activeGlobal =
-    themePage === "product" && resolvedProductId
-      ? (theme.productGlobals?.[resolvedProductId] ?? theme.global)
-      : theme.global;
   const themeStyle = {
     "--rose": activeGlobal.primaryColor,
     "--rose-soft": activeGlobal.softColor,

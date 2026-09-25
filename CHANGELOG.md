@@ -4,6 +4,15 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 > **Note d'environnement :** Ce projet a été initialement généré avec Lovable, mais a été entièrement migré sur Antigravity. Il n'est plus synchronisé avec Lovable Cloud et utilise désormais exclusivement la propre instance Supabase de l'utilisateur.
 
+## [25/09/2026] - Alignement Automatique des Couleurs du Catalogue sur la Page d'Accueil
+
+### Corrigé
+- **`Storefront.tsx` (`src/components/site/Storefront.tsx`)** : correction de l'héritage des couleurs sur la page catalogue (`/produits` et liste générale des produits).
+  - **Problème résolu :** La page catalogue adoptait involontairement la palette IA du premier produit créé (`theme.productGlobals[firstProduct.id]`), ce qui provoquait l'affichage d'une couleur différente (ex. bleu) sur la barre d'annonces, le bouton « Commander », les filtres et les boutons « Acheter » / « Panier », au lieu du vert ou de la couleur choisie lors de l'onboarding.
+  - **Correction :** Désormais, seules les véritables pages produit dédiées (avec `productId` explicite ou boutique mono-produit sur sa fiche) appliquent les styles et couleurs spécifiques du produit (`productGlobals`).
+  - La page catalogue (`/produits`), la page de commande (`/commande`) et la page d'accueil (`/`) héritent TOUJOURS de l'identité globale de la boutique (`theme.global`).
+  - Tout changement de couleur de la page d'accueil ou de la boutique (onboarding ou éditeur) met à jour automatiquement la page catalogue en temps réel.
+
 ## [25/09/2026] - Boutons Orange sur la Page de Création IA (Generate page & Choose media)
 
 ### Modifié
