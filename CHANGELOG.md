@@ -4,6 +4,24 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 > **Note d'environnement :** Ce projet a été initialement généré avec Lovable, mais a été entièrement migré sur Antigravity. Il n'est plus synchronisé avec Lovable Cloud et utilise désormais exclusivement la propre instance Supabase de l'utilisateur.
 
+## [25/09/2026] - Fiabilisation de l'Autocomplétion d'Adresse (Page de Commande)
+
+### Corrigé
+- **`AddressAutocomplete` (`src/components/storefront/CheckoutPage.tsx`)** : correction des défaillances intermittentes de la recherche d'adresse automatique.
+  - **User-Agent Nominatim obligatoire :** Ajout de l'en-tête `User-Agent: DUKAIO-SafeSell/1.0 (contact@dukaio.com)` requis par l'API OpenStreetMap Nominatim. Sans cet en-tête, les requêtes étaient bloquées silencieusement (HTTP 429 / erreur CORS), causant les pannes intermittentes.
+  - **Timeout de 5 secondes :** Implémentation d'un `AbortController` avec délai d'annulation automatique à 5s, évitant les attentes infinies sur les connexions lentes.
+  - **Annulation des requêtes obsolètes :** La requête précédente est annulée dès que l'utilisateur tape un nouveau caractère, évitant les collisions de réponses et les résultats dans le mauvais ordre.
+  - **Message d'erreur visible :** En cas d'indisponibilité réseau, un message ambre informe l'utilisateur et propose un lien direct vers la saisie manuelle (au lieu d'échouer silencieusement).
+  - **Clé de liste fiable :** Remplacement de `key={r.place_id}` par `key={\`${r.place_id}-${r.lat}-${r.lon}\`}` pour éviter les conflits de clé React en cas de résultats identiques.
+
+## [25/09/2026] - Correction Crash Navigation Boutique & Erreur `shop.href` (commit `3675325`)
+
+### Corrigé
+- **`Storefront.tsx` (`src/components/site/Storefront.tsx`)** : correction du crash `insertBefore` en DOM. La logique d'injection du favicon a été refactorisée pour utiliser `setAttribute` au lieu de `removeChild` / `insertBefore`, évitant une exception d'arbre DOM invalide lors des transitions de route rapides.
+- **`CheckoutPage.tsx` (`src/components/storefront/CheckoutPage.tsx`)** : correction de l'erreur `TypeError: shop.href is not a function`. Tous les appels `shop.href(...)` sur la page de commande ont été sécurisés avec un fallback sur `storePath(...)` pour les rares cas où le contexte boutique n'est pas encore initialisé.
+- **`shop.tsx` (`src/lib/shop.tsx`)** : ajout de la méthode `href` à l'interface `ShopValue` et à l'objet `useMemo` du `ShopProvider` pour garantir sa disponibilité dès le premier rendu.
+- **`produit.index.tsx` & `produits.tsx`** : typage `any` ajouté au contexte `head` pour résoudre les erreurs de build TypeScript (`exactOptionalPropertyTypes`).
+
 ## [25/09/2026] - Widget Hub Créateur (Support, Nouveautés, Aide & Messages)
 - **`CreatorHubWidget` (`src/components/dashboard/creator-hub-widget.tsx`)** :
   - **Bouton flottant officiel avec casque support client** : cercle orange vibrant aux couleurs DUKAIO (`bg-gradient-to-tr from-orange-600 via-orange-500 to-amber-500`) avec micro-casque de support client (`Headphones`) en blanc pur, ombre portée lumineuse et pastille animée de disponibilité en direct.

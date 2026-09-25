@@ -33,7 +33,9 @@ function AddressAutocomplete({
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [manual, setManual] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Sync external value changes (e.g. form reset)
@@ -54,19 +56,39 @@ function AddressAutocomplete({
 
   const search = (q: string) => {
     if (timerRef.current) clearTimeout(timerRef.current);
-    if (q.trim().length < 3) { setResults([]); setOpen(false); return; }
+    // Annuler la requête précédente si elle est encore en cours
+    if (abortRef.current) abortRef.current.abort();
+    if (q.trim().length < 3) { setResults([]); setOpen(false); setFetchError(false); return; }
     timerRef.current = setTimeout(async () => {
       setLoading(true);
+      setFetchError(false);
+      const controller = new AbortController();
+      abortRef.current = controller;
+      // Timeout de 5 secondes
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
       try {
         const countryCode = country ? `&countrycodes=${country.toLowerCase()}` : "";
         const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&accept-language=fr${countryCode}`;
-        const res = await fetch(url, { headers: { "Accept-Language": "fr" } });
+        const res = await fetch(url, {
+          signal: controller.signal,
+          headers: {
+            // Nominatim exige un User-Agent identifiable — sans cela les requêtes
+            // sont bloquées silencieusement (HTTP 429 / CORS refusé).
+            "User-Agent": "DUKAIO-SafeSell/1.0 (contact@dukaio.com)",
+            "Accept-Language": "fr",
+          },
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data: NominatimResult[] = await res.json();
         setResults(data);
         setOpen(data.length > 0);
-      } catch {
+      } catch (err: unknown) {
+        // Ignorer les abandons volontaires (changement de requête)
+        if (err instanceof Error && err.name === "AbortError") return;
         setResults([]);
+        setFetchError(true);
       } finally {
+        clearTimeout(timeoutId);
         setLoading(false);
       }
     }, 400);
@@ -128,10 +150,11 @@ function AddressAutocomplete({
         )}
       </div>
 
+      {/* Résultats de l'autocomplétion */}
       {open && results.length > 0 && (
         <ul className="absolute z-50 mt-1 w-full overflow-hidden rounded-[var(--radius)] border border-border bg-card shadow-lg">
           {results.map((r) => (
-            <li key={r.place_id}>
+            <li key={`${r.place_id}-${r.lat}-${r.lon}`}>
               <button
                 type="button"
                 onClick={() => pick(r)}
@@ -143,6 +166,20 @@ function AddressAutocomplete({
             </li>
           ))}
         </ul>
+      )}
+
+      {/* Message d'erreur réseau avec suggestion de saisie manuelle */}
+      {fetchError && !loading && (
+        <p className="mt-1 text-[11px] text-amber-600 dark:text-amber-400">
+          Recherche automatique indisponible.{" "}
+          <button
+            type="button"
+            onClick={() => setManual(true)}
+            className="font-semibold underline"
+          >
+            Saisir manuellement
+          </button>
+        </p>
       )}
 
       <button
