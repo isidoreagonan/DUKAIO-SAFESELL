@@ -84,7 +84,6 @@ function SiteFavicon({ domain, className }: { domain?: string | null | undefined
   );
 }
 
-/** Logo seul de la plateforme d'une boutique. */
 export function PlatformLogo({
   platform,
   domain,
@@ -108,30 +107,61 @@ export function PlatformLogo({
   }
 }
 
-/** Pastille « logo + nom » posée devant une boutique. */
+export { ShopifyLogo, WooLogo, YouCanLogo, DukaioLogo, SiteFavicon };
+
+/** Pastille « logo officiel + nom » posée devant une boutique. */
 export function PlatformBadge({
   platform,
   domain,
   showLabel = true,
+  size = "sm",
   className,
 }: {
   platform?: string | null | undefined;
   domain?: string | null | undefined;
   showLabel?: boolean | undefined;
+  size?: "xs" | "sm" | "md" | "lg" | undefined;
   className?: string | undefined;
 }) {
   const kind = platformKind(platform);
   if (kind === "other" && !domain) return null;
+
+  const sizeClasses = {
+    xs: "px-1.5 py-0.5 text-[9px] gap-1 rounded-[4px]",
+    sm: "px-2 py-0.5 text-[11px] gap-1.5 rounded-md",
+    md: "px-2.5 py-1 text-xs gap-1.5 rounded-lg",
+    lg: "px-3 py-1.5 text-xs sm:text-sm font-black gap-2 rounded-xl",
+  }[size];
+
+  const iconSizes = {
+    xs: "h-3 w-3",
+    sm: "h-3.5 w-3.5",
+    md: "h-4 w-4",
+    lg: "h-4 w-4 sm:h-5 sm:w-5",
+  }[size];
+
+  // Couleurs de marque soignées pour chaque plateforme
+  const toneClasses = {
+    shopify: "border-[#95BF47]/30 bg-[#95BF47]/10 text-[#4c7a23] dark:text-[#95BF47]",
+    woocommerce: "border-[#7F54B3]/30 bg-[#7F54B3]/10 text-[#7F54B3] dark:text-[#a074d6]",
+    youcan: "border-[#00E0A1]/30 bg-[#00E0A1]/10 text-[#009b6e] dark:text-[#00E0A1]",
+    dukaio: "border-orange-500/30 bg-orange-500/10 text-orange-600 dark:text-orange-400",
+    other: "border-border/80 bg-muted/50 text-foreground",
+  }[kind];
+
   return (
     <span
       title={platformName(platform)}
       className={cn(
-        "inline-flex shrink-0 items-center gap-1 rounded-[4px] border border-border bg-background px-1 py-0.5 text-[9px] font-bold leading-none",
+        "inline-flex shrink-0 items-center border font-bold leading-none shadow-xs transition-colors",
+        sizeClasses,
+        toneClasses,
         className,
       )}
     >
-      <PlatformLogo platform={platform} domain={domain} className="h-3 w-3" />
-      {showLabel ? <span className="max-w-[84px] truncate">{platformName(platform)}</span> : null}
+      <PlatformLogo platform={platform} domain={domain} className={iconSizes} />
+      {showLabel ? <span className="truncate">{platformName(platform)}</span> : null}
     </span>
   );
 }
+

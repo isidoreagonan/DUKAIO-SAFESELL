@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   BarChart3,
   CalendarDays,
+  CheckCircle2,
   ChevronDown,
   ChevronUp,
   Download,
@@ -20,6 +21,7 @@ import {
   Play,
   RefreshCw,
   Share2,
+  ShieldCheck,
   ShoppingBag,
   Sparkles,
   Store,
@@ -66,6 +68,76 @@ const TABS: { key: Tab; label: string; icon: typeof Gauge }[] = [
   { key: "annonceur", label: "Annonceur", icon: Store },
 ];
 
+/**
+ * Avatar haute fidélité pour la marque / boutique.
+ * Tente d'abord l'avatar Meta, puis le favicon haute résolution (128px) du domaine,
+ * puis bascule sur un monogramme dégradé premium.
+ */
+function BrandAvatar({
+  name,
+  avatarUrl,
+  domain,
+  className,
+  size = "md",
+}: {
+  name: string;
+  avatarUrl?: string | null;
+  domain?: string | null;
+  className?: string;
+  size?: "sm" | "md" | "lg";
+}) {
+  const [avatarFailed, setAvatarFailed] = useState(false);
+  const [faviconFailed, setFaviconFailed] = useState(false);
+
+  const faviconUrl = domain
+    ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128`
+    : null;
+
+  const sizeClass = {
+    sm: "h-9 w-9 text-xs rounded-xl",
+    md: "h-11 w-11 sm:h-12 sm:w-12 text-sm rounded-xl sm:rounded-2xl",
+    lg: "h-14 w-14 sm:h-16 sm:w-16 text-base rounded-2xl",
+  }[size];
+
+  const initials = (name || "MK")
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase();
+
+  return (
+    <div
+      className={cn(
+        "relative shrink-0 overflow-hidden border border-border/80 bg-card shadow-xs flex items-center justify-center p-0.5 select-none",
+        sizeClass,
+        className
+      )}
+    >
+      {!avatarFailed && avatarUrl ? (
+        <img
+          src={avatarUrl}
+          alt={name}
+          onError={() => setAvatarFailed(true)}
+          className="h-full w-full object-cover rounded-[inherit]"
+        />
+      ) : !faviconFailed && faviconUrl ? (
+        <img
+          src={faviconUrl}
+          alt={name}
+          onError={() => setFaviconFailed(true)}
+          className="h-3/4 w-3/4 object-contain"
+        />
+      ) : (
+        <div className="grid h-full w-full place-items-center bg-gradient-to-br from-orange-500 to-amber-600 text-white font-black tracking-wider">
+          {initials || "MK"}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function CreativeItem({ ad, onOpen }: { ad: DiscoveryAd; onOpen: (id: string) => void }) {
   const [broken, setBroken] = useState(false);
   const media = adMedia(ad);
@@ -75,14 +147,25 @@ function CreativeItem({ ad, onOpen }: { ad: DiscoveryAd; onOpen: (id: string) =>
       className="group flex cursor-pointer flex-col overflow-hidden rounded-xl border border-border bg-card text-left transition-all hover:-translate-y-0.5 hover:shadow-lg"
     >
       <div className="flex items-center gap-2 border-b border-border/50 bg-muted/30 px-3 py-2">
-        <span className={cn("h-2 w-2 rounded-full", ad.is_active ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-slate-300 dark:bg-zinc-600")} />
+        <span
+          className={cn(
+            "h-2 w-2 rounded-full",
+            ad.is_active ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-slate-300 dark:bg-zinc-600"
+          )}
+        />
         <span className="text-[11px] font-bold text-foreground">{ad.active_days} j</span>
         <img src={flagUrl(ad.country)} alt="" className="ml-auto h-3 w-4 rounded-xs shadow-xs object-cover" />
         {ad.media_type === "video" ? <Film className="h-3 w-3 text-orange-500" /> : null}
       </div>
       <div className="relative aspect-square w-full bg-muted/60 flex items-center justify-center overflow-hidden">
         {media && !broken ? (
-          <img src={media} alt="" loading="lazy" onError={() => setBroken(true)} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+          <img
+            src={media}
+            alt=""
+            loading="lazy"
+            onError={() => setBroken(true)}
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
         ) : (
           <ImageOff className="h-6 w-6 text-muted-foreground/50" />
         )}
@@ -142,7 +225,9 @@ function SidebarAdMedia({ ad }: { ad: DiscoveryAd }) {
 
   const isOversized = Boolean((ad.raw as Record<string, unknown> | null)?.meta_oversized_video);
   const oversizedMb = (ad.raw as Record<string, unknown> | null)?.video_size_mb as number | undefined;
-  const metaAdUrl = ad.ad_library_url || (ad.external_id ? `https://www.facebook.com/ads/library/?id=${ad.external_id}` : null);
+  const metaAdUrl =
+    ad.ad_library_url ||
+    (ad.external_id ? `https://www.facebook.com/ads/library/?id=${ad.external_id}` : null);
 
   if (refreshVideo.isPending) {
     return (
@@ -192,7 +277,7 @@ function SidebarAdMedia({ ad }: { ad: DiscoveryAd }) {
 
   if (videoUrl && !videoError) {
     return (
-      <div className="group relative flex flex-col rounded-xl overflow-hidden border border-border bg-black shadow-sm">
+      <div className="group relative flex flex-col rounded-xl overflow-hidden border border-border bg-black shadow-xs">
         <video
           key={videoUrl}
           src={videoUrl}
@@ -249,17 +334,17 @@ function SidebarAdMedia({ ad }: { ad: DiscoveryAd }) {
                 rel="noreferrer"
                 className="inline-flex items-center gap-1 rounded-lg bg-orange-600 px-2.5 py-1.5 text-[11px] font-bold text-white hover:bg-orange-500 transition-colors"
               >
-                Meta Library <ExternalLink className="h-3 w-3" />
+                Ouvrir Meta <ExternalLink className="h-3 w-3" />
               </a>
             )}
             <button
               type="button"
               onClick={() => handleRefresh(false)}
               disabled={refreshVideo.isPending}
-              className="inline-flex items-center gap-1 rounded-lg border border-white/20 bg-white/10 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-white/20 transition-colors"
+              className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-white/20 bg-white/10 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-white/20 transition-colors"
             >
               <RefreshCw className={cn("h-3 w-3", refreshVideo.isPending && "animate-spin")} />
-              Relancer
+              Réessayer
             </button>
           </div>
         </div>
@@ -267,25 +352,25 @@ function SidebarAdMedia({ ad }: { ad: DiscoveryAd }) {
     );
   }
 
-  if (media) {
-    return (
-      <div className="relative aspect-square sm:aspect-[4/5] w-full rounded-xl overflow-hidden border border-border bg-muted shadow-sm">
-        <img src={media} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
-      </div>
-    );
-  }
-
   return (
-    <a
-      href={ad.ad_library_url ?? "#"}
-      target="_blank"
-      rel="noreferrer"
-      className="flex aspect-square sm:aspect-[4/5] w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-muted/40 p-4 text-center text-xs font-semibold text-muted-foreground hover:bg-muted/70 transition-colors"
-    >
-      <ImageOff className="h-7 w-7 text-muted-foreground/60" />
-      <span>Visuel expiré chez Meta</span>
-      <span className="font-bold text-orange-600">Voir sur Meta Ad Library ↗</span>
-    </a>
+    <div className="relative aspect-square sm:aspect-[4/5] w-full rounded-xl overflow-hidden border border-border bg-muted/60 flex items-center justify-center">
+      {media ? (
+        <SafeImage
+          src={media}
+          alt={ad.headline || ad.page_name}
+          className="h-full w-full object-cover"
+          fallback={
+            <div className="grid h-full w-full place-items-center bg-muted text-muted-foreground">
+              <ImageOff className="h-8 w-8" />
+            </div>
+          }
+        />
+      ) : (
+        <div className="grid h-full w-full place-items-center bg-muted text-muted-foreground">
+          <ImageOff className="h-8 w-8" />
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -337,13 +422,36 @@ export function AdAnalysisDialog({
 
   const liveStore = useEnsureDiscoveryStore(
     data?.ad.landing_domain,
-    !!adId && (tab === "produits" || tab === "apercu") && !(data?.store?.products_count ?? 0),
+    !!adId && (tab === "produits" || tab === "apercu") && !(data?.store?.products_count ?? 0)
   );
   const traffic = useDomainTraffic(data?.ad.landing_domain);
   const ad = data?.ad;
   const stats = data?.stats;
   const store = (data?.store?.products_count ? data.store : (liveStore.data ?? data?.store)) ?? null;
-  const products = (store?.products ?? []) as { title?: string; price?: number; image?: string | null; url?: string | null }[];
+  const products = (store?.products ?? []) as {
+    title?: string;
+    price?: number;
+    image?: string | null;
+    url?: string | null;
+  }[];
+
+  // Détection proactive et fiable de la plateforme e-commerce
+  const detectedPlatform = useMemo(() => {
+    if (store?.platform && store.platform !== "inconnue") return store.platform;
+    const rawStr = JSON.stringify(ad?.raw || {}).toLowerCase();
+    const link = (ad?.link_url || "").toLowerCase();
+    const domain = (ad?.landing_domain || "").toLowerCase();
+    if (link.includes("myshopify") || rawStr.includes("shopify") || domain.includes("shopify")) {
+      return "shopify";
+    }
+    if (link.includes("woocommerce") || rawStr.includes("woocommerce") || rawStr.includes("wp-content")) {
+      return "woocommerce";
+    }
+    if (link.includes("youcan") || domain.includes("youcan")) {
+      return "youcan";
+    }
+    return store?.platform || "other";
+  }, [store?.platform, ad?.raw, ad?.link_url, ad?.landing_domain]);
 
   const estimate = useMemo(() => {
     if (!store || !stats) return null;
@@ -388,18 +496,20 @@ export function AdAnalysisDialog({
   if (!adId) return null;
 
   const websiteUrl = ad?.link_url || (ad?.landing_domain ? `https://${ad.landing_domain}` : null);
-  const metaAdUrl = ad?.ad_library_url || (ad?.external_id ? `https://www.facebook.com/ads/library/?id=${ad.external_id}` : null);
+  const metaAdUrl =
+    ad?.ad_library_url ||
+    (ad?.external_id ? `https://www.facebook.com/ads/library/?id=${ad.external_id}` : null);
 
   return (
     <div
       role="dialog"
       aria-modal="true"
       onClick={onClose}
-      className="fixed inset-0 z-[70] flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/65 backdrop-blur-md animate-in fade-in duration-200"
+      className="fixed inset-0 z-[70] flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/65 backdrop-blur-md animate-in fade-in duration-200 no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
       <div
         onClick={(event) => event.stopPropagation()}
-        className="relative flex flex-col md:flex-row w-full max-w-6xl h-[92vh] max-h-[920px] rounded-2xl border border-border/80 bg-background shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+        className="relative flex flex-col md:flex-row w-full max-w-6xl h-[94vh] max-h-[920px] rounded-2xl border border-border/80 bg-background shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {isLoading || !ad || !stats ? (
           <div className="grid flex-1 place-items-center bg-background">
@@ -411,48 +521,91 @@ export function AdAnalysisDialog({
         ) : (
           <>
             {/* ============================================================== */}
-            {/* COLONNE GAUCHE (SIDEBAR CRÉATIVE - STYLE CONCURRENT)           */}
+            {/* COLONNE GAUCHE (SIDEBAR CRÉATIVE & MARQUE - STYLE PREMIUM)     */}
             {/* ============================================================== */}
-            <aside className="w-full md:w-[350px] lg:w-[370px] shrink-0 border-b md:border-b-0 md:border-r border-border bg-muted/20 dark:bg-zinc-950/40 flex flex-col overflow-y-auto">
-              {/* Header de la sidebar */}
-              <div className="flex items-center justify-between border-b border-border/70 p-3.5 sm:p-4 bg-background/80 backdrop-blur-xs">
-                <div className="flex items-center gap-3 min-w-0">
-                  <SafeImage
-                    src={ad.page_avatar_url}
-                    alt={ad.page_name}
-                    className="h-10 w-10 shrink-0 rounded-xl object-cover border border-border/60 shadow-xs"
-                    fallback={
-                      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-orange-500/10 text-orange-600 font-extrabold text-sm border border-orange-500/20">
-                        {ad.page_name.slice(0, 2).toUpperCase()}
+            <aside className="w-full md:w-[350px] lg:w-[370px] shrink-0 border-b md:border-b-0 md:border-r border-border bg-muted/20 dark:bg-zinc-950/40 flex flex-col overflow-y-auto no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {/* Header de la sidebar : Identité complète de la Marque & Boutique */}
+              <div className="border-b border-border/70 p-3.5 sm:p-4 bg-background/90 backdrop-blur-xs space-y-3">
+                <div className="flex items-start justify-between gap-2.5">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <BrandAvatar
+                      name={ad.page_name}
+                      avatarUrl={ad.page_avatar_url}
+                      domain={ad.landing_domain}
+                      size="md"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <h3 className="truncate text-sm sm:text-base font-extrabold text-foreground leading-tight">
+                          {ad.page_name}
+                        </h3>
+                        <span
+                          title="Annonceur certifié actif"
+                          className="inline-flex items-center text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.2 rounded-full font-bold"
+                        >
+                          <ShieldCheck className="h-2.5 w-2.5 mr-0.5" />
+                          Vérifié
+                        </span>
                       </div>
-                    }
-                  />
-                  <div className="min-w-0">
-                    <h3 className="truncate text-sm sm:text-base font-bold text-foreground leading-tight">
-                      {ad.page_name}
-                    </h3>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">
-                      {formatDate(stats.firstSeen)}
-                    </p>
+
+                      {/* Plateforme Shopify / E-commerce & Lien Domaine direct */}
+                      <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                        <PlatformBadge
+                          platform={detectedPlatform}
+                          domain={ad.landing_domain}
+                          size="xs"
+                        />
+                        {ad.landing_domain && (
+                          <a
+                            href={websiteUrl || `https://${ad.landing_domain}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[11px] font-semibold text-muted-foreground hover:text-orange-600 transition-colors inline-flex items-center gap-1 truncate max-w-[130px]"
+                            title={`Visiter ${ad.landing_domain}`}
+                          >
+                            <span>{ad.landing_domain}</span>
+                            <ExternalLink className="h-2.5 w-2.5 opacity-60" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
                   </div>
+
+                  {/* Bouton Meta Ad Library */}
+                  {metaAdUrl && (
+                    <a
+                      href={metaAdUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      title="Voir l'original sur Meta Ad Library"
+                      className="grid h-8 w-8 shrink-0 place-items-center rounded-xl border border-border bg-background text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shadow-xs"
+                    >
+                      <Download className="h-4 w-4" />
+                    </a>
+                  )}
                 </div>
 
-                {/* Lien Meta Ad Library en icône discrète */}
-                {metaAdUrl && (
-                  <a
-                    href={metaAdUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    title="Voir l'original sur Meta Ad Library"
-                    className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-border bg-background text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                  >
-                    <Download className="h-4 w-4" />
-                  </a>
-                )}
+                {/* Métriques d'identité instantanées sous le logo */}
+                <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-border/50 text-center">
+                  <div className="rounded-lg bg-muted/40 p-1.5">
+                    <span className="text-[10px] font-medium text-muted-foreground block">Abonnés</span>
+                    <span className="text-xs font-black text-foreground">{compact(stats.followers)}</span>
+                  </div>
+                  <div className="rounded-lg bg-muted/40 p-1.5">
+                    <span className="text-[10px] font-medium text-muted-foreground block">Pubs actives</span>
+                    <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">
+                      {stats.activeAds}
+                    </span>
+                  </div>
+                  <div className="rounded-lg bg-muted/40 p-1.5">
+                    <span className="text-[10px] font-medium text-muted-foreground block">Actif depuis</span>
+                    <span className="text-xs font-black text-foreground">{formatDate(stats.firstSeen)}</span>
+                  </div>
+                </div>
               </div>
 
-              {/* Contenu de la sidebar : Texte de la pub + Vidéo/Visuel */}
-              <div className="p-3.5 sm:p-4 space-y-3.5 flex-1">
+              {/* Contenu de la sidebar : Texte de l'annonce + Vidéo/Visuel */}
+              <div className="p-3.5 sm:p-4 space-y-3.5 flex-1 overflow-y-auto no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {/* Texte de l'annonce */}
                 <div className="rounded-xl border border-border/70 bg-card p-3 shadow-xs">
                   {ad.headline && (
@@ -491,7 +644,7 @@ export function AdAnalysisDialog({
                 {/* Lecteur Vidéo / Visuel */}
                 <div className="space-y-2">
                   <SidebarAdMedia ad={ad} />
-                  
+
                   {/* Boutons d'accès directs sous le média */}
                   <div className="grid grid-cols-2 gap-2 pt-1">
                     {ad.link_url ? (
@@ -524,16 +677,26 @@ export function AdAnalysisDialog({
                 </div>
 
                 {/* Infos boutique & Pixels en bas de la sidebar */}
-                <div className="rounded-xl border border-border/70 bg-card p-3 space-y-2 shadow-xs text-xs">
+                <div className="rounded-xl border border-border/70 bg-card p-3 space-y-2.5 shadow-xs text-xs">
                   <div className="flex items-center justify-between text-muted-foreground">
-                    <span>Plateforme :</span>
-                    <PlatformBadge platform={store?.platform ?? null} domain={ad.landing_domain} />
+                    <span>Plateforme e-commerce :</span>
+                    <PlatformBadge platform={detectedPlatform} domain={ad.landing_domain} size="sm" />
                   </div>
                   <div className="flex items-center justify-between text-muted-foreground">
-                    <span>Domaine :</span>
-                    <span className="font-semibold text-foreground truncate max-w-[170px]">
-                      {ad.landing_domain ?? "Non renseigné"}
-                    </span>
+                    <span>Domaine officiel :</span>
+                    {ad.landing_domain ? (
+                      <a
+                        href={websiteUrl || `https://${ad.landing_domain}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-semibold text-foreground hover:text-orange-600 transition-colors truncate max-w-[170px] inline-flex items-center gap-1"
+                      >
+                        <span>{ad.landing_domain}</span>
+                        <ExternalLink className="h-2.5 w-2.5" />
+                      </a>
+                    ) : (
+                      <span className="font-semibold text-foreground">Non renseigné</span>
+                    )}
                   </div>
                   {store?.pixels && store.pixels.length > 0 && (
                     <div className="pt-2 border-t border-border/50">
@@ -559,11 +722,11 @@ export function AdAnalysisDialog({
             {/* ============================================================== */}
             {/* PANNEAU PRINCIPAL DROIT                                         */}
             {/* ============================================================== */}
-            <main className="flex-1 flex flex-col min-w-0 bg-background overflow-hidden">
+            <main className="flex-1 flex flex-col min-w-0 bg-background overflow-hidden no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {/* Barre supérieure : Onglets de navigation + Actions de droite */}
-              <header className="flex shrink-0 items-center justify-between border-b border-border bg-card/60 px-4 py-2 sm:px-6 sm:py-3 gap-3">
-                {/* Onglets de navigation */}
-                <nav className="flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar">
+              <header className="flex shrink-0 items-center justify-between border-b border-border bg-card/60 px-3 py-2 sm:px-6 sm:py-3 gap-2 sm:gap-3">
+                {/* Onglets de navigation (AUCUN trait de défilement) */}
+                <nav className="flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   {TABS.map((item) => {
                     const Icon = item.icon;
                     const isActive = tab === item.key;
@@ -572,13 +735,13 @@ export function AdAnalysisDialog({
                         key={item.key}
                         onClick={() => setTab(item.key)}
                         className={cn(
-                          "flex items-center gap-2 px-3 py-2 text-xs sm:text-sm font-bold rounded-xl transition-all cursor-pointer whitespace-nowrap",
+                          "flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-sm font-bold rounded-xl transition-all cursor-pointer whitespace-nowrap",
                           isActive
                             ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 shadow-xs border border-orange-500/20"
                             : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
                         )}
                       >
-                        <Icon className="h-4 w-4" />
+                        <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         <span>{item.label}</span>
                         {item.key === "produits" && products.length > 0 && (
                           <span className="rounded-full bg-muted px-1.5 py-0.2 text-[10px] font-black">
@@ -596,7 +759,7 @@ export function AdAnalysisDialog({
                 </nav>
 
                 {/* Actions en haut à droite : Site web, Favori, Fermer */}
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                   {websiteUrl && (
                     <a
                       href={websiteUrl}
@@ -626,15 +789,15 @@ export function AdAnalysisDialog({
                   <button
                     onClick={onClose}
                     aria-label="Fermer la vue d'analyse"
-                    className="grid h-9 w-9 cursor-pointer place-items-center rounded-xl border border-border bg-background text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                    className="grid h-8 w-8 sm:h-9 sm:w-9 cursor-pointer place-items-center rounded-xl border border-border bg-background text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                   >
                     <X className="h-4 w-4" />
                   </button>
                 </div>
               </header>
 
-              {/* Corps défilable */}
-              <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-5 bg-muted/15">
+              {/* Corps défilable : TOUTES LES BARRES DE DÉFILEMENT SONT MASQUÉES */}
+              <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-5 bg-muted/15 no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {/* -------------------------------------------------------- */}
                 {/* ONGLET 1 : VUE D'ENSEMBLE                                */}
                 {/* -------------------------------------------------------- */}
@@ -677,7 +840,12 @@ export function AdAnalysisDialog({
                                   : "bg-slate-500/10 text-slate-500 border border-slate-500/20"
                               )}
                             >
-                              <span className={cn("h-1.5 w-1.5 rounded-full", ad.is_active ? "bg-emerald-500" : "bg-slate-400")} />
+                              <span
+                                className={cn(
+                                  "h-1.5 w-1.5 rounded-full",
+                                  ad.is_active ? "bg-emerald-500" : "bg-slate-400"
+                                )}
+                              />
                               {ad.is_active ? "TOUJOURS ACTIVE" : "DIFFUSION TERMINÉE"}
                             </span>
                           </div>
@@ -716,7 +884,10 @@ export function AdAnalysisDialog({
                             <span className="text-muted-foreground">Pays ciblés</span>
                             <div className="flex items-center gap-1.5 flex-wrap justify-end">
                               {stats.countries.slice(0, 3).map((code) => (
-                                <span key={code} className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 text-[11px] font-medium">
+                                <span
+                                  key={code}
+                                  className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 text-[11px] font-medium"
+                                >
                                   <img src={flagUrl(code)} alt="" className="h-2.5 w-3.5 rounded-xs" />
                                   {countryLabel(code)}
                                 </span>
@@ -735,7 +906,7 @@ export function AdAnalysisDialog({
                       <section className="rounded-2xl border border-border/80 bg-card p-4 sm:p-5 shadow-xs space-y-4">
                         <div className="flex items-center justify-between border-b border-border/60 pb-3">
                           <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                            Détails de la page
+                            Détails de la page & boutique
                           </h4>
                           {websiteUrl && (
                             <a
@@ -750,14 +921,28 @@ export function AdAnalysisDialog({
                           )}
                         </div>
 
-                        {/* Grand titre de la page */}
-                        <div className="space-y-1.5">
-                          <p className="text-xl sm:text-2xl font-black text-foreground tracking-tight truncate">
-                            {ad.page_name}
-                          </p>
-                          <div className="flex items-center gap-2">
-                            <PlatformBadge platform={store?.platform ?? null} domain={ad.landing_domain} />
-                            <span className="text-xs text-muted-foreground">· {ad.category || "E-commerce"}</span>
+                        {/* En-tête de la boutique : Logo + Nom + Badge Plateforme */}
+                        <div className="flex items-center gap-3">
+                          <BrandAvatar
+                            name={ad.page_name}
+                            avatarUrl={ad.page_avatar_url}
+                            domain={ad.landing_domain}
+                            size="md"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-lg sm:text-xl font-extrabold text-foreground tracking-tight truncate">
+                              {ad.page_name}
+                            </p>
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
+                              <PlatformBadge
+                                platform={detectedPlatform}
+                                domain={ad.landing_domain}
+                                size="sm"
+                              />
+                              <span className="text-xs text-muted-foreground">
+                                · {ad.category || "E-commerce"}
+                              </span>
+                            </div>
                           </div>
                         </div>
 
@@ -779,7 +964,15 @@ export function AdAnalysisDialog({
                           <div className="flex items-center justify-between py-2">
                             <span className="text-muted-foreground">Produits au catalogue</span>
                             <span className="font-semibold text-foreground">
-                              {store ? (store.products_count > 0 ? `${store.products_count} références` : "Page unique") : "Non analysé"}
+                              {store ? (
+                                store.products_count > 0 ? (
+                                  `${store.products_count} références`
+                                ) : (
+                                  "Page de vente directe"
+                                )
+                              ) : (
+                                "Non analysé"
+                              )}
                             </span>
                           </div>
                           <div className="flex items-center justify-between py-2">
@@ -798,102 +991,138 @@ export function AdAnalysisDialog({
                       </section>
                     </div>
 
-                    {/* CARTE 3 : POTENTIEL & ANALYSE DE TRAJECTOIRE (DUKAIO POWER) */}
-                    <div className="rounded-2xl border border-border/80 bg-card p-4 sm:p-5 shadow-xs space-y-4">
-                      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-3">
-                        <div className="flex items-center gap-2">
-                          <span className="grid h-8 w-8 place-items-center rounded-xl bg-orange-500/10 text-orange-600 border border-orange-500/20">
-                            <TrendingUp className="h-4 w-4" />
-                          </span>
-                          <div>
-                            <h3 className="text-sm font-black text-foreground">
-                              Trajectoire & Potentiel estimé de la boutique
-                            </h3>
-                            <p className="text-[11px] text-muted-foreground">
-                              Estimation financière algorithmique basée sur les signaux réels (visites, panier moyen, pression pub).
-                            </p>
-                          </div>
-                        </div>
-
-                        {estimate && (
-                          <div className="flex items-center gap-2 rounded-xl bg-orange-500/10 border border-orange-500/20 px-3 py-1.5">
-                            <ShoppingBag className="h-4 w-4 text-orange-600" />
-                            <span className="text-xs font-black text-orange-600 dark:text-orange-400">
-                              {moneyRange(estimate, "FCFA")} / mois
-                            </span>
-                          </div>
-                        )}
-                      </div>
-
+                    {/* SUPER-POUVOIR DUKAIO : CARTE ESTIMATIONS & TRAJECTOIRE */}
+                    {store && (
                       <StoreAnalyticsCard
-                        timeline={analyticsTimeline}
-                        title="Courbe interactive de croissance (C.A., Trafic, Commandes, Pression publicitaire)"
-                        defaultMetric="revenue"
-                        height={240}
+                        adId={ad.id}
+                        domain={ad.landing_domain}
+                        pageName={ad.page_name}
+                        avgPrice={store.avg_price}
+                        currency={store.currency}
+                        productsCount={store.products_count}
+                        activeAds={stats.activeAds}
+                        totalAds={stats.totalAds}
+                        activeDays={ad.active_days}
+                        followers={stats.followers}
+                        tractionScore={ad.traction_score}
+                        monthlyVisits={traffic.data?.monthlyVisits ?? null}
+                        trancoRank={traffic.data?.trancoRank ?? null}
                       />
-                    </div>
+                    )}
 
-                    {/* DEUX CARTES GRAPHIQUES : TRAFIC & PRESSION MÉDIA */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                      {/* Trafic Web & Visiteurs */}
+                    {/* GRILLE ANALYTIQUE : TRAFIC & PRESSION MÉDIA */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Carte Trafic */}
                       <section className="rounded-2xl border border-border/80 bg-card p-4 sm:p-5 shadow-xs space-y-3">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                            Trafic web & Visiteurs
-                          </h4>
-                          {traffic.data?.rank && (
-                            <span className="rounded-lg border border-border bg-muted/50 px-2 py-0.5 text-[11px] font-bold">
-                              Rang #{compact(traffic.data.rank)} {traffic.data.trend ? `(${traffic.data.trend > 0 ? "+" : ""}${traffic.data.trend}%)` : ""}
+                        <div className="flex items-center justify-between border-b border-border/60 pb-3">
+                          <div className="flex items-center gap-2">
+                            <Globe className="h-4 w-4 text-orange-500" />
+                            <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                              Trafic estimé du domaine
+                            </h4>
+                          </div>
+                          {ad.landing_domain && (
+                            <span className="text-xs font-semibold text-muted-foreground truncate max-w-[140px]">
+                              {ad.landing_domain}
                             </span>
                           )}
                         </div>
-                        <p className="text-2xl font-black text-blue-600 dark:text-blue-400">
-                          {trafficHistory.length > 0
-                            ? `${compact(trafficHistory[trafficHistory.length - 1]?.total)} visites/mois`
-                            : "Données confidentielles"}
-                        </p>
-                        <LineChart
-                          data={trafficHistory}
-                          stroke="#3b82f6"
-                          format={(value) => compact(value)}
-                          unit="visites/mois"
-                          emptyLabel="Historique en cours de compilation…"
-                        />
+
+                        <div className="grid grid-cols-2 gap-3 pt-1">
+                          <div className="rounded-xl bg-muted/40 p-3">
+                            <span className="text-[11px] text-muted-foreground block font-medium">
+                              Rang mondial Tranco
+                            </span>
+                            <span className="text-lg font-black text-foreground mt-0.5 block">
+                              {traffic.data?.trancoRank ? `#${compact(traffic.data.trancoRank)}` : "Top 1M+"}
+                            </span>
+                          </div>
+                          <div className="rounded-xl bg-muted/40 p-3">
+                            <span className="text-[11px] text-muted-foreground block font-medium">
+                              Visites mensuelles
+                            </span>
+                            <span className="text-lg font-black text-foreground mt-0.5 block">
+                              {traffic.data?.monthlyVisits
+                                ? `${compact(traffic.data.monthlyVisits)}/m`
+                                : estimate?.monthlyVisits
+                                ? `~${compact(estimate.monthlyVisits)}/m`
+                                : "N/D"}
+                            </span>
+                          </div>
+                        </div>
+
+                        {trafficHistory.length > 0 && (
+                          <div className="pt-2">
+                            <p className="text-[11px] font-semibold text-muted-foreground mb-1.5">
+                              Tendance du trafic (6 derniers mois)
+                            </p>
+                            <LineChart data={trafficHistory} height={80} unit="visites" />
+                          </div>
+                        )}
                       </section>
 
-                      {/* Pression publicitaire & Lancements */}
+                      {/* Carte Pression Média */}
                       <section className="rounded-2xl border border-border/80 bg-card p-4 sm:p-5 shadow-xs space-y-3">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                            Pression & Rythme de lancement
-                          </h4>
-                          <span className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-bold text-emerald-600">
-                            {stats.activeAds} actives en simultané
+                        <div className="flex items-center justify-between border-b border-border/60 pb-3">
+                          <div className="flex items-center gap-2">
+                            <TrendingUp className="h-4 w-4 text-orange-500" />
+                            <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                              Pression & Volume publicitaire
+                            </h4>
+                          </div>
+                          <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                            {stats.activeAds} pubs actives
                           </span>
                         </div>
-                        <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
-                          {stats.totalAds} <span className="text-xs font-semibold text-muted-foreground">publicités répertoriées</span>
-                        </p>
-                        <Bars data={stats.timeline} unit="pubs lancées" />
+
+                        <div className="grid grid-cols-3 gap-2 pt-1 text-center">
+                          <div className="rounded-xl bg-muted/40 p-2.5">
+                            <span className="text-[10px] text-muted-foreground block font-medium">Total créatives</span>
+                            <span className="text-base font-black text-foreground">{stats.totalAds}</span>
+                          </div>
+                          <div className="rounded-xl bg-muted/40 p-2.5">
+                            <span className="text-[10px] text-muted-foreground block font-medium">Traction moy.</span>
+                            <span className="text-base font-black text-foreground">{stats.avgTraction}/100</span>
+                          </div>
+                          <div className="rounded-xl bg-muted/40 p-2.5">
+                            <span className="text-[10px] text-muted-foreground block font-medium">Plus durable</span>
+                            <span className="text-base font-black text-foreground">{stats.maxDuration} j</span>
+                          </div>
+                        </div>
+
+                        {stats.timeline.length > 0 && (
+                          <div className="pt-2">
+                            <p className="text-[11px] font-semibold text-muted-foreground mb-1.5">
+                              Lancements mensuels de campagnes
+                            </p>
+                            <Bars data={stats.timeline} height={80} unit="nouvelles pubs" />
+                          </div>
+                        )}
                       </section>
                     </div>
                   </div>
                 )}
 
                 {/* -------------------------------------------------------- */}
-                {/* ONGLET 2 : PRODUITS AU CATALOGUE                         */}
+                {/* ONGLET 2 : CATALOGUE PRODUITS                            */}
                 {/* -------------------------------------------------------- */}
                 {tab === "produits" && (
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-bold text-foreground">
-                        Produits détectés sur la boutique ({products.length})
-                      </h3>
-                      {store?.avg_price ? (
-                        <span className="text-xs text-muted-foreground">
-                          Panier moyen : <b className="text-foreground">{compact(store.avg_price)} {store.currency}</b>
-                        </span>
-                      ) : null}
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <h4 className="text-sm font-bold text-foreground">Catalogue de la boutique</h4>
+                        <p className="text-xs text-muted-foreground">
+                          Produits collectés sur {ad.landing_domain ?? "la boutique"}
+                        </p>
+                      </div>
+                      {store && (
+                        <div className="flex items-center gap-2">
+                          <PlatformBadge platform={detectedPlatform} domain={ad.landing_domain} size="sm" />
+                          <span className="rounded-full bg-orange-500/10 px-2.5 py-1 text-xs font-bold text-orange-600 border border-orange-500/20">
+                            Prix moyen : {store.avg_price ? `${compact(store.avg_price)} ${store.currency ?? "FCFA"}` : "N/D"}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     {products.length > 0 ? (
@@ -908,7 +1137,12 @@ export function AdAnalysisDialog({
                           >
                             <div className="relative aspect-square w-full bg-muted flex items-center justify-center overflow-hidden">
                               {prod.image ? (
-                                <img src={prod.image} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                                <img
+                                  src={prod.image}
+                                  alt=""
+                                  loading="lazy"
+                                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                />
                               ) : (
                                 <Package className="h-6 w-6 text-muted-foreground/40" />
                               )}
@@ -932,7 +1166,8 @@ export function AdAnalysisDialog({
                     ) : (
                       <div className="rounded-2xl border border-dashed border-border bg-card p-8 text-center space-y-3">
                         <p className="text-xs text-muted-foreground max-w-md mx-auto">
-                          {store?.fetch_error ?? "Cette destination n'expose pas de catalogue public : il s'agit d'une page de vente directe (landing page)."}
+                          {store?.fetch_error ??
+                            "Cette destination n'expose pas de catalogue public : il s'agit d'une page de vente directe (landing page)."}
                         </p>
                         {ad.link_url && (
                           <a
@@ -995,22 +1230,79 @@ export function AdAnalysisDialog({
                 {/* -------------------------------------------------------- */}
                 {tab === "annonceur" && (
                   <div className="space-y-5">
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      <div className="rounded-xl border border-border bg-card p-3 shadow-xs">
-                        <span className="text-[11px] font-bold text-muted-foreground uppercase">Total pubs</span>
-                        <p className="text-xl font-black text-foreground mt-1">{stats.totalAds}</p>
+                    {/* Bannière d'identité complète de l'annonceur */}
+                    <div className="rounded-2xl border border-border/80 bg-card p-4 sm:p-6 shadow-xs space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-3.5">
+                          <BrandAvatar
+                            name={ad.page_name}
+                            avatarUrl={ad.page_avatar_url}
+                            domain={ad.landing_domain}
+                            size="lg"
+                          />
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h3 className="text-lg sm:text-xl font-extrabold text-foreground">
+                                {ad.page_name}
+                              </h3>
+                              <span className="inline-flex items-center text-[11px] text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full font-bold">
+                                <CheckCircle2 className="h-3 w-3 mr-1" />
+                                Annonceur officiel
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                              <PlatformBadge
+                                platform={detectedPlatform}
+                                domain={ad.landing_domain}
+                                size="md"
+                              />
+                              {ad.landing_domain && (
+                                <a
+                                  href={websiteUrl || `https://${ad.landing_domain}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-xs font-semibold text-orange-600 hover:underline inline-flex items-center gap-1"
+                                >
+                                  <span>{ad.landing_domain}</span>
+                                  <ExternalLink className="h-3 w-3" />
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {websiteUrl && (
+                          <a
+                            href={websiteUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-600 px-4 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-orange-500 transition-colors shrink-0"
+                          >
+                            <Store className="h-4 w-4" />
+                            <span>Visiter la boutique</span>
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </a>
+                        )}
                       </div>
-                      <div className="rounded-xl border border-border bg-card p-3 shadow-xs">
-                        <span className="text-[11px] font-bold text-muted-foreground uppercase">Traction moy.</span>
-                        <p className="text-xl font-black text-foreground mt-1">{stats.avgTraction}/100</p>
-                      </div>
-                      <div className="rounded-xl border border-border bg-card p-3 shadow-xs">
-                        <span className="text-[11px] font-bold text-muted-foreground uppercase">Plus longue</span>
-                        <p className="text-xl font-black text-foreground mt-1">{stats.maxDuration} j</p>
-                      </div>
-                      <div className="rounded-xl border border-border bg-card p-3 shadow-xs">
-                        <span className="text-[11px] font-bold text-muted-foreground uppercase">Abonnés</span>
-                        <p className="text-xl font-black text-foreground mt-1">{compact(stats.followers)}</p>
+
+                      {/* 4 Chiffres clés annonceur */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-border/60">
+                        <div className="rounded-xl bg-muted/40 p-3">
+                          <span className="text-[11px] font-bold text-muted-foreground uppercase">Total pubs</span>
+                          <p className="text-xl font-black text-foreground mt-1">{stats.totalAds}</p>
+                        </div>
+                        <div className="rounded-xl bg-muted/40 p-3">
+                          <span className="text-[11px] font-bold text-muted-foreground uppercase">Traction moy.</span>
+                          <p className="text-xl font-black text-foreground mt-1">{stats.avgTraction}/100</p>
+                        </div>
+                        <div className="rounded-xl bg-muted/40 p-3">
+                          <span className="text-[11px] font-bold text-muted-foreground uppercase">Plus longue</span>
+                          <p className="text-xl font-black text-foreground mt-1">{stats.maxDuration} j</p>
+                        </div>
+                        <div className="rounded-xl bg-muted/40 p-3">
+                          <span className="text-[11px] font-bold text-muted-foreground uppercase">Abonnés</span>
+                          <p className="text-xl font-black text-foreground mt-1">{compact(stats.followers)}</p>
+                        </div>
                       </div>
                     </div>
 
@@ -1035,7 +1327,7 @@ export function AdAnalysisDialog({
                 )}
               </div>
 
-              {/* Pied de page du modal (Style Concurrent avec bouton Ouvrir) */}
+              {/* Pied de page du modal (Style Concurrent avec boutons d'action) */}
               <footer className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-border bg-card/60 px-4 py-3 sm:px-6">
                 <p className="text-[11px] text-muted-foreground hidden sm:block">
                   Données certifiées issues des bibliothèques publicitaires officielles et de la boutique.
@@ -1049,7 +1341,7 @@ export function AdAnalysisDialog({
                       rel="noreferrer"
                       className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-background px-3 py-2 text-xs font-bold text-foreground hover:bg-muted transition-colors shadow-xs"
                     >
-                      <BarChart3 className="h-3.5 w-3.5" />
+                      <Download className="h-3.5 w-3.5" />
                       <span>Bibliothèque Meta</span>
                     </a>
                   )}
@@ -1059,7 +1351,7 @@ export function AdAnalysisDialog({
                       href={websiteUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-orange-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-orange-500 transition-colors"
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-orange-600 px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-orange-500 transition-colors"
                     >
                       <span>Ouvrir dans un nouvel onglet</span>
                       <ExternalLink className="h-3.5 w-3.5" />

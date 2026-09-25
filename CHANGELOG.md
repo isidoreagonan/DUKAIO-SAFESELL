@@ -4,7 +4,22 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 > **Note d'environnement :** Ce projet a été initialement généré avec Lovable, mais a été entièrement migré sur Antigravity. Il n'est plus synchronisé avec Lovable Cloud et utilise désormais exclusivement la propre instance Supabase de l'utilisateur.
 
+## [25/09/2026] - Refonte Finition Modale d'Analyse Découverte : Suppression Totale des Scrollbars et Identité de Marque / Shopify HD
+
+### Modifié & Optimisé
+- **Suppression intégrale des traits de défilement / barres disgracieuses (`src/styles.css` & `src/components/discovery/analysis-dialog.tsx`)** :
+  - **Problème résolu :** Des ascenseurs natifs gris avec flèches haut/bas (`▲`/`▼`) apparaissaient dans la colonne latérale, et une barre de défilement horizontale apparaissait sous les onglets de navigation, dégradant l'aspect visuel sur PC et mobile.
+  - **Correction apportée :** Ajout d'utilitaires universels `.no-scrollbar` et `.scrollbar-none` dans le CSS principal masquant complètement les ascenseurs (`display: none !important`, `scrollbar-width: none !important`, `-ms-overflow-style: none !important`) tout en maintenant un défilement ultra-fluide à la souris, au trackpad et au toucher tactile.
+- **Rendu net du Logo de Marque et Badge Officiel Plateforme (Shopify, WooCommerce...) (`src/components/discovery/platform-badge.tsx` & `src/components/discovery/analysis-dialog.tsx`)** :
+  - **Problème résolu :** Le logo de la marque n'était pas mis en valeur (icône générique ou coupée), et le logo officiel de Shopify ainsi que les informations de la boutique étaient invisibles ou relégués en bas.
+  - **Correction apportée :**
+    - Composant `BrandAvatar` haute fidélité avec résolution en cascade (avatar officiel Meta -> favicon HD 128px du domaine -> monogramme dégradé premium).
+    - Détection intelligente de la plateforme e-commerce (Shopify, WooCommerce, YouCan, Dukaio).
+    - Mise à niveau de `PlatformBadge` avec logo vectoriel officiel (sac vert Shopify `#95BF47`, violet Woo, etc.), tailles ajustées et styles soignés.
+    - Affichage immédiat dès le haut de la barre latérale, dans la carte « Détails de la page & boutique », et dans l'onglet « Annonceur » avec lien direct vers le domaine et métriques clés (abonnés, pubs actives, date).
+
 ## [25/09/2026] - Alignement Naturel à Gauche des E-mails et Mise à Jour de l'E-mail de Bienvenue (Essai 14 Jours)
+
 
 ### Modifié & Optimisé
 - **Alignement et structure des gabarits d'e-mails (`src/lib/email.server.ts`)** :
