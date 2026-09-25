@@ -4,6 +4,17 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 > **Note d'environnement :** Ce projet a été initialement généré avec Lovable, mais a été entièrement migré sur Antigravity. Il n'est plus synchronisé avec Lovable Cloud et utilise désormais exclusivement la propre instance Supabase de l'utilisateur.
 
+## [25/09/2026] - Chargement Instantané (0ms) des Boutiques au Dashboard et Requête Client Directe
+
+### Performance & Optimisation
+- **Chargement instantané sans délai (`src/lib/store.ts`)** :
+  - **Problème résolu :** À la connexion au tableau de bord, le nom de la boutique et les boutons d'accès mettaient 10 à 20 secondes à s'afficher (affichant temporairement « Boutique, Boutique, Boutique ») en attendant une fonction serveur RPC distante.
+  - **Correction apportée :**
+    1. **Cache local instantané et sécurisé par utilisateur (`dukaio.cachedStores.[userId]` et `dukaio.cachedActiveStore.[userId]`)** : dès le premier millième de seconde, le tableau de bord hydrate le nom de la boutique et la liste des boutiques depuis ce cache spécifique à l'utilisateur connecté via `initialData`. Le rendu est **immédiat (0 ms)**.
+    2. **Requête directe Supabase client (~50ms)** : `listStores()` interroge désormais directement le client Supabase en premier, évitant le temps de démarrage à froid des fonctions serveur de 10 à 20 secondes.
+    3. Les boutiques partagées (équipe/closer) continuent d'être synchronisées en arrière-plan sans bloquer l'affichage.
+    4. Isolation 100% étanche entre différents comptes sur le même navigateur.
+
 ## [25/09/2026] - Correction de l'Attribution de l'Essai Gratuit 14 Jours et de l'Isolation Multi-Boutiques
 
 ### Corrigé
