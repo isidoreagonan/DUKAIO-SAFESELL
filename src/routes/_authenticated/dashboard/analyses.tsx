@@ -29,6 +29,7 @@ import { useAnalytics, growth, type Range } from "@/lib/analytics";
 import { formatFcfa } from "@/lib/store";
 import { statusMeta } from "@/lib/order-status";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/dashboard/analyses")({
   head: () => ({
@@ -50,12 +51,6 @@ export const Route = createFileRoute("/_authenticated/dashboard/analyses")({
   }),
   component: AnalysesPage,
 });
-
-const RANGES: { value: Range; label: string }[] = [
-  { value: 7, label: "7 jours" },
-  { value: 30, label: "30 jours" },
-  { value: 90, label: "90 jours" },
-];
 
 function Panel({ className, children }: { className?: string; children: React.ReactNode }) {
   return (
@@ -135,33 +130,40 @@ function Ranking({
 }
 
 function AnalysesPage() {
+  const { t } = useI18n();
   const [range, setRange] = useState<Range>(30);
   const { data, isLoading } = useAnalytics(range);
 
+  const RANGES: { value: Range; label: string }[] = [
+    { value: 7, label: t("analysesPage.last7Days") },
+    { value: 30, label: t("analysesPage.last30Days") },
+    { value: 90, label: t("analysesPage.last90Days") },
+  ];
+
   const kpis = [
     {
-      label: "Revenu encaissé",
+      label: t("analysesPage.revenue"),
       value: formatFcfa(data?.revenue ?? 0),
       unit: "FCFA",
       icon: Wallet,
       delta: growth(data?.revenue ?? 0, data?.revenuePrev ?? 0),
     },
     {
-      label: "Commandes",
+      label: t("analysesPage.orders"),
       value: String(data?.ordersCount ?? 0),
       unit: "",
       icon: ShoppingBag,
       delta: growth(data?.ordersCount ?? 0, data?.ordersPrev ?? 0),
     },
     {
-      label: "Visites boutique",
+      label: t("analysesPage.visitors"),
       value: String(data?.visits ?? 0),
       unit: "",
       icon: Eye,
       delta: growth(data?.visits ?? 0, data?.visitsPrev ?? 0),
     },
     {
-      label: "Taux de conversion",
+      label: t("analysesPage.conversion"),
       value: `${(data?.conversionRate ?? 0).toFixed(1)}`,
       unit: "%",
       icon: Target,
@@ -173,9 +175,9 @@ function AnalysesPage() {
     <DashboardShell>
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">Analyses</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">{t("analysesPage.title")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Données réelles de votre boutique — ventes, visiteurs et conversion.
+            {t("analysesPage.subtitle")}
           </p>
         </div>
         <div className="inline-flex rounded-[6px] border border-border bg-background p-1">
@@ -213,7 +215,7 @@ function AnalysesPage() {
             </p>
             <p className="mt-2 flex items-center gap-2">
               <Delta value={k.delta} />
-              <span className="text-xs text-muted-foreground">vs période précédente</span>
+              <span className="text-xs text-muted-foreground">{t("analysesPage.vsLastPeriod")}</span>
             </p>
           </Panel>
         ))}
@@ -221,7 +223,7 @@ function AnalysesPage() {
 
       <div className="mt-4 grid gap-4 xl:grid-cols-[1.6fr_1fr]">
         <Panel>
-          <h2 className="text-sm font-bold">Évolution du chiffre d'affaires</h2>
+          <h2 className="text-sm font-bold">{t("analysesPage.revenueChart")}</h2>
           <div className="mt-4 h-64">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={data?.series ?? []}>
@@ -239,7 +241,7 @@ function AnalysesPage() {
                 <XAxis dataKey="label" tickLine={false} axisLine={false} fontSize={11} />
                 <YAxis tickLine={false} axisLine={false} fontSize={11} width={48} />
                 <Tooltip
-                  formatter={(v: number) => [`${formatFcfa(v)} FCFA`, "Revenu"]}
+                  formatter={(v: number) => [`${formatFcfa(v)} FCFA`, t("analysesPage.revenue2")]}
                   contentStyle={{ borderRadius: 12, borderColor: "var(--color-border)" }}
                 />
                 <Area
@@ -255,7 +257,7 @@ function AnalysesPage() {
         </Panel>
 
         <Panel>
-          <h2 className="text-sm font-bold">Visites par jour</h2>
+          <h2 className="text-sm font-bold">{t("analysesPage.visitorsChart")}</h2>
           <div className="mt-4 h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data?.series ?? []}>
@@ -267,7 +269,7 @@ function AnalysesPage() {
                 <XAxis dataKey="label" tickLine={false} axisLine={false} fontSize={11} />
                 <YAxis tickLine={false} axisLine={false} fontSize={11} width={32} />
                 <Tooltip
-                  formatter={(v: number) => [String(v), "Visites"]}
+                  formatter={(v: number) => [String(v), t("analysesPage.visitors")]}
                   contentStyle={{ borderRadius: 12, borderColor: "var(--color-border)" }}
                 />
                 <Bar dataKey="visits" radius={[6, 6, 0, 0]} fill="var(--color-primary)" />
@@ -283,37 +285,37 @@ function AnalysesPage() {
             <span className="grid h-9 w-9 place-items-center rounded-[6px] bg-accent text-accent-foreground">
               <Users className="h-4 w-4" />
             </span>
-            <h2 className="text-sm font-bold">Clients</h2>
+            <h2 className="text-sm font-bold">{t("clientsPage.title")}</h2>
           </div>
           <p className="mt-3 text-3xl font-extrabold tracking-tight">{data?.customers ?? 0}</p>
           <p className="mt-1 text-xs text-muted-foreground">
             dont {data?.newCustomers ?? 0} nouveaux sur la période
           </p>
           <p className="mt-4 text-sm font-semibold">
-            Panier moyen : {formatFcfa(data?.averageOrder ?? 0)} FCFA
+            {t("analysesPage.avgBasket")} : {formatFcfa(data?.averageOrder ?? 0)} FCFA
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            {data?.uniqueVisitors ?? 0} visiteurs uniques
+            {data?.uniqueVisitors ?? 0} {t("analysesPage.visitors").toLowerCase()} uniques
           </p>
         </Panel>
 
         <Ranking
-          title="Pays de conversion"
+          title={t("analysesPage.byCountry")}
           icon={Globe2}
           rows={data?.countries.map((c) => ({ name: c.name, visits: c.visits })) ?? []}
-          empty="Aucune visite enregistrée pour l'instant. Publiez votre boutique pour collecter les données."
+          empty={t("analysesPage.noDataSubtitle")}
         />
         <Ranking
-          title="Navigateurs"
+          title={t("analysesPage.device")}
           icon={Laptop}
           rows={data?.browsers ?? []}
-          empty="Les navigateurs de vos visiteurs apparaîtront ici."
+          empty={t("analysesPage.noDataSubtitle")}
         />
         <Ranking
           title="Sources de trafic"
           icon={Link2}
           rows={data?.referrers ?? []}
-          empty="Aucune source de trafic pour l'instant."
+          empty={t("analysesPage.noData")}
         />
       </div>
 
@@ -323,11 +325,11 @@ function AnalysesPage() {
             <span className="grid h-9 w-9 place-items-center rounded-[6px] bg-accent text-accent-foreground">
               <Package className="h-4 w-4" />
             </span>
-            <h2 className="text-sm font-bold">Meilleurs produits</h2>
+            <h2 className="text-sm font-bold">{t("analysesPage.topProducts")}</h2>
           </div>
           {(data?.topProducts.length ?? 0) === 0 ? (
             <p className="mt-4 text-sm text-muted-foreground">
-              Aucune vente sur la période sélectionnée.
+              {t("analysesPage.noData")}
             </p>
           ) : (
             <ul className="mt-4 divide-y divide-border">
@@ -335,7 +337,7 @@ function AnalysesPage() {
                 <li key={p.name} className="flex items-center justify-between gap-3 py-3">
                   <span className="truncate text-sm font-medium">{p.name}</span>
                   <span className="shrink-0 text-sm text-muted-foreground">
-                    {p.sales} vente(s) · {formatFcfa(p.total)} FCFA
+                    {p.sales} {t("analysesPage.sales").toLowerCase()} · {formatFcfa(p.total)} FCFA
                   </span>
                 </li>
               ))}
@@ -344,9 +346,9 @@ function AnalysesPage() {
         </Panel>
 
         <Panel>
-          <h2 className="text-sm font-bold">Répartition des commandes</h2>
+          <h2 className="text-sm font-bold">{t("analysesPage.recentOrders")}</h2>
           {(data?.statuses.length ?? 0) === 0 ? (
-            <p className="mt-4 text-sm text-muted-foreground">Aucune commande sur la période.</p>
+            <p className="mt-4 text-sm text-muted-foreground">{t("analysesPage.noData")}</p>
           ) : (
             <ul className="mt-4 space-y-3">
               {data?.statuses.map((s) => {
@@ -377,10 +379,10 @@ function AnalysesPage() {
 
       <div className="mt-4">
         <Ranking
-          title="Appareils utilisés"
+          title={t("analysesPage.byDevice")}
           icon={Laptop}
           rows={data?.devices ?? []}
-          empty="Les appareils de vos visiteurs apparaîtront ici dès les premières visites."
+          empty={t("analysesPage.noDataSubtitle")}
         />
       </div>
     </DashboardShell>

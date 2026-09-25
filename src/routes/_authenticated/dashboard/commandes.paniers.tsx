@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Mail, ShoppingCart, Trash2, Phone, MapPin, Clock, MessageCircle } from "lucide-react";
+import { Mail, ShoppingCart, Trash2, Phone, MapPin, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { DashboardShell } from "@/components/dashboard/shell";
 import { ModuleEmptyState, ModuleHeader } from "@/components/dashboard/empty-state";
@@ -16,6 +16,7 @@ import { notifyError } from "@/components/ui/notice-dialog";
 import { useRecoveryAccess } from "@/lib/entitlements";
 import { DiscoveryPaywall } from "@/components/discovery/paywall-dialog";
 import { useState } from "react";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/dashboard/commandes/paniers")({
   head: () => ({
@@ -158,6 +159,7 @@ function CartRow({ cart, onLocked }: { cart: AbandonedCart; onLocked: () => void
 }
 
 function AbandonedPage() {
+  const { t } = useI18n();
   const { data: store } = useStore();
   const { data: carts = [], isLoading } = useAbandonedCarts(store?.id);
   const open = carts.filter((cart) => cart.status !== "ordered");
@@ -168,15 +170,15 @@ function AbandonedPage() {
   return (
     <DashboardShell>
       <ModuleHeader
-        title="Paniers abandonnés"
+        title={t("cartsPage.title")}
         count={String(carts.length)}
-        description="Les clients qui ont commencé une commande sans la terminer. Relancez-les par e-mail."
+        description={t("cartsPage.subtitle")}
         actions={
           <Link
             to="/dashboard/commandes"
             className="inline-flex items-center gap-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-200 hover:border-orange-500 hover:text-orange-600 px-3.5 py-2.5 text-sm font-semibold shadow-sm transition-colors cursor-pointer"
           >
-            ← Commandes
+            ← {t("dashboardNav.orders")}
           </Link>
         }
       />
@@ -218,8 +220,8 @@ function AbandonedPage() {
       {!isLoading && carts.length === 0 ? (
         <ModuleEmptyState
           icon={ShoppingCart}
-          title="Aucun panier abandonné"
-          description="Dès qu'un visiteur commence une commande sans la finaliser, vous pourrez le relancer ici."
+          title={t("cartsPage.noCarts")}
+          description={t("cartsPage.noCartsSubtitle")}
           action={
             <Link
               to="/dashboard/produits"
@@ -233,15 +235,15 @@ function AbandonedPage() {
         <>
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
             <div className="rounded-[8px] border border-border bg-background p-4">
-              <p className="text-xs font-semibold text-muted-foreground">Paniers à relancer</p>
+              <p className="text-xs font-semibold text-muted-foreground">{t("cartsPage.totalCarts")}</p>
               <p className="font-display text-2xl">{open.length}</p>
             </div>
             <div className="rounded-[8px] border border-border bg-background p-4">
-              <p className="text-xs font-semibold text-muted-foreground">Montant en attente</p>
+              <p className="text-xs font-semibold text-muted-foreground">{t("cartsPage.avgValue")}</p>
               <p className="font-display text-2xl">{formatFcfa(value)}</p>
             </div>
             <div className="rounded-[8px] border border-border bg-background p-4">
-              <p className="text-xs font-semibold text-muted-foreground">Récupérés</p>
+              <p className="text-xs font-semibold text-muted-foreground">{t("cartsPage.recovered")}</p>
               <p className="font-display text-2xl">
                 {carts.filter((cart) => cart.status === "ordered").length}
               </p>

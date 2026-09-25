@@ -425,6 +425,8 @@ export interface TranslationDictionary {
     viewProduct: string;
     emptyStores: string;
     emptyProducts: string;
+    emptyAds: string;
+  };
   commandesPage: {
     title: string;
     subtitle: string;

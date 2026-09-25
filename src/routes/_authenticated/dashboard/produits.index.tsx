@@ -49,7 +49,7 @@ function AiDraftRow({
   draft: PendingAiDraft;
   onDiscard: () => void;
 }) {
-  const { dict } = useI18n();
+  const { dict, isEn } = useI18n();
   const confirmDelete = useConfirmDelete();
   const imageUrl = draft.draft.images?.[0];
 
@@ -74,7 +74,7 @@ function AiDraftRow({
           </span>
         </div>
         <p className="mt-0.5 truncate text-xs text-muted-foreground">
-          {formatFcfa(Number(draft.draft.price ?? 0))} FCFA · {dict.isEn ? "Sales page ready in editor" : "Page de vente prête dans l'éditeur"}
+          {formatFcfa(Number(draft.draft.price ?? 0))} FCFA · {isEn ? "Sales page ready in editor" : "Page de vente prête dans l'éditeur"}
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-2">
@@ -99,10 +99,10 @@ function AiDraftRow({
               return;
             clearPendingAiDraft();
             onDiscard();
-            toast.success(dict.isEn ? "AI draft deleted" : "Brouillon IA supprimé");
+            toast.success(isEn ? "AI draft deleted" : "Brouillon IA supprimé");
           }}
           className="grid h-9 w-9 place-items-center rounded-[6px] border border-border text-muted-foreground hover:border-destructive/40 hover:text-destructive transition-colors"
-          title={dict.isEn ? "Discard and delete this AI draft" : "Abandonner et supprimer ce brouillon IA"}
+          title={isEn ? "Discard and delete this AI draft" : "Abandonner et supprimer ce brouillon IA"}
         >
           <Trash2 className="h-4 w-4" />
         </button>
@@ -113,7 +113,7 @@ function AiDraftRow({
 
 function ProductRow({ product }: { product: Product }) {
   const { allowed: aiAllowed } = useAiAccess();
-  const { dict } = useI18n();
+  const { dict, isEn } = useI18n();
   const remove = useDeleteProduct();
   const confirmDelete = useConfirmDelete();
   const statusText =
@@ -180,8 +180,8 @@ function ProductRow({ product }: { product: Product }) {
           onClick={async () => {
             if (!(await confirmDelete(`« ${product.name} »`))) return;
             remove.mutate(product.id, {
-              onSuccess: () => toast.success(dict.isEn ? "Product deleted" : "Produit supprimé"),
-              onError: (e) => notifyError(e, dict.isEn ? "Deletion failed" : "Suppression impossible"),
+              onSuccess: () => toast.success(isEn ? "Product deleted" : "Produit supprimé"),
+              onError: (e) => notifyError(e, isEn ? "Deletion failed" : "Suppression impossible"),
             });
           }}
           className="grid h-9 w-9 place-items-center rounded-[6px] border border-border text-muted-foreground hover:text-destructive"
@@ -195,7 +195,7 @@ function ProductRow({ product }: { product: Product }) {
 
 function ProduitsPage() {
   const { allowed: aiAllowed } = useAiAccess();
-  const { dict } = useI18n();
+  const { dict, isEn } = useI18n();
   const { data: products = [], isLoading } = useProducts();
   const [query, setQuery] = useState("");
   const [pendingAiDraft, setPendingAiDraftState] = useState<PendingAiDraft | null>(() =>
@@ -226,7 +226,7 @@ function ProduitsPage() {
             {dict.productsPage.title}{" "}
             <span className="font-display not-italic text-muted-foreground">
               · {products.length}
-              {showPendingDraft ? (dict.isEn ? " (+1 AI draft)" : " (+1 brouillon IA)") : ""}
+              {showPendingDraft ? (isEn ? " (+1 AI draft)" : " (+1 brouillon IA)") : ""}
             </span>
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -242,7 +242,7 @@ function ProduitsPage() {
           >
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">{dict.productsPage.addProduct}</span>
-            <span className="sm:hidden">{dict.isEn ? "Add" : "Ajouter"}</span>
+            <span className="sm:hidden">{isEn ? "Add" : "Ajouter"}</span>
           </Link>
         </div>
       </header>
