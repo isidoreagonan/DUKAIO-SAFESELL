@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   ArrowLeft,
@@ -34,12 +34,13 @@ import {
 import { ORDER_STATUSES, ACTION_STATUSES, statusMeta, type OrderStatus } from "@/lib/order-status";
 import { useConfirmDelete } from "@/components/ui/confirm-dialog";
 import { notifyError } from "@/components/ui/notice-dialog";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/dashboard/commandes/$id")({
   head: () => ({
     meta: [
-      { title: "Detil commande | DUKAIO" },
-      { name: "description", content: "Detail et gestion d'une commande DUKAIO." },
+      { title: "Détail commande | DUKAIO" },
+      { name: "description", content: "Détail et gestion d'une commande DUKAIO." },
     ],
   }),
   component: OrderDetailPage,
@@ -71,7 +72,8 @@ function osmSearchUrl(address: string, city?: string | null) {
   return "https://www.openstreetmap.org/search?query=" + q;
 }
 
-function AddressMap({ address, city }: { address: string; city?: string | null }) {
+function AddressMap({ address, city }: { address: string; city?: string | null | undefined }) {
+  const { dict } = useI18n();
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -115,7 +117,7 @@ function AddressMap({ address, city }: { address: string; city?: string | null }
           rel="noreferrer"
           className="shrink-0 flex items-center gap-1 text-[11px] font-semibold text-primary hover:underline"
         >
-          Ouvrir <ExternalLink className="h-3 w-3" />
+          {dict.ordersDetailPage.openMap} <ExternalLink className="h-3 w-3" />
         </a>
       </div>
       <div className="relative h-52 sm:h-64 bg-muted/50">
@@ -127,7 +129,7 @@ function AddressMap({ address, city }: { address: string; city?: string | null }
         {error && !loading && (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center gap-2 px-4">
             <MapPin className="h-7 w-7 text-muted-foreground/50" />
-            <p className="text-sm font-semibold">Adresse introuvable sur la carte</p>
+            <p className="text-sm font-semibold">{dict.ordersDetailPage.mapNotFound}</p>
             <p className="text-xs text-muted-foreground">{fullAddress}</p>
             <a
               href={osmSearchUrl(address, city)}
@@ -135,7 +137,7 @@ function AddressMap({ address, city }: { address: string; city?: string | null }
               rel="noreferrer"
               className="mt-1 text-xs text-primary font-semibold hover:underline"
             >
-              Rechercher manuellement
+              {dict.ordersDetailPage.searchManually}
             </a>
           </div>
         )}
