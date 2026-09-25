@@ -4,6 +4,16 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 > **Note d'environnement :** Ce projet a été initialement généré avec Lovable, mais a été entièrement migré sur Antigravity. Il n'est plus synchronisé avec Lovable Cloud et utilise désormais exclusivement la propre instance Supabase de l'utilisateur.
 
+## [25/09/2026] - Alignement Naturel à Gauche des E-mails et Mise à Jour de l'E-mail de Bienvenue (Essai 14 Jours)
+
+### Modifié & Optimisé
+- **Alignement et structure des gabarits d'e-mails (`src/lib/email.server.ts`)** :
+  - **Problème résolu :** Sur les écrans larges, le contenu des e-mails flottait au centre de la fenêtre avec un grand vide de chaque côté (`align="center"`).
+  - **Correction apportée :** L'e-mail s'aligne désormais naturellement à gauche (`align="left"`, conteneur max-width 640px avec marge latérale confortable de 32px), respectant les standards typographiques des e-mails personnels et professionnels directs. Les boutons CTA et la signature du fondateur sont parfaitement calés sur la grille de lecture.
+- **Message de Bienvenue du Fondateur & relances (`src/lib/lifecycle-emails.server.ts`)** :
+  - **Problème résolu :** Le message mentionnait une ancienne « formule Gratuite active à vie », ce qui ne correspondait plus au modèle économique actuel.
+  - **Correction apportée :** L'e-mail met désormais en avant l'**Essai gratuit de 14 jours**, explique clairement ce qu'il permet de faire (tester la plateforme, lancer sa boutique, générer ses premières fiches produits IA), et présente de manière structurée et percutante les formules **Starter** (7 900 FCFA/mois) et **Pro** (14 900 FCFA/mois) pour créer davantage avec l'IA et scaler ses ventes.
+
 ## [25/09/2026] - Rétablissement des E-mails Transactionnels de Commande et de Mise à Jour de Statut
 
 ### Corrigé

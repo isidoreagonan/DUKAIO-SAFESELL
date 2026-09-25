@@ -67,12 +67,12 @@ export function founderSignatureMarkup(customNote?: string) {
     "Une question, un bug, une idée ? Réponds direct à ce mail — je lis tous les messages perso.";
 
   return `
-  <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:32px;padding-top:20px;border-top:1px solid #f1f5f9;width:100%;">
+  <table role="presentation" cellpadding="0" cellspacing="0" align="left" style="margin-top:32px;padding-top:20px;border-top:1px solid #f1f5f9;width:100%;max-width:640px;text-align:left;">
     <tr>
       <td style="width:48px;vertical-align:top;padding-right:12px;">
         <img src="${escapeHtml(photoUrl)}" alt="${escapeHtml(FOUNDER_NAME)}" width="44" height="44" style="display:block;width:44px;height:44px;border-radius:50%;-webkit-border-radius:50%;object-fit:cover;border:1.5px solid #e2e8f0;" />
       </td>
-      <td style="vertical-align:middle;">
+      <td style="vertical-align:middle;text-align:left;">
         <p style="margin:0;font-size:14px;font-weight:700;color:#0f172a;line-height:1.25;">
           ${escapeHtml(FOUNDER_NAME)} <span style="font-size:12px;font-weight:500;color:#64748b;">• ${escapeHtml(FOUNDER_TITLE)}</span>
         </p>
@@ -82,6 +82,7 @@ export function founderSignatureMarkup(customNote?: string) {
       </td>
     </tr>
   </table>
+  <div style="clear:both;"></div>
   `;
 }
 
@@ -117,7 +118,8 @@ export function renderBrandEmail({
     img { -ms-interpolation-mode: bicubic; border: 0; outline: none; text-decoration: none; }
     p, li { line-height: 1.65; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
     @media only screen and (max-width: 600px) {
-      .email-container { width: 100% !important; padding: 20px 16px !important; }
+      .email-container { width: 100% !important; padding: 0 !important; }
+      .email-outer-td { padding: 16px 16px 32px 16px !important; }
       .mobile-full { width: 100% !important; display: block !important; }
     }
   </style>
@@ -126,10 +128,10 @@ export function renderBrandEmail({
   <!-- Préheader masqué pour les boîtes de réception -->
   ${intro ? `<div style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">${escapeHtml(intro)}</div>` : ""}
 
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffffff;padding:24px 0 40px 0;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffffff;margin:0;padding:0;">
     <tr>
-      <td align="center">
-        <table role="presentation" class="email-container" width="100%" cellpadding="0" cellspacing="0" style="max-width:580px;margin:0 auto;padding:0 20px;text-align:left;">
+      <td align="left" class="email-outer-td" style="padding:28px 24px 40px 32px;text-align:left;">
+        <table role="presentation" class="email-container" width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;margin:0;padding:0;text-align:left;">
           
           ${
             headerBrand
@@ -181,14 +183,14 @@ export function renderBrandEmail({
           ${
             htmlBody
               ? `<tr>
-            <td style="padding:0;font-size:15px;line-height:1.65;color:#334155;">
+            <td style="padding:0;font-size:15px;line-height:1.65;color:#334155;text-align:left;">
               ${htmlBody}
             </td>
           </tr>`
               : body
                 ? `<tr>
-            <td style="padding:0;">
-              <p style="margin:0;font-size:15px;line-height:1.65;color:#334155;white-space:pre-line;">${escapeHtml(body)}</p>
+            <td style="padding:0;text-align:left;">
+              <p style="margin:0;font-size:15px;line-height:1.65;color:#334155;white-space:pre-line;text-align:left;">${escapeHtml(body)}</p>
             </td>
           </tr>`
                 : ""
@@ -198,8 +200,8 @@ export function renderBrandEmail({
           ${
             cta
               ? `<tr>
-            <td style="padding:24px 0 12px 0;">
-              <table role="presentation" cellpadding="0" cellspacing="0">
+            <td style="padding:24px 0 12px 0;" align="left">
+              <table role="presentation" cellpadding="0" cellspacing="0" align="left">
                 <tr>
                   <td align="center" style="border-radius:6px;background-color:${cta.variant === "orange" ? "#f97316" : "#0f172a"};">
                     <a href="${escapeHtml(cta.url)}" target="_blank" style="display:inline-block;padding:12px 24px;font-size:14px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:6px;letter-spacing:0.2px;">
@@ -208,7 +210,8 @@ export function renderBrandEmail({
                   </td>
                 </tr>
               </table>
-              <p style="margin:10px 0 0 0;font-size:11px;color:#94a3b8;word-break:break-all;">
+              <div style="clear:both;"></div>
+              <p style="margin:10px 0 0 0;font-size:11px;color:#94a3b8;word-break:break-all;text-align:left;">
                 <a href="${escapeHtml(cta.url)}" style="color:#94a3b8;text-decoration:underline;">${escapeHtml(cta.url)}</a>
               </p>
             </td>

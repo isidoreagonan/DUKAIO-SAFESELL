@@ -64,8 +64,9 @@ type Block = {
   title: string;
   intro: string;
   body?: string;
+  htmlBody?: string;
   footNote?: string;
-  cta?: { label: string; url: string };
+  cta?: { label: string; url: string; variant?: "dark" | "orange" };
   includeFounderSignature?: boolean;
 };
 
@@ -88,14 +89,43 @@ export async function sendWelcomeEmail(userId: string) {
   const user = await emailOf(userId);
   if (!user) return false;
 
+  const nameGreeting = user.name ? `, ${user.name}` : "";
+
   await send(user.email, "Bienvenue sur DUKAIO 🎉 — Message du Fondateur", {
-    title: user.name ? `Bienvenue sur DUKAIO, ${user.name} !` : "Bienvenue sur DUKAIO !",
+    title: `Bienvenue sur DUKAIO${nameGreeting} !`,
     intro:
-      "Votre compte est désormais actif. Vous pouvez créer votre boutique, générer vos fiches produits avec l'IA et commencer à encaisser vos premières ventes dès aujourd'hui.",
-    body: `Toute l'équipe DUKAIO et moi-même sommes ravis de vous compter parmi nos marchands.\n\nVotre formule Gratuite est active à vie. Dès que vous souhaitez accélérer vos ventes et profiter de toute la puissance de nos outils IA, découvrez nos formules Starter et Pro : ${sellingPoints()}`,
+      "Votre compte est actif. Vous disposez de 14 jours d'essai gratuit pour créer votre boutique, tester la puissance de l'IA et lancer vos premières ventes.",
+    htmlBody: `
+      <p style="margin:0 0 16px 0;font-size:15px;line-height:1.65;color:#334155;">
+        Toute l'équipe DUKAIO et moi-même sommes ravis de vous compter parmi nos marchands.
+      </p>
+
+      <p style="margin:0 0 16px 0;font-size:15px;line-height:1.65;color:#334155;">
+        <strong>Votre essai gratuit de 14 jours est activé.</strong> Pendant deux semaines, vous avez un accès complet pour configurer votre boutique, explorer la plateforme et tester notre intelligence artificielle pour concevoir vos pages de vente à fort impact.
+      </p>
+
+      <p style="margin:0 0 12px 0;font-size:15px;line-height:1.65;color:#334155;">
+        Dès que vous souhaitez aller plus loin, générer davantage de fiches produits avec l'IA sans limitation et accélérer vos ventes, nos formules <strong>Starter</strong> et <strong>Pro</strong> sont prêtes pour vous :
+      </p>
+
+      <ul style="margin:0 0 20px 0;padding-left:20px;font-size:14px;line-height:1.75;color:#475569;">
+        <li style="margin-bottom:8px;">
+          <strong>Création IA surpuissante :</strong> Générez vos pages produit captivantes et vos visuels de vente en quelques minutes au lieu de plusieurs heures.
+        </li>
+        <li style="margin-bottom:8px;">
+          <strong>Vendez plus à chaque commande :</strong> Produits illimités, offres combos, ventes croisées (cross-sell) et codes promo pour maximiser chaque panier.
+        </li>
+        <li style="margin-bottom:8px;">
+          <strong>Croissance & pilotage :</strong> Statistiques en temps réel, gestion d'équipe (closers / livreurs), relances automatiques par e-mail et notifications instantanées.
+        </li>
+        <li style="margin-bottom:8px;">
+          <strong>Tarifs adaptés :</strong> Formule <strong>Starter</strong> à partir de 7 900 FCFA/mois, ou <strong>Pro</strong> à 14 900 FCFA/mois pour les boutiques qui décollent et scalent.
+        </li>
+      </ul>
+    `,
     cta: { label: "Accéder à mon tableau de bord", url: `${SITE_URL}/dashboard` },
     includeFounderSignature: true,
-    footNote: "Une question ou besoin d'accompagnement pour lancer votre boutique ? Répondez directement à cet e-mail.",
+    footNote: "Une question ou besoin d'accompagnement pour lancer votre boutique ? Répondez directement à cet e-mail — je lis et réponds personnellement à chaque message.",
   });
   await logSent(userId, "welcome");
   return true;
@@ -111,21 +141,35 @@ export async function sendCheckoutAbandonEmail(userId: string, plan?: string) {
   const user = await emailOf(userId);
   if (!user) return false;
 
-  const label = plan && plan in PLAN_CATALOG ? PLAN_CATALOG[plan as "starter"].name : null;
+  const label = plan && plan in PLAN_CATALOG ? PLAN_CATALOG[plan as "starter"].name : "votre formule";
   await send(user.email, "Votre abonnement DUKAIO vous attend", {
-    title: label ? `Il ne manquait qu'un pas vers ${label}` : "Il ne manquait qu'un pas",
+    title: `Il ne manquait qu'un pas vers ${label}`,
     intro:
       "Votre paiement n'a pas été finalisé. Votre boutique est toujours là, et votre formule vous attend.",
-    body: `Ce que vous débloquez immédiatement : ${sellingPoints()}`,
+    htmlBody: `
+      <p style="margin:0 0 16px 0;font-size:15px;line-height:1.65;color:#334155;">
+        Votre boutique est prête et n'attend plus que la finalisation de votre formule pour libérer tout son potentiel de vente.
+      </p>
+
+      <p style="margin:0 0 12px 0;font-size:15px;line-height:1.65;color:#334155;">
+        Ce que vous débloquez immédiatement :
+      </p>
+
+      <ul style="margin:0 0 20px 0;padding-left:20px;font-size:14px;line-height:1.75;color:#475569;">
+        <li style="margin-bottom:8px;">Génération illimitée de fiches produits et visuels avec l'IA.</li>
+        <li style="margin-bottom:8px;">Produits et collections illimités, offres combos et codes promo.</li>
+        <li style="margin-bottom:8px;">Gestion d'équipe (closers & livreurs) et relances automatiques.</li>
+      </ul>
+    `,
     cta: { label: "Finaliser mon abonnement", url: PLANS_URL },
     footNote:
-      "Un souci pour payer par mobile money ou carte ? Répondez à cet e-mail, nous vous aidons.",
+      "Un souci pour payer par mobile money ou carte ? Répondez à cet e-mail, nous vous aidons rapidement.",
   });
   await logSent(userId, "checkout_abandon");
   return true;
 }
 
-/** Relance marketing des comptes gratuits (une fois tous les 3 jours). */
+/** Relance marketing des comptes en essai (une fois tous les 3 jours). */
 export async function sendUpsellEmail(userId: string) {
   const last = await lastSentAt(userId, ["upsell", "welcome", "checkout_abandon"]);
   if (last && Date.now() - last.getTime() < 3 * 24 * 3600 * 1000) return false;
@@ -134,11 +178,24 @@ export async function sendUpsellEmail(userId: string) {
   /* On laisse 3 jours au vendeur après son inscription avant la première relance. */
   if (!last && Date.now() - user.createdAt.getTime() < 3 * 24 * 3600 * 1000) return false;
 
-  await send(user.email, "Vendez plus avec DUKAIO — passez en formule payante", {
-    title: user.name ? `${user.name}, votre boutique peut aller plus loin` : "Votre boutique peut aller plus loin",
+  await send(user.email, "Vendez plus avec DUKAIO — Passez à la formule Starter ou Pro", {
+    title: user.name ? `${user.name}, donnez un coup d'accélérateur à votre boutique` : "Donnez un coup d'accélérateur à votre boutique",
     intro:
       "Les vendeurs qui utilisent nos outils IA et nos offres promotionnelles publient plus vite et vendent davantage.",
-    body: `Ce qui vous attend : ${sellingPoints()}`,
+    htmlBody: `
+      <p style="margin:0 0 16px 0;font-size:15px;line-height:1.65;color:#334155;">
+        Vous avez pu découvrir la simplicité de DUKAIO. Pour passer à la vitesse supérieure et transformer votre boutique en véritable machine à vendre, choisissez la formule qui vous correspond :
+      </p>
+
+      <ul style="margin:0 0 20px 0;padding-left:20px;font-size:14px;line-height:1.75;color:#475569;">
+        <li style="margin-bottom:8px;">
+          <strong>Starter (7 900 FCFA/mois) :</strong> Idéal pour lancer ses campagnes, tester des produits gagnants et créer rapidement des pages produits avec l'IA.
+        </li>
+        <li style="margin-bottom:8px;">
+          <strong>Pro (14 900 FCFA/mois) :</strong> Pensé pour les marchands qui scalent : équipe complète (closers et livreurs), fiches IA décuplées et outils de conversion avancés.
+        </li>
+      </ul>
+    `,
     cta: { label: "Choisir ma formule", url: PLANS_URL },
     footNote: "Vous ne souhaitez plus recevoir ces conseils ? Répondez « STOP » à cet e-mail.",
   });
