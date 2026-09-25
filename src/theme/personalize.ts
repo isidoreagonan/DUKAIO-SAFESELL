@@ -73,8 +73,8 @@ function paletteGlobal(store: StoreSettings): GlobalSettings {
   const legacy = (store.theme_config as { global?: Partial<GlobalSettings> } | null)?.global ?? {};
   return {
     ...defaultGlobal,
-    logoUrl: store.logo_url || (typeof legacy.logoUrl === "string" ? legacy.logoUrl : defaultGlobal.logoUrl),
-    faviconUrl: store.favicon_url || (typeof legacy.faviconUrl === "string" ? legacy.faviconUrl : defaultGlobal.faviconUrl),
+    logoUrl: store.logo_url || (typeof legacy.logoUrl === "string" ? legacy.logoUrl : defaultGlobal.logoUrl) || "",
+    faviconUrl: store.favicon_url || (typeof legacy.faviconUrl === "string" ? legacy.faviconUrl : defaultGlobal.faviconUrl) || "",
     primaryColor: palette.primaryColor,
     softColor: palette.softColor,
     paleColor: palette.paleColor,
@@ -148,8 +148,8 @@ export function readThemeConfig(store: StoreSettings, products: Product[]): Them
         product: raw.pages.product ?? base.pages.product,
         contact: raw.pages.contact ?? base.pages.contact,
       },
-      productPages: raw.productPages,
-      productGlobals: raw.productGlobals,
+      ...(raw.productPages ? { productPages: raw.productPages } : {}),
+      ...(raw.productGlobals ? { productGlobals: raw.productGlobals } : {}),
     };
   }
   return base;

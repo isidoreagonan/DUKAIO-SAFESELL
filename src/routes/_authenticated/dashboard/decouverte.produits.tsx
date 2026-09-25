@@ -134,6 +134,8 @@ function DiscoveryProductsPage() {
   const [minDuration, setMinDuration] = useState("");
   const [priceBand, setPriceBand] = useState("");
   const [minTraction, setMinTraction] = useState("");
+  const set = <K extends keyof ProductFilters>(key: K, value: ProductFilters[K]) =>
+    setFilters((prev) => ({ ...prev, [key]: value }));
   const access = useDiscoveryAccess();
   const { data: facets } = useDiscoveryFacets();
   const locked = !access.allowed;

@@ -43,6 +43,7 @@ import { readTiers } from "@/lib/pricing";
 import { useConfirmDelete } from "@/components/ui/confirm-dialog";
 import { notifyError } from "@/components/ui/notice-dialog";
 import { EmailCampaignsTab } from "@/components/dashboard/email-campaigns";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/dashboard/marketing/")({
   head: () => ({
@@ -137,6 +138,7 @@ const EMPTY_COUPON: CouponForm = {
 };
 
 function CodesTab({ storeId, products }: { storeId: string | undefined; products: Product[] }) {
+  const { dict, isEn } = useI18n();
   const { data: coupons = [], isLoading } = useCoupons(storeId);
   const save = useSaveCoupon(storeId);
   const remove = useDeleteCoupon();
@@ -170,15 +172,15 @@ function CodesTab({ storeId, products }: { storeId: string | undefined; products
     const code = form.code.trim().toUpperCase();
     const value = Number(form.value);
     if (code.length < 3) {
-      toast.error("Le code doit contenir au moins 3 caractères.");
+      toast.error(isEn ? "The code must be at least 3 characters." : "Le code doit contenir au moins 3 caractères.");
       return;
     }
     if (!Number.isFinite(value) || value <= 0) {
-      toast.error("Indiquez une remise supérieure à 0.");
+      toast.error(isEn ? "Specify a discount greater than 0." : "Indiquez une remise supérieure à 0.");
       return;
     }
     if (form.type === "percent" && value > 90) {
-      toast.error("La remise en pourcentage ne peut pas dépasser 90 %.");
+      toast.error(isEn ? "Percentage discount cannot exceed 90%." : "La remise en pourcentage ne peut pas dépasser 90 %.");
       return;
     }
     save.mutate(
@@ -197,13 +199,13 @@ function CodesTab({ storeId, products }: { storeId: string | undefined; products
       },
       {
         onSuccess: () => {
-          toast.success(editing ? "Code promo mis à jour" : "Code promo créé");
+          toast.success(editing ? (isEn ? "Promo code updated" : "Code promo mis à jour") : (isEn ? "Promo code created" : "Code promo créé"));
           setOpen(false);
         },
         onError: (error) =>
           toast.error(
             (error as Error).message.includes("duplicate")
-              ? "Ce code existe déjà dans votre boutique."
+              ? (isEn ? "This code already exists in your store." : "Ce code existe déjà dans votre boutique.")
               : (error as Error).message,
           ),
       },
@@ -214,15 +216,15 @@ function CodesTab({ storeId, products }: { storeId: string | undefined; products
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{editing ? "Modifier le code promo" : "Nouveau code promo"}</DialogTitle>
+          <DialogTitle>{editing ? (isEn ? "Edit promo code" : "Modifier le code promo") : (isEn ? "New promo code" : "Nouveau code promo")}</DialogTitle>
           <DialogDescription>
-            Vos clients saisissent ce code dans le panier : la remise est recalculée côté serveur.
+            {isEn ? "Customers enter this code at checkout: discount is calculated server-side." : "Vos clients saisissent ce code dans le panier : la remise est recalculée côté serveur."}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="coupon-code">Code</Label>
+            <Label htmlFor="coupon-code">{dict.marketingPage.couponCode}</Label>
             <Input
               id="coupon-code"
               value={form.code}
@@ -234,20 +236,20 @@ function CodesTab({ storeId, products }: { storeId: string | undefined; products
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="coupon-type">Type de remise</Label>
+              <Label htmlFor="coupon-type">{dict.marketingPage.offerType}</Label>
               <select
                 id="coupon-type"
                 value={form.type}
                 onChange={(e) => setForm({ ...form, type: e.target.value as Coupon["type"] })}
                 className="h-10 w-full rounded-[6px] border border-border bg-background px-3 text-sm"
               >
-                <option value="percent">Pourcentage (%)</option>
-                <option value="fixed">Montant fixe (FCFA)</option>
+                <option value="percent">{dict.marketingPage.percentage}</option>
+                <option value="fixed">{dict.marketingPage.fixedAmount}</option>
               </select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="coupon-value">
-                {form.type === "percent" ? "Remise (%)" : "Remise (FCFA)"}
+                {form.type === "percent" ? (isEn ? "Discount (%)" : "Remise (%)") : (isEn ? "Discount (FCFA)" : "Remise (FCFA)")}
               </Label>
               <Input
                 id="coupon-value"
@@ -261,7 +263,7 @@ function CodesTab({ storeId, products }: { storeId: string | undefined; products
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="coupon-min">Panier minimum (FCFA)</Label>
+              <Label htmlFor="coupon-min">{dict.marketingPage.minOrder}</Label>
               <Input
                 id="coupon-min"
                 type="number"
@@ -271,12 +273,12 @@ function CodesTab({ storeId, products }: { storeId: string | undefined; products
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="coupon-max">Utilisations max</Label>
+              <Label htmlFor="coupon-max">{dict.marketingPage.maxUses}</Label>
               <Input
                 id="coupon-max"
                 type="number"
                 min={1}
-                placeholder="Illimité"
+                placeholder={isEn ? "Unlimited" : "Illimité"}
                 value={form.max_uses}
                 onChange={(e) => setForm({ ...form, max_uses: e.target.value })}
               />
@@ -284,7 +286,7 @@ function CodesTab({ storeId, products }: { storeId: string | undefined; products
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="coupon-end">Date de fin</Label>
+            <Label htmlFor="coupon-end">{dict.marketingPage.expiresOn}</Label>
             <Input
               id="coupon-end"
               type="date"
@@ -294,7 +296,7 @@ function CodesTab({ storeId, products }: { storeId: string | undefined; products
           </div>
 
           <ProductSelect
-            label="Produit ciblé"
+            label={isEn ? "Target product" : "Produit ciblé"}
             value={form.product_id}
             products={products}
             onChange={(value) => setForm({ ...form, product_id: value })}
@@ -303,8 +305,8 @@ function CodesTab({ storeId, products }: { storeId: string | undefined; products
 
           <div className="flex items-center justify-between rounded-[6px] border border-border px-3 py-2.5">
             <div>
-              <p className="text-sm font-semibold">Code actif</p>
-              <p className="text-xs text-muted-foreground">Désactivez-le pour le suspendre.</p>
+              <p className="text-sm font-semibold">{isEn ? "Active code" : "Code actif"}</p>
+              <p className="text-xs text-muted-foreground">{isEn ? "Deactivate to suspend." : "Désactivez-le pour le suspendre."}</p>
             </div>
             <Switch
               checked={form.is_active}
@@ -318,14 +320,14 @@ function CodesTab({ storeId, products }: { storeId: string | undefined; products
             onClick={() => setOpen(false)}
             className="inline-flex items-center justify-center rounded-xl border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted transition-colors cursor-pointer"
           >
-            Annuler
+            {dict.marketingPage.cancel}
           </button>
           <button
             onClick={submit}
             disabled={save.isPending}
             className="inline-flex items-center justify-center rounded-xl bg-orange-600 hover:bg-orange-500 text-white px-5 py-2.5 text-sm font-semibold shadow-sm transition-colors cursor-pointer disabled:opacity-60"
           >
-            {save.isPending ? "Enregistrement…" : editing ? "Enregistrer" : "Créer le code"}
+            {save.isPending ? (isEn ? "Saving…" : "Enregistrement…") : editing ? dict.marketingPage.save : (isEn ? "Create code" : "Créer le code")}
           </button>
         </DialogFooter>
       </DialogContent>
@@ -341,14 +343,14 @@ function CodesTab({ storeId, products }: { storeId: string | undefined; products
       <>
         <ModuleEmptyState
           icon={Ticket}
-          title="Aucun code promo"
-          description="Créez votre premier code de réduction pour inciter vos visiteurs à commander."
+          title={isEn ? "No promo codes" : "Aucun code promo"}
+          description={dict.marketingPage.noOffersSubtitle}
           action={
             <button
               onClick={() => openNew()}
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white px-5 py-2.5 text-sm font-semibold shadow-sm transition-colors cursor-pointer"
             >
-              <Plus className="h-4 w-4" /> Créer un code promo
+              <Plus className="h-4 w-4" /> {isEn ? "Create a promo code" : "Créer un code promo"}
             </button>
           }
         />
@@ -364,7 +366,7 @@ function CodesTab({ storeId, products }: { storeId: string | undefined; products
           onClick={() => openNew()}
           className="inline-flex items-center gap-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors cursor-pointer"
         >
-          <Plus className="h-4 w-4" /> Nouveau code
+          <Plus className="h-4 w-4" /> {isEn ? "New code" : "Nouveau code"}
         </button>
       </div>
       <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -380,22 +382,22 @@ function CodesTab({ storeId, products }: { storeId: string | undefined; products
                     : "bg-muted text-muted-foreground",
                 )}
               >
-                {coupon.is_active ? "Actif" : "Suspendu"}
+                {coupon.is_active ? dict.marketingPage.active : (isEn ? "Suspended" : "Suspendu")}
               </span>
             </div>
             <p className="mt-2 text-sm text-muted-foreground">
               {coupon.type === "percent"
-                ? `−${Number(coupon.value)} % de remise`
+                ? `−${Number(coupon.value)} % ${isEn ? "discount" : "de remise"}`
                 : `−${formatFcfa(Number(coupon.value))} FCFA`}
               {Number(coupon.min_subtotal) > 0
-                ? ` · dès ${formatFcfa(Number(coupon.min_subtotal))} FCFA`
+                ? ` · ${isEn ? "from" : "dès"} ${formatFcfa(Number(coupon.min_subtotal))} FCFA`
                 : ""}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              {coupon.used_count} utilisation{coupon.used_count > 1 ? "s" : ""}
+              {coupon.used_count} {coupon.used_count > 1 ? dict.marketingPage.usageCount : (isEn ? "use" : "utilisation")}
               {coupon.max_uses ? ` / ${coupon.max_uses}` : ""}
               {coupon.ends_at
-                ? ` · jusqu'au ${new Date(coupon.ends_at).toLocaleDateString("fr-FR")}`
+                ? ` · ${isEn ? "until" : "jusqu'au"} ${new Date(coupon.ends_at).toLocaleDateString(isEn ? "en-US" : "fr-FR")}`
                 : ""}
             </p>
             <div className="mt-4 flex gap-2">
@@ -403,28 +405,30 @@ function CodesTab({ storeId, products }: { storeId: string | undefined; products
                 onClick={() => openEdit(coupon)}
                 className="btn-3d inline-flex flex-1 items-center justify-center gap-2 rounded-[6px] border border-border px-3 py-2 text-sm font-semibold"
               >
-                <Pencil className="h-3.5 w-3.5" /> Modifier
+                <Pencil className="h-3.5 w-3.5" /> {dict.marketingPage.editOffer}
               </button>
               <button
                 aria-label={`Copier ${coupon.code}`}
                 onClick={() => {
                   void navigator.clipboard.writeText(coupon.code);
-                  toast.success("Code copié");
+                  toast.success(dict.marketingPage.codeCopied);
                 }}
                 className="btn-3d inline-flex items-center justify-center rounded-[6px] border border-border px-3 py-2 text-muted-foreground"
+                title={dict.marketingPage.copyCode}
               >
                 <Copy className="h-3.5 w-3.5" />
               </button>
               <button
                 aria-label={`Supprimer ${coupon.code}`}
                 onClick={async () => {
-                  if (!(await confirmDelete(`le code ${coupon.code}`))) return;
+                  if (!(await confirmDelete(`le code « ${coupon.code} »`))) return;
                   remove.mutate(coupon.id, {
-                    onSuccess: () => toast.success("Code supprimé"),
-                    onError: (error) => notifyError(error, "Suppression impossible"),
+                    onSuccess: () => toast.success(isEn ? "Promo code deleted" : "Code promo supprimé"),
+                    onError: (error) => notifyError(error, isEn ? "Deletion failed" : "Suppression impossible"),
                   });
                 }}
                 className="btn-3d inline-flex items-center justify-center rounded-[6px] border border-border px-3 py-2 text-muted-foreground"
+                title={dict.marketingPage.deleteOffer}
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
@@ -508,6 +512,7 @@ function OffresTab({
   products: Product[];
   initialType?: Offer["type"] | undefined;
 }) {
+  const { dict, isEn } = useI18n();
   const { data: offers = [], isLoading } = useOffers(storeId);
   const save = useSaveOffer(storeId);
   const remove = useDeleteOffer();
@@ -980,14 +985,14 @@ function OffresTab({
       <>
         <ModuleEmptyState
           icon={Gift}
-          title="Aucune offre ou pack"
-          description="Augmentez votre panier moyen en récompensant les achats multiples sur vos produits phares."
+          title={isEn ? "No active offers or packs" : "Aucune offre ou pack"}
+          description={dict.marketingPage.noOffersSubtitle}
           action={
             <Link
               to="/dashboard/marketing/offres/nouveau"
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white px-5 py-2.5 text-sm font-semibold shadow-sm transition-colors cursor-pointer"
             >
-              <Plus className="h-4 w-4" /> Créer une offre / pack
+              <Plus className="h-4 w-4" /> {dict.marketingPage.createOffer}
             </Link>
           }
         />
@@ -1003,7 +1008,7 @@ function OffresTab({
           to="/dashboard/marketing/offres/nouveau"
           className="inline-flex items-center gap-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors cursor-pointer"
         >
-          <Plus className="h-4 w-4" /> Nouvelle offre
+          <Plus className="h-4 w-4" /> {dict.marketingPage.newOffer}
         </Link>
       </div>
       <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -1021,33 +1026,34 @@ function OffresTab({
                     : "bg-muted text-muted-foreground",
                 )}
               >
-                {offer.is_active ? "Active" : "Suspendue"}
+                {offer.is_active ? dict.marketingPage.active : (isEn ? "Suspended" : "Suspendue")}
               </span>
             </div>
             <h3 className="mt-3 truncate text-base font-bold">{offer.name}</h3>
             <p className="mt-1 text-sm text-muted-foreground">{describe(offer)}</p>
             <p className="mt-2 text-xs text-muted-foreground">
               {offer.product_id
-                ? (products.find((p) => p.id === offer.product_id)?.name ?? "Produit supprimé")
-                : "Toute la boutique"}
+                ? (products.find((p) => p.id === offer.product_id)?.name ?? (isEn ? "Deleted product" : "Produit supprimé"))
+                : (isEn ? "Entire store" : "Toute la boutique")}
             </p>
             <div className="mt-4 flex gap-2">
               <button
                 onClick={() => openEdit(offer)}
                 className="btn-3d inline-flex flex-1 items-center justify-center gap-2 rounded-[6px] border border-border px-3 py-2 text-sm font-semibold"
               >
-                <Pencil className="h-3.5 w-3.5" /> Modifier
+                <Pencil className="h-3.5 w-3.5" /> {dict.marketingPage.editOffer}
               </button>
               <button
                 aria-label={`Supprimer ${offer.name}`}
                 onClick={async () => {
                   if (!(await confirmDelete(`l'offre « ${offer.name} »`))) return;
                   remove.mutate(offer.id, {
-                    onSuccess: () => toast.success("Offre supprimée"),
-                    onError: (error) => notifyError(error, "Suppression impossible"),
+                    onSuccess: () => toast.success(isEn ? "Offer deleted" : "Offre supprimée"),
+                    onError: (error) => notifyError(error, isEn ? "Deletion failed" : "Suppression impossible"),
                   });
                 }}
                 className="btn-3d inline-flex items-center justify-center rounded-[6px] border border-border px-3 py-2 text-muted-foreground"
+                title={dict.marketingPage.deleteOffer}
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
@@ -1062,17 +1068,24 @@ function OffresTab({
 
 function MarketingPage() {
   const search = Route.useSearch();
+  const { dict, isEn } = useI18n();
   const [tab, setTab] = useState<TabKey>(
     search.tab && TABS.some((t) => t.key === search.tab) ? search.tab : "codes",
   );
   const { data: store } = useStore();
   const { data: products = [] } = useProducts();
 
+  const tabLabels: Record<TabKey, string> = {
+    codes: isEn ? "Promo codes" : "Codes promo",
+    offres: isEn ? "Offers & packs" : "Offres & packs",
+    emails: dict.marketingPage.emailsTab,
+  };
+
   return (
     <DashboardShell>
       <ModuleHeader
-        title="Marketing"
-        description="Codes promo, offres automatiques et campagnes e-mail, réunis au même endroit."
+        title={dict.marketingPage.title}
+        description={dict.marketingPage.subtitle}
       />
 
       <div className="mt-5 flex flex-wrap gap-2 rounded-[8px] border border-border bg-background p-1.5">
@@ -1088,7 +1101,7 @@ function MarketingPage() {
             )}
           >
             <t.icon className="h-4 w-4" />
-            {t.label}
+            {tabLabels[t.key]}
           </button>
         ))}
       </div>

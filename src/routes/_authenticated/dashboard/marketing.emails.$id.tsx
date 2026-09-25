@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { useStore } from "@/lib/store";
 import { notifyError } from "@/components/ui/notice-dialog";
 import { useConfirmDelete } from "@/components/ui/confirm-dialog";
+import { useI18n } from "@/lib/i18n";
 import {
   AUDIENCES,
   useAudienceCount,
@@ -59,14 +60,7 @@ export const Route = createFileRoute("/_authenticated/dashboard/marketing/emails
   component: EmailComposerPage,
 });
 
-const STEPS = [
-  { key: "modele", label: "Modèle", icon: LayoutTemplate },
-  { key: "contenu", label: "Contenu", icon: Type },
-  { key: "apparence", label: "Apparence", icon: Palette },
-  { key: "clients", label: "Destinataires", icon: Users },
-] as const;
-
-type StepKey = (typeof STEPS)[number]["key"];
+type StepKey = "modele" | "contenu" | "apparence" | "clients";
 
 const emptyForm: CampaignInput = {
   name: "",
@@ -115,6 +109,7 @@ function ColorField({
 }
 
 function EmailComposerPage() {
+  const { isEn } = useI18n();
   const { id } = Route.useParams();
   const navigate = useNavigate();
   const isNew = id === "nouveau";
@@ -124,6 +119,16 @@ function EmailComposerPage() {
   const send = useSendCampaign();
   const test = useSendCampaignTest();
   const confirmSend = useConfirmDelete();
+
+  const steps = useMemo(
+    () => [
+      { key: "modele" as const, label: isEn ? "Template" : "Modèle", icon: LayoutTemplate },
+      { key: "contenu" as const, label: isEn ? "Content" : "Contenu", icon: Type },
+      { key: "apparence" as const, label: isEn ? "Appearance" : "Apparence", icon: Palette },
+      { key: "clients" as const, label: isEn ? "Recipients" : "Destinataires", icon: Users },
+    ],
+    [isEn],
+  );
 
   const [step, setStep] = useState<StepKey>("modele");
   const [form, setForm] = useState<CampaignInput>(emptyForm);
@@ -175,17 +180,19 @@ function EmailComposerPage() {
   const preview = useMemo(
     () =>
       renderEmailTemplate(design, {
-        storeName: store?.store_name ?? "Ma boutique",
-        subject: form.subject.trim() || "Votre objet apparaîtra ici",
+        storeName: store?.store_name ?? (isEn ? "My Store" : "Ma boutique"),
+        subject: form.subject.trim() || (isEn ? "Your subject will appear here" : "Votre objet apparaîtra ici"),
         preheader: form.preheader,
         body:
           form.body.trim() ||
-          "Écrivez votre message ici.\n\nChaque paragraphe est séparé par une ligne vide.",
+          (isEn
+            ? "Write your message here.\n\nEach paragraph is separated by an empty line."
+            : "Écrivez votre message ici.\n\nChaque paragraphe est séparé par une ligne vide."),
         ctaLabel: form.cta_label,
         ctaUrl: form.cta_url || "#",
         firstName: "Awa",
       }),
-    [design, form, store?.store_name],
+    [design, form, store?.store_name, isEn],
   );
 
   const audience = useAudienceCount(store?.id, {
@@ -210,12 +217,18 @@ function EmailComposerPage() {
 
   const doSave = (after?: (id: string) => void) => {
     if (form.subject.trim().length < 3) {
-      notifyError("Objet manquant", "Écrivez l'objet de votre e-mail.");
+      notifyError(
+        isEn ? "Missing subject" : "Objet manquant",
+        isEn ? "Write the subject of your email." : "Écrivez l'objet de votre e-mail.",
+      );
       setStep("contenu");
       return;
     }
     if (form.body.trim().length < 10) {
-      notifyError("Message trop court", "Écrivez le message que recevront vos clients.");
+      notifyError(
+        isEn ? "Message too short" : "Message trop court",
+        isEn ? "Write the message your customers will receive." : "Écrivez le message que recevront vos clients.",
+      );
       setStep("contenu");
       return;
     }
@@ -233,10 +246,14 @@ function EmailComposerPage() {
       {
         onSuccess: (newId) => {
           setSavedId(newId);
-          toast.success("Campagne enregistrée");
+          toast.success(isEn ? "Campaign saved" : "Campagne enregistrée");
           if (after) after(newId);
         },
-        onError: () => notifyError("Enregistrement impossible", "Réessayez dans un instant."),
+        onError: () =>
+          notifyError(
+            isEn ? "Unable to save" : "Enregistrement impossible",
+            isEn ? "Please try again in a moment." : "Réessayez dans un instant.",
+          ),
       },
     );
   };
@@ -245,32 +262,72 @@ function EmailComposerPage() {
     doSave((cid) =>
       test.mutate(cid, {
         onSuccess: (result) => {
-          if (result.ok) toast.success(`E-mail de test envoyé à ${result.email}`);
-          else notifyError("Test impossible", result.reason);
+          if (result.ok) toast.success(isEn ? `Test email sent to ${result.email}` : `E-mail de test envoyé à ${result.email}`);
+          else notifyError(isEn ? "Test failed" : "Test impossible", result.reason);
         },
-        onError: () => notifyError("Test impossible", "Réessayez dans un instant."),
+        onError: () =>
+          notifyError(
+            isEn ? "Test failed" : "Test impossible",
+            isEn ? "Please try again in a moment." : "Réessayez dans un instant.",
+          ),
       }),
     );
 
   const doSend = () =>
     doSave(async (cid) => {
       const ok = await confirmSend(
-        "confirmer l'envoi",
-        "L'e-mail partira immédiatement chez tous les clients choisis. Cette action ne peut pas être annulée.",
+        isEn ? "confirm sending" : "confirmer l'envoi",
+        isEn
+          ? "The email will be sent immediately to all selected customers. This action cannot be undone."
+          : "L'e-mail partira immédiatement chez tous les clients choisis. Cette action ne peut pas être annulée.",
       );
       if (!ok) return;
       send.mutate(cid, {
         onSuccess: (result) => {
           if (!result.ok) {
-            notifyError("Envoi impossible", result.reason);
+            notifyError(isEn ? "Unable to send" : "Envoi impossible", result.reason);
             return;
           }
-          toast.success(`Campagne envoyée à ${result.sent} client(s)`);
+          toast.success(
+            isEn
+              ? `Campaign sent to ${result.sent} customer(s)`
+              : `Campagne envoyée à ${result.sent} client(s)`,
+          );
           void navigate({ to: "/dashboard/marketing" });
         },
-        onError: () => notifyError("Envoi impossible", "Réessayez dans un instant."),
+        onError: () =>
+          notifyError(
+            isEn ? "Unable to send" : "Envoi impossible",
+            isEn ? "Please try again in a moment." : "Réessayez dans un instant.",
+          ),
       });
     });
+
+  const audienceOptions = useMemo(
+    () => [
+      {
+        key: "all" as const,
+        label: isEn ? "All my customers" : "Tous mes clients",
+        hint: isEn ? "All customer profiles with an email." : "Toutes les fiches clients avec un e-mail.",
+      },
+      {
+        key: "vip" as const,
+        label: isEn ? "Best customers" : "Meilleurs clients",
+        hint: isEn ? "Those who ordered multiple times." : "Ceux qui ont commandé plusieurs fois.",
+      },
+      {
+        key: "inactive" as const,
+        label: isEn ? "Inactive customers" : "Clients inactifs",
+        hint: isEn ? "No order for a while." : "Sans commande depuis un moment.",
+      },
+      {
+        key: "city" as const,
+        label: isEn ? "A specific city" : "Une ville précise",
+        hint: isEn ? "Target a single city." : "Ciblez une seule ville.",
+      },
+    ],
+    [isEn],
+  );
 
   return (
     <DashboardShell>
@@ -279,16 +336,24 @@ function EmailComposerPage() {
           <Link
             to="/dashboard/marketing"
             className="btn-white-3d inline-flex h-9 w-9 items-center justify-center rounded-[6px] border border-border"
-            aria-label="Retour au marketing"
+            aria-label={isEn ? "Back to marketing" : "Retour au marketing"}
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
           <div>
             <h1 className="font-display text-xl font-bold">
-              {isNew ? "Nouvelle campagne e-mail" : "Modifier la campagne"}
+              {isNew
+                ? isEn
+                  ? "New email campaign"
+                  : "Nouvelle campagne e-mail"
+                : isEn
+                  ? "Edit campaign"
+                  : "Modifier la campagne"}
             </h1>
             <p className="text-xs text-muted-foreground">
-              Choisissez un modèle, écrivez, personnalisez les couleurs, envoyez.
+              {isEn
+                ? "Choose a template, write, customize colors, and send."
+                : "Choisissez un modèle, écrivez, personnalisez les couleurs, envoyez."}
             </p>
           </div>
         </div>
@@ -299,7 +364,7 @@ function EmailComposerPage() {
             disabled={save.isPending}
             className="inline-flex items-center gap-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-200 hover:bg-stone-50 dark:hover:bg-stone-700 px-3.5 py-2 text-xs font-semibold shadow-sm transition-colors cursor-pointer disabled:opacity-60"
           >
-            <Save className="h-3.5 w-3.5" /> Enregistrer
+            <Save className="h-3.5 w-3.5" /> {isEn ? "Save" : "Enregistrer"}
           </button>
           <button
             type="button"
@@ -307,7 +372,7 @@ function EmailComposerPage() {
             disabled={test.isPending || save.isPending}
             className="inline-flex items-center gap-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-200 hover:bg-stone-50 dark:hover:bg-stone-700 px-3.5 py-2 text-xs font-semibold shadow-sm transition-colors cursor-pointer disabled:opacity-60"
           >
-            <FlaskConical className="h-3.5 w-3.5 text-orange-500" /> M'envoyer un test
+            <FlaskConical className="h-3.5 w-3.5 text-orange-500" /> {isEn ? "Send test email" : "M'envoyer un test"}
           </button>
           {!sent && (
             <button
@@ -316,7 +381,14 @@ function EmailComposerPage() {
               disabled={send.isPending || save.isPending}
               className="inline-flex items-center gap-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white px-4 py-2 text-sm font-semibold shadow-sm transition-colors cursor-pointer disabled:opacity-60"
             >
-              <Send className="h-4 w-4" /> {send.isPending ? "Envoi..." : "Envoyer"}
+              <Send className="h-4 w-4" />{" "}
+              {send.isPending
+                ? isEn
+                  ? "Sending..."
+                  : "Envoi..."
+                : isEn
+                  ? "Send"
+                  : "Envoyer"}
             </button>
           )}
         </div>
@@ -326,7 +398,7 @@ function EmailComposerPage() {
         {/* Colonne réglages */}
         <div className="rounded-[8px] border border-border bg-background">
           <div className="flex flex-wrap gap-1 border-b border-border p-2">
-            {STEPS.map((item) => (
+            {steps.map((item) => (
               <button
                 key={item.key}
                 type="button"
@@ -345,7 +417,9 @@ function EmailComposerPage() {
 
           <div className="p-4">
             {isLoading && !isNew ? (
-              <p className="text-sm text-muted-foreground">Chargement de la campagne...</p>
+              <p className="text-sm text-muted-foreground">
+                {isEn ? "Loading campaign..." : "Chargement de la campagne..."}
+              </p>
             ) : step === "modele" ? (
               <div className="grid gap-3 sm:grid-cols-2">
                 {TEMPLATES.map((item) => {
@@ -410,37 +484,49 @@ function EmailComposerPage() {
             ) : step === "contenu" ? (
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="camp-name">Nom interne (visible par vous seul)</Label>
+                  <Label htmlFor="camp-name">
+                    {isEn ? "Internal name (visible only to you)" : "Nom interne (visible par vous seul)"}
+                  </Label>
                   <Input
                     id="camp-name"
                     value={form.name}
                     onChange={(event) => set("name", event.target.value)}
-                    placeholder="Promo de fin de mois"
+                    placeholder={isEn ? "End of month promo" : "Promo de fin de mois"}
                     maxLength={120}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="camp-subject">Objet de l'e-mail *</Label>
+                  <Label htmlFor="camp-subject">
+                    {isEn ? "Email subject *" : "Objet de l'e-mail *"}
+                  </Label>
                   <Input
                     id="camp-subject"
                     value={form.subject}
                     onChange={(event) => set("subject", event.target.value)}
-                    placeholder="-20% sur toute la boutique ce week-end"
+                    placeholder={
+                      isEn
+                        ? "-20% off entire store this weekend"
+                        : "-20% sur toute la boutique ce week-end"
+                    }
                     maxLength={160}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="camp-pre">Phrase d'accroche (aperçu boîte de réception)</Label>
+                  <Label htmlFor="camp-pre">
+                    {isEn ? "Preview text (inbox snippet)" : "Phrase d'accroche (aperçu boîte de réception)"}
+                  </Label>
                   <Input
                     id="camp-pre"
                     value={form.preheader ?? ""}
                     onChange={(event) => set("preheader", event.target.value)}
-                    placeholder="Offre valable jusqu'à dimanche soir"
+                    placeholder={
+                      isEn ? "Offer valid until Sunday night" : "Offre valable jusqu'à dimanche soir"
+                    }
                     maxLength={160}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="camp-body">Message *</Label>
+                  <Label htmlFor="camp-body">{isEn ? "Message *" : "Message *"}</Label>
                   <textarea
                     id="camp-body"
                     value={form.body}
@@ -448,28 +534,31 @@ function EmailComposerPage() {
                     rows={9}
                     maxLength={4000}
                     placeholder={
-                      "Bonne nouvelle !\n\nCe week-end, profitez de -20% sur toute la boutique."
+                      isEn
+                        ? "Great news!\n\nThis weekend, enjoy -20% off across our entire store."
+                        : "Bonne nouvelle !\n\nCe week-end, profitez de -20% sur toute la boutique."
                     }
                     className="w-full rounded-[6px] border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Laissez une ligne vide entre deux paragraphes. Le prénom du client est ajouté
-                    automatiquement en haut du message.
+                    {isEn
+                      ? "Leave an empty line between paragraphs. The customer's first name is automatically added at the top."
+                      : "Laissez une ligne vide entre deux paragraphes. Le prénom du client est ajouté automatiquement en haut du message."}
                   </p>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="camp-cta">Texte du bouton</Label>
+                    <Label htmlFor="camp-cta">{isEn ? "Button label" : "Texte du bouton"}</Label>
                     <Input
                       id="camp-cta"
                       value={form.cta_label ?? ""}
                       onChange={(event) => set("cta_label", event.target.value)}
-                      placeholder="Voir la boutique"
+                      placeholder={isEn ? "Visit store" : "Voir la boutique"}
                       maxLength={60}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="camp-url">Lien du bouton</Label>
+                    <Label htmlFor="camp-url">{isEn ? "Button link" : "Lien du bouton"}</Label>
                     <Input
                       id="camp-url"
                       value={form.cta_url ?? ""}
@@ -484,28 +573,30 @@ function EmailComposerPage() {
               <div className="space-y-4">
                 <div className="grid gap-3 sm:grid-cols-2">
                   <ColorField
-                    label="Couleur de marque (titres, accents)"
+                    label={isEn ? "Brand color (headings, accents)" : "Couleur de marque (titres, accents)"}
                     value={design.brandColor}
                     onChange={(value) => set("brand_color", value)}
                   />
                   <ColorField
-                    label="Couleur du bouton"
+                    label={isEn ? "Button color" : "Couleur du bouton"}
                     value={design.buttonColor}
                     onChange={(value) => set("button_color", value)}
                   />
                   <ColorField
-                    label="Couleur de fond"
+                    label={isEn ? "Background color" : "Couleur de fond"}
                     value={design.bgColor}
                     onChange={(value) => set("bg_color", value)}
                   />
                   <ColorField
-                    label="Couleur du texte"
+                    label={isEn ? "Text color" : "Couleur du texte"}
                     value={design.textColor}
                     onChange={(value) => set("text_color", value)}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="camp-logo">Logo affiché dans l'e-mail (lien https)</Label>
+                  <Label htmlFor="camp-logo">
+                    {isEn ? "Logo displayed in email (https link)" : "Logo affiché dans l'e-mail (lien https)"}
+                  </Label>
                   <Input
                     id="camp-logo"
                     value={form.logo_url ?? ""}
@@ -514,17 +605,24 @@ function EmailComposerPage() {
                     maxLength={500}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Vide : le logo de votre boutique est utilisé. Sans logo, le nom de la boutique
-                    s'affiche.
+                    {isEn
+                      ? "Empty: store logo will be used. Without logo, store name is displayed."
+                      : "Vide : le logo de votre boutique est utilisé. Sans logo, le nom de la boutique s'affiche."}
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="camp-foot">Mention de bas de page</Label>
+                  <Label htmlFor="camp-foot">
+                    {isEn ? "Footer note" : "Mention de bas de page"}
+                  </Label>
                   <Input
                     id="camp-foot"
                     value={form.footer_note ?? ""}
                     onChange={(event) => set("footer_note", event.target.value || null)}
-                    placeholder="Vous recevez cet e-mail car vous êtes client chez nous."
+                    placeholder={
+                      isEn
+                        ? "You are receiving this email because you are a customer of our store."
+                        : "Vous recevez cet e-mail car vous êtes client chez nous."
+                    }
                     maxLength={240}
                   />
                 </div>
@@ -533,15 +631,15 @@ function EmailComposerPage() {
                   onClick={() => pickTemplate(form.template as TemplateKey)}
                   className="btn-white-3d inline-flex items-center gap-2 rounded-[6px] border border-border px-3.5 py-2 text-xs font-bold"
                 >
-                  Rétablir les couleurs du modèle
+                  {isEn ? "Reset template colors" : "Rétablir les couleurs du modèle"}
                 </button>
               </div>
             ) : (
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Qui reçoit cet e-mail ?</Label>
+                  <Label>{isEn ? "Who receives this email?" : "Qui reçoit cet e-mail ?"}</Label>
                   <div className="grid gap-2 sm:grid-cols-2">
-                    {AUDIENCES.map((item) => (
+                    {audienceOptions.map((item) => (
                       <button
                         key={item.key}
                         type="button"
@@ -562,7 +660,9 @@ function EmailComposerPage() {
 
                 {form.audience === "vip" && (
                   <div className="space-y-2">
-                    <Label htmlFor="camp-min">À partir de combien de commandes ?</Label>
+                    <Label htmlFor="camp-min">
+                      {isEn ? "Minimum number of orders:" : "À partir de combien de commandes ?"}
+                    </Label>
                     <Input
                       id="camp-min"
                       type="number"
@@ -575,7 +675,9 @@ function EmailComposerPage() {
                 )}
                 {form.audience === "inactive" && (
                   <div className="space-y-2">
-                    <Label htmlFor="camp-days">Sans commande depuis combien de jours ?</Label>
+                    <Label htmlFor="camp-days">
+                      {isEn ? "No orders for how many days?" : "Sans commande depuis combien de jours ?"}
+                    </Label>
                     <Input
                       id="camp-days"
                       type="number"
@@ -588,7 +690,9 @@ function EmailComposerPage() {
                 )}
                 {form.audience === "city" && (
                   <div className="space-y-2">
-                    <Label htmlFor="camp-city">Ville ciblée</Label>
+                    <Label htmlFor="camp-city">
+                      {isEn ? "Target city" : "Ville ciblée"}
+                    </Label>
                     <Input
                       id="camp-city"
                       value={form.city ?? ""}
@@ -602,8 +706,12 @@ function EmailComposerPage() {
                 <p className="inline-flex items-center gap-2 rounded-[6px] bg-surface-tint px-3 py-2 text-xs font-semibold">
                   <Users className="h-3.5 w-3.5 text-primary" />
                   {audience.isLoading
-                    ? "Calcul du nombre de clients..."
-                    : `${audience.data?.count ?? 0} client(s) recevront cet e-mail`}
+                    ? isEn
+                      ? "Calculating recipient count..."
+                      : "Calcul du nombre de clients..."
+                    : isEn
+                      ? `${audience.data?.count ?? 0} customer(s) will receive this email`
+                      : `${audience.data?.count ?? 0} client(s) recevront cet e-mail`}
                 </p>
               </div>
             )}
@@ -614,10 +722,11 @@ function EmailComposerPage() {
         <aside className="lg:sticky lg:top-4 lg:self-start">
           <div className="rounded-[8px] border border-border bg-background p-3">
             <p className="mb-2 text-xs font-bold text-muted-foreground">
-              Aperçu — {templatePreset(form.template).label}
+              {isEn ? "Preview — " : "Aperçu — "}
+              {templatePreset(form.template).label}
             </p>
             <iframe
-              title="Aperçu de l'e-mail"
+              title={isEn ? "Email preview" : "Aperçu de l'e-mail"}
               srcDoc={preview}
               className="h-[620px] w-full rounded-[6px] border border-border bg-white"
             />

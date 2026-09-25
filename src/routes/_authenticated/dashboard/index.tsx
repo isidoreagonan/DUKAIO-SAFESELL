@@ -251,7 +251,7 @@ function DashboardHomePage() {
               <Link
                 key={item.title}
                 to={item.to}
-                search={item.search}
+                search={item.search as any}
                 onClick={(e) => {
                   if (!discoveryAccess.allowed && item.search && "category" in item.search) {
                     e.preventDefault();
@@ -387,7 +387,7 @@ function DashboardHomePage() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-foreground truncate">{dict.dashboardHome.storeDomainTitle}</p>
-                  <p className="text-[10px] text-muted-foreground truncate">{store?.name || "My Store"}</p>
+                  <p className="text-[10px] text-muted-foreground truncate">{store?.store_name || "My Store"}</p>
                 </div>
               </div>
               <span className="inline-flex shrink-0 items-center text-[11px] font-bold text-primary group-hover:underline">

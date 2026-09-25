@@ -7,8 +7,8 @@ import { nitro } from "nitro/vite";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
-  const supabaseUrl = env.SUPABASE_URL || env.VITE_SUPABASE_URL || "";
-  const supabaseAnonKey = env.SUPABASE_PUBLISHABLE_KEY || env.VITE_SUPABASE_PUBLISHABLE_KEY || "";
+  const supabaseUrl = env["SUPABASE_URL"] || env["VITE_SUPABASE_URL"] || "";
+  const supabaseAnonKey = env["SUPABASE_PUBLISHABLE_KEY"] || env["VITE_SUPABASE_PUBLISHABLE_KEY"] || "";
 
   return {
     define: {

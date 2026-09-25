@@ -149,11 +149,11 @@ function ThemeEditorPage() {
       markSaved();
       toast.success(
         action === "unpublish"
-          ? "Boutique dépubliée (mise hors ligne)"
-          : "Modifications enregistrées et publiées en direct !",
+          ? (isEn ? "Store unpublished (taken offline)" : "Boutique dépubliée (mise hors ligne)")
+          : (isEn ? "Changes saved and published live!" : "Modifications enregistrées et publiées en direct !"),
       );
     } catch {
-      toast.error("Enregistrement impossible. Réessayez.");
+      toast.error(isEn ? "Unable to save. Please try again." : "Enregistrement impossible. Réessayez.");
     } finally {
       setPending(null);
     }
@@ -206,11 +206,14 @@ function ThemeEditorPage() {
       setAiDraft(null);
       toast.success(
         targetId
-          ? `Page de vente mise à jour pour « ${draft.name} »`
-          : `Produit « ${draft.name} » créé et page de vente enregistrée !`,
+          ? (isEn ? `Sales page updated for “${draft.name}”` : `Page de vente mise à jour pour « ${draft.name} »`)
+          : (isEn ? `Product “${draft.name}” created and sales page saved!` : `Produit « ${draft.name} » créé et page de vente enregistrée !`),
       );
     } catch (e: any) {
-      toast.error("Impossible d'enregistrer le produit IA", { description: e.message || "Réessayez." });
+      toast.error(
+        isEn ? "Failed to save AI product" : "Impossible d'enregistrer le produit IA",
+        { description: e.message || (isEn ? "Try again." : "Réessayez.") },
+      );
     } finally {
       setPending(null);
     }
@@ -220,13 +223,17 @@ function ThemeEditorPage() {
     clearPendingAiDraft();
     setAiDraft(null);
     dropAiDraft();
-    toast.success("Brouillon IA abandonné");
+    toast.success(isEn ? "AI draft discarded" : "Brouillon IA abandonné");
   };
 
   const reset = () => {
     if (!store) return;
     hydrate(personalizedTheme(store, catalogue));
-    toast.success("Thème réinitialisé sur les informations de votre boutique");
+    toast.success(
+      isEn
+        ? "Theme reset to your store settings"
+        : "Thème réinitialisé sur les informations de votre boutique",
+    );
   };
 
   if (isLoading || !store || !ready) {

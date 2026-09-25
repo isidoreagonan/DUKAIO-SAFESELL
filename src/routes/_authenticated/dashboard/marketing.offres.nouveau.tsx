@@ -14,6 +14,7 @@ import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { DashboardShell } from "@/components/dashboard/shell";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 type OfferKind = "quantity" | "bogo" | "free_shipping" | "combo";
 
@@ -123,6 +124,9 @@ function OfferCard({
   kind?: OfferKind;
   soon?: boolean;
 }) {
+  const { dict } = useI18n();
+  const op = dict.offerTemplatesPage;
+
   return (
     <article
       className={cn(
@@ -138,7 +142,7 @@ function OfferCard({
             : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
         )}
       >
-        {soon ? "Bientôt" : "Prêt à l'emploi"}
+        {soon ? op.soonBadge : op.readyBadge}
       </span>
 
       <div className="mt-6 space-y-2 rounded-[6px] border border-border bg-surface-tint/50 p-3">
@@ -158,7 +162,7 @@ function OfferCard({
 
       {soon || !kind ? (
         <span className="mt-5 grid cursor-not-allowed place-items-center rounded-[6px] border border-border py-2.5 text-sm font-semibold text-muted-foreground">
-          Bientôt disponible
+          {op.soonBtn}
         </span>
       ) : (
         <Link
@@ -166,7 +170,7 @@ function OfferCard({
           search={{ tab: "offres", type: kind }}
           className="mt-5 inline-flex items-center justify-center rounded-[6px] bg-primary py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
         >
-          Utiliser ce modèle
+          {op.useTemplateBtn}
         </Link>
       )}
     </article>
@@ -174,6 +178,9 @@ function OfferCard({
 }
 
 function NouvelleOffrePage() {
+  const { dict } = useI18n();
+  const op = dict.offerTemplatesPage;
+
   return (
     <DashboardShell>
       <Link
@@ -181,52 +188,51 @@ function NouvelleOffrePage() {
         search={{ tab: "offres" }}
         className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="h-4 w-4" /> Retour au marketing
+        <ArrowLeft className="h-4 w-4" /> {op.backToMarketing}
       </Link>
 
       <header className="mt-3">
         <div className="flex flex-wrap items-baseline gap-3">
           <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">
-            Modèles d'offres & packs
+            {op.title}
           </h1>
           <span className="rounded-[4px] border border-border px-2 py-0.5 text-xs font-semibold text-muted-foreground">
-            Étape 1 sur 2
+            {op.step}
           </span>
         </div>
         <p className="mt-2 text-sm text-muted-foreground">
-          4 modèles fonctionnent déjà sur vos pages produit et dans le panier — 4 autres arrivent.
-          Choisissez un modèle, le formulaire s'ouvre pré-rempli.
+          {op.subtitle}
         </p>
       </header>
 
       <h2 className="mt-7 text-sm font-bold tracking-wider text-muted-foreground uppercase">
-        Actifs en boutique
+        {op.activeSection}
       </h2>
       <div className="mt-3 grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
         <OfferCard
           kind="quantity"
           icon={Package}
-          title="Remise sur quantité"
-          tagline="Achète plus, paie moins"
-          text="Le client choisit son pack sur la fiche produit. Le prix par unité et l'économie se recalculent en direct."
+          title={op.quantityDiscount.title}
+          tagline={op.quantityDiscount.tagline}
+          text={op.quantityDiscount.text}
           preview={
             <>
-              <Row qty="x1" label="1 produit" price="12 900" />
+              <Row qty="x1" label={op.quantityDiscount.row1} price="12 900" />
               <Row
                 qty="x2"
-                label="2 produits · -10%"
-                sub="Vous économisez 2 580"
+                label={op.quantityDiscount.row2}
+                sub={op.quantityDiscount.row2Sub}
                 price="23 220"
                 strike="25 800"
-                tag="Populaire"
+                tag={op.quantityDiscount.popular}
               />
               <Row
                 qty="x3"
-                label="3 produits · -20%"
-                sub="Économie maximale"
+                label={op.quantityDiscount.row3}
+                sub={op.quantityDiscount.row3Sub}
                 price="30 960"
                 strike="38 700"
-                tag="Meilleure offre"
+                tag={op.quantityDiscount.bestOffer}
                 tone="best"
               />
             </>
@@ -236,19 +242,19 @@ function NouvelleOffrePage() {
         <OfferCard
           kind="bogo"
           icon={Gift}
-          title="X acheté / Y offert"
-          tagline="Achète X, reçois Y gratuitement"
-          text="Un bandeau cadeau apparaît sur la fiche produit et indique combien d'articles ajouter pour déclencher le bonus."
+          title={op.bogo.title}
+          tagline={op.bogo.tagline}
+          text={op.bogo.text}
           preview={
             <>
-              <Row qty="x2" label="1 acheté = 1 offert" price="5 000 FCFA" strike="10 000 FCFA" />
-              <Row qty="x4" label="2 achetés = 2 offerts" price="10 000 FCFA" strike="20 000 FCFA" />
+              <Row qty="x2" label={op.bogo.row1} price="5 000 FCFA" strike="10 000 FCFA" />
+              <Row qty="x4" label={op.bogo.row2} price="10 000 FCFA" strike="20 000 FCFA" />
               <Row
                 qty="x6"
-                label="3 achetés = 3 offerts"
+                label={op.bogo.row3}
                 price="15 000 FCFA"
                 strike="30 000 FCFA"
-                tag="Meilleure offre"
+                tag={op.quantityDiscount.bestOffer}
                 tone="best"
               />
             </>
@@ -258,17 +264,17 @@ function NouvelleOffrePage() {
         <OfferCard
           kind="free_shipping"
           icon={Truck}
-          title="Livraison offerte dès…"
-          tagline="Plus le panier grossit, plus les frais tombent"
-          text="Une barre de progression pousse le client au palier suivant, et les frais passent vraiment à zéro au panier."
+          title={op.freeShipping.title}
+          tagline={op.freeShipping.tagline}
+          text={op.freeShipping.text}
           preview={
             <>
               <Progress
                 percent={55}
-                label="Encore 1 article et la livraison est offerte"
-                note="Livraison 2 000 FCFA · offerte dès 2 articles"
+                label={op.freeShipping.progressLabel}
+                note={op.freeShipping.progressNote}
               />
-              <Row label="2 articles ou plus" price="Livraison offerte" tone="best" />
+              <Row label={op.freeShipping.rowLabel} price={op.freeShipping.rowPrice} tone="best" />
             </>
           }
         />
@@ -276,32 +282,32 @@ function NouvelleOffrePage() {
         <OfferCard
           kind="combo"
           icon={Layers}
-          title="Pack combo"
-          tagline="Produits liés à prix réduit"
-          text="Plusieurs produits achetés ensemble déclenchent la remise. Le client ajoute tout le pack en un clic."
+          title={op.comboPack.title}
+          tagline={op.comboPack.tagline}
+          text={op.comboPack.text}
           preview={
             <>
-              <Row label="Chemise + pantalon" sub="Ajoutés ensemble" price="-20%" tone="best" />
-              <Row label="Pack complet" price="32 000 FCFA" strike="40 000 FCFA" />
+              <Row label={op.comboPack.row1Label} sub={op.comboPack.row1Sub} price="-20%" tone="best" />
+              <Row label={op.comboPack.row2Label} price="32 000 FCFA" strike="40 000 FCFA" />
             </>
           }
         />
       </div>
 
       <h2 className="mt-9 text-sm font-bold tracking-wider text-muted-foreground uppercase">
-        Bientôt disponibles
+        {op.soonSection}
       </h2>
       <div className="mt-3 grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
         <OfferCard
           soon
           icon={TrendingUp}
-          title="Upsell au panier"
-          tagline="Propose un produit complémentaire"
-          text="Suggérez un produit complémentaire au moment où le client valide son panier, avec une remise."
+          title={op.cartUpsell.title}
+          tagline={op.cartUpsell.tagline}
+          text={op.cartUpsell.text}
           preview={
             <>
-              <Row label="Dans le panier : chemise blanche" />
-              <Row label="+ Ceinture cuir à -20%" tone="best" />
+              <Row label={op.cartUpsell.row1} />
+              <Row label={op.cartUpsell.row2} tone="best" />
             </>
           }
         />
@@ -309,13 +315,13 @@ function NouvelleOffrePage() {
         <OfferCard
           soon
           icon={RotateCcw}
-          title="Downsell"
-          tagline="Ne perdez pas le client"
-          text="Si le client refuse un produit, proposez-lui une alternative moins chère pour rattraper la vente."
+          title={op.downsell.title}
+          tagline={op.downsell.tagline}
+          text={op.downsell.text}
           preview={
             <>
-              <Row label="Premium 25 000 FCFA — refusé" />
-              <Row label="À la place : Standard 12 500 FCFA" tone="best" />
+              <Row label={op.downsell.row1} />
+              <Row label={op.downsell.row2} tone="best" />
             </>
           }
         />
@@ -323,13 +329,13 @@ function NouvelleOffrePage() {
         <OfferCard
           soon
           icon={Boxes}
-          title="Cadeau dès un montant"
-          tagline="Un bonus au-delà d'un seuil"
-          text="Offrez automatiquement un article cadeau lorsque le panier dépasse le montant que vous fixez."
+          title={op.giftThreshold.title}
+          tagline={op.giftThreshold.tagline}
+          text={op.giftThreshold.text}
           preview={
             <>
-              <Row label="Panier 30 000 FCFA" />
-              <Row label="+ Trousse offerte" price="Cadeau" tone="best" />
+              <Row label={op.giftThreshold.row1} />
+              <Row label={op.giftThreshold.row2} price={op.giftThreshold.giftBadge} tone="best" />
             </>
           }
         />
@@ -337,13 +343,13 @@ function NouvelleOffrePage() {
         <OfferCard
           soon
           icon={Hourglass}
-          title="Offre à durée limitée"
-          tagline="Compte à rebours sur la fiche produit"
-          text="Affichez une remise valable quelques heures, avec un compte à rebours qui crée l'urgence."
+          title={op.limitedTime.title}
+          tagline={op.limitedTime.tagline}
+          text={op.limitedTime.text}
           preview={
             <>
-              <Row label="-15% pendant 4 h" price="Se termine à 20 h" tone="best" />
-              <Row label="Après l'offre" price="Prix normal" />
+              <Row label={op.limitedTime.row1Label} price={op.limitedTime.row1Price} tone="best" />
+              <Row label={op.limitedTime.row2Label} price={op.limitedTime.row2Price} />
             </>
           }
         />

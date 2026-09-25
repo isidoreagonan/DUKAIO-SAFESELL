@@ -429,9 +429,7 @@ function AdminPlatformTrackingPage() {
                   data-lpignore="true"
                   data-1p-ignore="true"
                   data-form-type="other"
-                  style={{
-                    WebkitTextSecurity: showMetaToken ? "none" : "disc",
-                  }}
+                  type={showMetaToken ? "text" : "password"}
                   placeholder="EAA..."
                   value={settings.facebook_capi_token}
                   onChange={(e) => updateField("facebook_capi_token", e.target.value)}
@@ -581,9 +579,7 @@ function AdminPlatformTrackingPage() {
                   data-lpignore="true"
                   data-1p-ignore="true"
                   data-form-type="other"
-                  style={{
-                    WebkitTextSecurity: showTiktokToken ? "none" : "disc",
-                  }}
+                  type={showTiktokToken ? "text" : "password"}
                   placeholder="Jeton d'accès..."
                   value={settings.tiktok_access_token}
                   onChange={(e) => updateField("tiktok_access_token", e.target.value)}
@@ -769,9 +765,7 @@ function AdminPlatformTrackingPage() {
                     data-lpignore="true"
                     data-1p-ignore="true"
                     data-form-type="other"
-                    style={{
-                      WebkitTextSecurity: showGaSecret ? "none" : "disc",
-                    }}
+                    type={showGaSecret ? "text" : "password"}
                     placeholder="Secret d'API GA4"
                     value={settings.ga4_api_secret}
                     onChange={(e) => updateField("ga4_api_secret", e.target.value)}

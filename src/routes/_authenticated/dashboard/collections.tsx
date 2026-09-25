@@ -26,6 +26,7 @@ import {
 } from "@/lib/marketing";
 import { useConfirmDelete } from "@/components/ui/confirm-dialog";
 import { notifyError } from "@/components/ui/notice-dialog";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/dashboard/collections")({
   head: () => ({
@@ -60,6 +61,7 @@ type FormState = {
 const EMPTY: FormState = { name: "", description: "", is_published: true, productIds: [] };
 
 function CollectionsPage() {
+  const { dict, isEn } = useI18n();
   const { data: store } = useStore();
   const { data: products = [] } = useProducts();
   const { data: collections = [], isLoading } = useCollections(store?.id);
@@ -90,7 +92,7 @@ function CollectionsPage() {
 
   const submit = () => {
     if (!form.name.trim()) {
-      toast.error("Donnez un nom à votre collection.");
+      toast.error(isEn ? "Please name your collection." : "Donnez un nom à votre collection.");
       return;
     }
     save.mutate(
@@ -106,7 +108,7 @@ function CollectionsPage() {
       },
       {
         onSuccess: () => {
-          toast.success(editing ? "Collection mise à jour" : "Collection créée");
+          toast.success(editing ? (isEn ? "Collection updated" : "Collection mise à jour") : (isEn ? "Collection created" : "Collection créée"));
           setOpen(false);
         },
         onError: (error) => toast.error((error as Error).message),
@@ -125,17 +127,17 @@ function CollectionsPage() {
   return (
     <DashboardShell>
       <ModuleHeader
-        title="Collections"
+        title={dict.collectionsPage.title}
         count={String(collections.length)}
-        description="Groupez vos produits par thème, saison ou univers."
+        description={dict.collectionsPage.subtitle}
         actions={
           <button
             onClick={openNew}
             className="inline-flex items-center gap-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors cursor-pointer"
           >
             <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">Nouvelle collection</span>
-            <span className="sm:hidden">Nouvelle</span>
+            <span className="hidden sm:inline">{dict.collectionsPage.newCollection}</span>
+            <span className="sm:hidden">{isEn ? "New" : "Nouvelle"}</span>
           </button>
         }
       />
@@ -149,14 +151,14 @@ function CollectionsPage() {
       ) : collections.length === 0 ? (
         <ModuleEmptyState
           icon={Layers}
-          title="Aucune collection"
-          description="Regroupez vos produits par thème pour faciliter la navigation de vos clients."
+          title={dict.collectionsPage.noCollections}
+          description={dict.collectionsPage.noCollectionsSubtitle}
           action={
             <button
               onClick={openNew}
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white px-5 py-2.5 text-sm font-semibold shadow-sm transition-colors cursor-pointer"
             >
-              <Plus className="h-4 w-4" /> Créer une collection
+              <Plus className="h-4 w-4" /> {dict.collectionsPage.createCollection}
             </button>
           }
         />
@@ -173,32 +175,32 @@ function CollectionsPage() {
                 </span>
                 {!collection.is_published ? (
                   <span className="inline-flex items-center gap-1 rounded-[4px] bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
-                    <EyeOff className="h-3 w-3" /> Masquée
+                    <EyeOff className="h-3 w-3" /> {isEn ? "Hidden" : "Masquée"}
                   </span>
                 ) : null}
               </div>
               <h2 className="mt-3 truncate text-base font-bold">{collection.name}</h2>
               <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                {collection.description || "Aucune description"}
+                {collection.description || (isEn ? "No description" : "Aucune description")}
               </p>
               <p className="mt-3 text-xs font-semibold text-muted-foreground">
-                {collection.productIds.length} produit
-                {collection.productIds.length > 1 ? "s" : ""}
+                {collection.productIds.length}{" "}
+                {collection.productIds.length > 1 ? dict.collectionsPage.productsCount : dict.collectionsPage.productSingular}
               </p>
               <div className="mt-4 flex gap-2">
                 <button
                   onClick={() => openEdit(collection)}
                   className="btn-3d inline-flex flex-1 items-center justify-center gap-2 rounded-[6px] border border-border px-3 py-2 text-sm font-semibold"
                 >
-                  <Pencil className="h-3.5 w-3.5" /> Modifier
+                  <Pencil className="h-3.5 w-3.5" /> {dict.collectionsPage.editCollection}
                 </button>
                 <button
                   aria-label={`Supprimer ${collection.name}`}
                   onClick={async () => {
                     if (!(await confirmDelete(`la collection « ${collection.name} »`))) return;
                     remove.mutate(collection.id, {
-                      onSuccess: () => toast.success("Collection supprimée"),
-                      onError: (error) => notifyError(error, "Suppression impossible"),
+                      onSuccess: () => toast.success(isEn ? "Collection deleted" : "Collection supprimée"),
+                      onError: (error) => notifyError(error, isEn ? "Deletion failed" : "Suppression impossible"),
                     });
                   }}
                   className="btn-3d inline-flex items-center justify-center rounded-[6px] border border-border px-3 py-2 text-muted-foreground"
@@ -214,15 +216,15 @@ function CollectionsPage() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editing ? "Modifier la collection" : "Nouvelle collection"}</DialogTitle>
+            <DialogTitle>{editing ? dict.collectionsPage.editCollection : dict.collectionsPage.newCollection}</DialogTitle>
             <DialogDescription>
-              La collection devient un rayon filtrable dans votre catalogue en ligne.
+              {isEn ? "The collection becomes a filterable category in your online store." : "La collection devient un rayon filtrable dans votre catalogue en ligne."}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="collection-name">Nom</Label>
+              <Label htmlFor="collection-name">{dict.collectionsPage.nameLabel}</Label>
               <Input
                 id="collection-name"
                 value={form.name}
@@ -232,21 +234,21 @@ function CollectionsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="collection-description">Description</Label>
+              <Label htmlFor="collection-description">{dict.collectionsPage.descriptionLabel}</Label>
               <Textarea
                 id="collection-description"
                 value={form.description}
                 maxLength={300}
                 rows={3}
-                placeholder="À quoi sert ce rayon ?"
+                placeholder={isEn ? "What is this collection for?" : "À quoi sert ce rayon ?"}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
               />
             </div>
             <div className="flex items-center justify-between rounded-[6px] border border-border px-3 py-2.5">
               <div>
-                <p className="text-sm font-semibold">Visible en boutique</p>
+                <p className="text-sm font-semibold">{isEn ? "Visible in store" : "Visible en boutique"}</p>
                 <p className="text-xs text-muted-foreground">
-                  Masquez-la pour la préparer sans l'afficher.
+                  {isEn ? "Hide it while preparing without publishing." : "Masquez-la pour la préparer sans l'afficher."}
                 </p>
               </div>
               <Switch
@@ -256,10 +258,10 @@ function CollectionsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label>Produits ({form.productIds.length})</Label>
+              <Label>{isEn ? "Products" : "Produits"} ({form.productIds.length})</Label>
               {products.length === 0 ? (
                 <p className="rounded-[6px] border border-border px-3 py-3 text-sm text-muted-foreground">
-                  Créez d'abord un produit pour l'ajouter à cette collection.
+                  {isEn ? "Create a product first to add it to this collection." : "Créez d'abord un produit pour l'ajouter à cette collection."}
                 </p>
               ) : (
                 <div className="max-h-52 space-y-1 overflow-y-auto rounded-[6px] border border-border p-2">
@@ -285,14 +287,14 @@ function CollectionsPage() {
               onClick={() => setOpen(false)}
               className="inline-flex items-center justify-center rounded-xl border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted transition-colors cursor-pointer"
             >
-              Annuler
+              {dict.collectionsPage.cancel}
             </button>
             <button
               onClick={submit}
               disabled={save.isPending}
               className="inline-flex items-center justify-center rounded-xl bg-orange-600 hover:bg-orange-500 text-white px-5 py-2.5 text-sm font-semibold shadow-sm transition-colors cursor-pointer disabled:opacity-60"
             >
-              {save.isPending ? "Enregistrement…" : editing ? "Enregistrer" : "Créer"}
+              {save.isPending ? (isEn ? "Saving…" : "Enregistrement…") : editing ? dict.collectionsPage.save : (isEn ? "Create" : "Créer")}
             </button>
           </DialogFooter>
         </DialogContent>

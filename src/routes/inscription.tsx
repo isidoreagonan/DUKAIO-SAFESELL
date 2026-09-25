@@ -91,7 +91,7 @@ function Page() {
       const { error: signinErr } = await supabase.auth.signInWithPassword({ email, password });
       if (signinErr) {
         toast.error("Compte créé mais connexion automatique échouée.", {
-          description: signinErr.message,
+          description: signinErr?.message,
         });
         void navigate({ to: "/connexion" });
         return;

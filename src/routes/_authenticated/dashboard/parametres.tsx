@@ -1463,8 +1463,7 @@ function ParametresPage() {
   const entitlements = useEntitlements();
   const isPro = entitlements.data?.plan === "pro";
 
-  const searchParams = new URLSearchParams(location.search);
-  const urlTab = searchParams.get("tab") as TabKey | null;
+  const urlTab = ((location.search as any)?.tab ?? null) as TabKey | null;
   const tab = urlTab && TABS.some((item) => item.key === urlTab) ? urlTab : localTab;
 
   const handleSetTab = (newTab: TabKey | null) => {

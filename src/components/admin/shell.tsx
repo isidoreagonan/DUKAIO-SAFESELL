@@ -593,17 +593,22 @@ export function StatCard({
 
 export function Panel({
   title,
+  description,
   action,
   children,
 }: {
   title: string;
+  description?: ReactNode;
   action?: ReactNode;
   children: ReactNode;
 }) {
   return (
     <section className="rounded-[10px] border border-border bg-card shadow-card">
       <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
-        <h2 className="text-sm font-bold tracking-tight">{title}</h2>
+        <div>
+          <h2 className="text-sm font-bold tracking-tight">{title}</h2>
+          {description && <p className="text-xs text-muted-foreground mt-0.5">{description}</p>}
+        </div>
         {action}
       </div>
       <div className="p-4">{children}</div>

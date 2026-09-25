@@ -38,7 +38,7 @@ export const Route = createFileRoute("/")({
     }
     return null;
   },
-  head: (ctx) => {
+  head: (ctx: any) => {
     const context = ctx?.context as { handle: string | null } | undefined;
     const loaderData = ctx?.loaderData as any;
     if (context?.handle) {

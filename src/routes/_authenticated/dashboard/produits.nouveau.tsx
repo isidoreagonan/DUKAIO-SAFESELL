@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { useProduct, useSaveProduct, useStore, slugify } from "@/lib/store";
 import { MediaLibraryDialog } from "@/components/editor/MediaLibraryDialog";
 import { parseVideoUrl } from "@/lib/video";
+import { useI18n } from "@/lib/i18n";
 
 const searchSchema = z.object({ id: z.string().optional() });
 
@@ -112,58 +113,71 @@ const STEPS = [
 ] as const;
 
 /** Règles métier vérifiées côté client avant l'enregistrement. */
-function validate(form: FormState, step: number) {
+function validate(form: FormState, step: number, isEn = false) {
   const e: Record<string, string> = {};
   const price = num(form.price);
   const compare = num(form.priceCompare);
   const cost = num(form.priceCost);
 
-  if (step >= 1 && form.images.length > 10) e["images"] = "10 images maximum.";
+  if (step >= 1 && form.images.length > 10) e["images"] = isEn ? "10 images maximum." : "10 images maximum.";
   if (step >= 1 && form.videoUrl.trim() && !parseVideoUrl(form.videoUrl))
-    e["videoUrl"] = "Lien vidéo non reconnu (YouTube, Vimeo ou Dailymotion).";
+    e["videoUrl"] = isEn
+      ? "Unrecognized video link (YouTube, Vimeo or Dailymotion)."
+      : "Lien vidéo non reconnu (YouTube, Vimeo ou Dailymotion).";
 
   if (step >= 2) {
     const name = form.name.trim();
-    if (!name) e["name"] = "Le nom du produit est obligatoire.";
-    else if (name.length < 3) e["name"] = "Au moins 3 caractères.";
-    else if (name.length > 120) e["name"] = "120 caractères maximum.";
-    if (form.description.length > 5000) e["description"] = "5000 caractères maximum.";
-    if (form.seoTitle.length > 70) e["seoTitle"] = "70 caractères maximum.";
-    if (form.seoDescription.length > 160) e["seoDescription"] = "160 caractères maximum.";
+    if (!name) e["name"] = isEn ? "Product name is required." : "Le nom du produit est obligatoire.";
+    else if (name.length < 3) e["name"] = isEn ? "At least 3 characters." : "Au moins 3 caractères.";
+    else if (name.length > 120) e["name"] = isEn ? "120 characters maximum." : "120 caractères maximum.";
+    if (form.description.length > 5000) e["description"] = isEn ? "5000 characters maximum." : "5000 caractères maximum.";
+    if (form.seoTitle.length > 70) e["seoTitle"] = isEn ? "70 characters maximum." : "70 caractères maximum.";
+    if (form.seoDescription.length > 160) e["seoDescription"] = isEn ? "160 characters maximum." : "160 caractères maximum.";
   }
 
   if (step >= 3) {
-    if (!form.price.trim()) e["price"] = "Indiquez un prix de vente.";
-    else if (!Number.isFinite(price) || price <= 0) e["price"] = "Le prix doit être supérieur à 0.";
-    else if (price > 100_000_000) e["price"] = "Prix trop élevé.";
+    if (!form.price.trim()) e["price"] = isEn ? "Please indicate a selling price." : "Indiquez un prix de vente.";
+    else if (!Number.isFinite(price) || price <= 0) e["price"] = isEn ? "Price must be greater than 0." : "Le prix doit être supérieur à 0.";
+    else if (price > 100_000_000) e["price"] = isEn ? "Price too high." : "Prix trop élevé.";
 
     if (form.priceCompare.trim()) {
       if (!Number.isFinite(compare) || compare <= 0)
-        e["priceCompare"] = "Prix barré invalide.";
+        e["priceCompare"] = isEn ? "Invalid compare price." : "Prix barré invalide.";
       else if (compare <= price)
-        e["priceCompare"] =
-          "Le prix barré doit être supérieur au prix de vente (sinon la réduction est fausse).";
+        e["priceCompare"] = isEn
+          ? "Compare price must be greater than selling price."
+          : "Le prix barré doit être supérieur au prix de vente (sinon la réduction est fausse).";
     }
     if (form.priceCost.trim()) {
-      if (!Number.isFinite(cost) || cost < 0) e["priceCost"] = "Prix d'achat invalide.";
+      if (!Number.isFinite(cost) || cost < 0) e["priceCost"] = isEn ? "Invalid cost price." : "Prix d'achat invalide.";
       else if (cost > price)
-        e["priceCost"] = "Le prix d'achat dépasse le prix de vente : vous vendriez à perte.";
+        e["priceCost"] = isEn
+          ? "Cost price exceeds selling price: you would sell at a loss."
+          : "Le prix d'achat dépasse le prix de vente : vous vendriez à perte.";
     }
     if (form.trackQuantity) {
       const q = Number(form.quantity || 0);
-      if (!Number.isInteger(q) || q < 0) e["quantity"] = "Quantité invalide.";
+      if (!Number.isInteger(q) || q < 0) e["quantity"] = isEn ? "Invalid quantity." : "Quantité invalide.";
     }
     if (form.isPhysical && form.weight.trim()) {
       const w = Number(form.weight);
-      if (!Number.isFinite(w) || w < 0) e["weight"] = "Poids invalide.";
+      if (!Number.isFinite(w) || w < 0) e["weight"] = isEn ? "Invalid weight." : "Poids invalide.";
     }
     if (form.status === "active" && form.images.length === 0)
-      e["images"] = "Ajoutez au moins une image pour publier le produit.";
+      e["images"] = isEn ? "Add at least one image to publish the product." : "Ajoutez au moins une image pour publier le produit.";
   }
   return e;
 }
 
 function Stepper({ step }: { step: number }) {
+  const { dict } = useI18n();
+  const pf = dict.productForm;
+  const stepLabels = [
+    pf.stepMedia,
+    pf.stepInfo,
+    pf.stepPricing,
+    pf.stepReview,
+  ];
   return (
     <div className="flex items-center justify-center gap-0">
       {STEPS.map((s, i) => {
@@ -188,7 +202,7 @@ function Stepper({ step }: { step: number }) {
                   active || done ? "text-foreground" : "text-muted-foreground",
                 )}
               >
-                {s.label}
+                {stepLabels[i]}
               </span>
             </div>
             {i < STEPS.length - 1 && (
@@ -216,14 +230,15 @@ function Panel({ children, className }: { children: React.ReactNode; className?:
   );
 }
 
-const CHECKS = [
-  "Vérification du nom et de la description",
-  "Contrôle des prix et de la marge",
-  "Contrôle du stock et de la livraison",
-  "Vérification SEO et médias",
-] as const;
-
 function NouveauProduitPage() {
+  const { dict, isEn } = useI18n();
+  const pf = dict.productForm;
+
+  const checks = useMemo(
+    () => [pf.check1, pf.check2, pf.check3, pf.check4],
+    [pf],
+  );
+
   const { id } = Route.useSearch();
   const navigate = useNavigate();
   const { data: store } = useStore();
@@ -240,9 +255,9 @@ function NouveauProduitPage() {
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
-  const errors = useMemo(() => validate(form, step), [form, step]);
-  const stepErrors = useMemo(() => validate(form, step), [form, step]);
-  const allErrors = useMemo(() => validate(form, 3), [form]);
+  const errors = useMemo(() => validate(form, step, isEn), [form, step, isEn]);
+  const stepErrors = useMemo(() => validate(form, step, isEn), [form, step, isEn]);
+  const allErrors = useMemo(() => validate(form, 3, isEn), [form, isEn]);
 
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
@@ -281,7 +296,7 @@ function NouveauProduitPage() {
   function next() {
     setTouched(true);
     if (Object.keys(stepErrors).length > 0) {
-      toast.error("Corrigez les champs signalés avant de continuer.");
+      toast.error(pf.errorFixFields);
       return;
     }
     setTouched(false);
@@ -293,16 +308,16 @@ function NouveauProduitPage() {
     timers.current.forEach(clearTimeout);
     timers.current = [];
     setChecking(1);
-    CHECKS.forEach((_, i) => {
+    checks.forEach((_, i) => {
       timers.current.push(setTimeout(() => setChecking(i + 2), 420 * (i + 1)));
     });
   }
 
   function handleSave() {
     setTouched(true);
-    const e = validate(form, 3);
+    const e = validate(form, 3, isEn);
     if (Object.keys(e).length > 0) {
-      toast.error("Le produit contient des erreurs", {
+      toast.error(pf.errorHasIssues, {
         description: Object.values(e)[0],
       });
       setStep(e["price"] || e["priceCompare"] || e["priceCost"] || e["quantity"] ? 3 : 2);
@@ -349,11 +364,11 @@ function NouveauProduitPage() {
       },
       {
         onSuccess: () => {
-          toast.success(id ? "Produit mis à jour" : "Produit créé");
+          toast.success(id ? pf.successUpdated : pf.successCreated);
           void navigate({ to: "/dashboard/produits" });
         },
         onError: (error) =>
-          toast.error("Enregistrement impossible", { description: error.message }),
+          toast.error(pf.errorSave, { description: error.message }),
       },
     );
   }
@@ -369,15 +384,15 @@ function NouveauProduitPage() {
             to="/dashboard/produits"
             className="inline-flex items-center gap-2 rounded-[6px] border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
-            <ArrowLeft className="h-3.5 w-3.5" /> Retour aux produits
+            <ArrowLeft className="h-3.5 w-3.5" /> {pf.backToProducts}
           </Link>
 
           <div className="flex items-center gap-2">
             <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
-              {id ? "Mode Modification" : "Nouveau Produit"}
+              {id ? pf.editMode : pf.newProduct}
             </span>
             <span className="text-xs font-medium text-muted-foreground">
-              Étape {step} sur 4
+              {isEn ? `Step ${step} ${pf.stepIndicator}` : `Étape ${step} ${pf.stepIndicator}`}
             </span>
           </div>
         </div>
@@ -391,30 +406,30 @@ function NouveauProduitPage() {
           <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">
             {step === 1 && (
               <>
-                Ajoutez vos <span className="font-display text-primary">médias</span>
+                {pf.titleStep1} <span className="font-display text-primary">{pf.accentStep1}</span>
               </>
             )}
             {step === 2 && (
               <>
-                Décrivez votre <span className="font-display text-primary">produit</span>
+                {pf.titleStep2} <span className="font-display text-primary">{pf.accentStep2}</span>
               </>
             )}
             {step === 3 && (
               <>
-                Prix, stock et <span className="font-display text-primary">livraison</span>
+                {pf.titleStep3} <span className="font-display text-primary">{pf.accentStep3}</span>
               </>
             )}
             {step === 4 && (
               <>
-                Dernière <span className="font-display text-primary">vérification</span>
+                {pf.titleStep4} <span className="font-display text-primary">{pf.accentStep4}</span>
               </>
             )}
           </h1>
           <p className="mx-auto mt-2 max-w-lg text-sm text-muted-foreground">
-            {step === 1 && "La première image sert de couverture. Vidéo optionnelle via un lien."}
-            {step === 2 && "Un nom clair et 3 bénéfices convertissent mieux qu'un long texte."}
-            {step === 3 && "Nous contrôlons vos prix pour éviter réductions fausses et ventes à perte."}
-            {step === 4 && "Analyse de votre fiche produit, sans génération automatique de contenu."}
+            {step === 1 && pf.subStep1}
+            {step === 2 && pf.subStep2}
+            {step === 3 && pf.subStep3}
+            {step === 4 && pf.subStep4}
           </p>
         </header>
 
@@ -430,12 +445,12 @@ function NouveauProduitPage() {
                     >
                       <img
                         src={url}
-                        alt={`Image ${i + 1} du produit`}
+                        alt={isEn ? `Product image ${i + 1}` : `Image ${i + 1} du produit`}
                         className="h-full w-full object-cover"
                       />
                       <button
                         type="button"
-                        aria-label="Retirer l'image"
+                        aria-label={pf.removeImage}
                         onClick={() =>
                           setForm((prev) => ({
                             ...prev,
@@ -444,11 +459,11 @@ function NouveauProduitPage() {
                         }
                         className="absolute right-1.5 top-1.5 rounded-[4px] bg-background/90 px-2 py-1 text-xs font-semibold"
                       >
-                        Retirer
+                        {pf.removeImage}
                       </button>
                       {i === 0 && (
                         <span className="absolute bottom-1.5 left-1.5 rounded-[4px] bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-foreground">
-                          Couverture
+                          {pf.cover}
                         </span>
                       )}
                     </div>
@@ -463,13 +478,12 @@ function NouveauProduitPage() {
                       <span className="mx-auto grid h-10 w-10 place-items-center rounded-[6px] bg-background text-primary">
                         <ImagePlus className="h-5 w-5" />
                       </span>
-                      <span className="mt-2 block text-sm font-semibold">Ajouter</span>
+                      <span className="mt-2 block text-sm font-semibold">{pf.addImage}</span>
                     </span>
                   </button>
                 </div>
                 <p className="mt-3 text-center text-sm text-muted-foreground">
-                  {form.images.length} image{form.images.length > 1 ? "s" : ""} sur 10 · JPG, PNG,
-                  WebP
+                  {form.images.length} {form.images.length > 1 ? (isEn ? "images" : "images") : (isEn ? "image" : "image")} {pf.imagesCountInfo}
                 </p>
                 {err("images")}
               </Panel>
@@ -480,10 +494,8 @@ function NouveauProduitPage() {
                     <Video className="h-4 w-4" />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <h2 className="text-base font-bold">Vidéo du produit (optionnel)</h2>
-                    <p className={hint}>
-                      Collez un lien YouTube, Vimeo ou Dailymotion — aucun fichier n'est hébergé.
-                    </p>
+                    <h2 className="text-base font-bold">{pf.videoTitle}</h2>
+                    <p className={hint}>{pf.videoHint}</p>
                     <input
                       className={cn(field, "mt-3")}
                       placeholder="https://www.youtube.com/watch?v=…"
@@ -496,7 +508,7 @@ function NouveauProduitPage() {
                       <div className="mt-3 overflow-hidden rounded-[6px] border border-border">
                         <iframe
                           src={parseVideoUrl(form.videoUrl)!.embedUrl}
-                          title="Aperçu de la vidéo produit"
+                          title={pf.videoPreview}
                           allowFullScreen
                           className="aspect-video w-full"
                         />
@@ -514,12 +526,12 @@ function NouveauProduitPage() {
                 <div className="grid gap-4">
                   <div>
                     <label className={labelCls} htmlFor="nom">
-                      Nom du produit *
+                      {pf.nameLabel}
                     </label>
                     <input
                       id="nom"
                       className={field}
-                      placeholder="Ex : Sneakers Urban"
+                      placeholder={pf.namePlaceholder}
                       maxLength={120}
                       value={form.name}
                       onChange={(e) => set("name", e.target.value)}
@@ -528,52 +540,52 @@ function NouveauProduitPage() {
                   </div>
                   <div>
                     <label className={labelCls} htmlFor="desc">
-                      Description
+                      {pf.descLabel}
                     </label>
                     <textarea
                       id="desc"
                       rows={6}
                       className={area}
-                      placeholder="Décrivez les bénéfices, la matière, la livraison…"
+                      placeholder={pf.descPlaceholder}
                       value={form.description}
                       onChange={(e) => set("description", e.target.value)}
                     />
-                    <p className={hint}>{form.description.length} / 5000 caractères</p>
+                    <p className={hint}>{form.description.length} / 5000 {pf.chars}</p>
                     {err("description")}
                   </div>
                 </div>
               </Panel>
 
               <Panel>
-                <h2 className="text-base font-bold">Organisation</h2>
+                <h2 className="text-base font-bold">{pf.orgTitle}</h2>
                 <div className="mt-4 grid gap-4 sm:grid-cols-3">
                   <div>
-                    <label className={labelCls}>Vendeur / Marque</label>
+                    <label className={labelCls}>{pf.vendorLabel}</label>
                     <input
                       className={field}
-                      placeholder="Ex : Nomad"
+                      placeholder={pf.vendorPlaceholder}
                       value={form.vendor}
                       onChange={(e) => set("vendor", e.target.value)}
                     />
                   </div>
                   <div>
-                    <label className={labelCls}>Catégorie</label>
+                    <label className={labelCls}>{pf.categoryLabel}</label>
                     <input
                       className={field}
-                      placeholder="Ex : Vêtement, digital…"
+                      placeholder={pf.categoryPlaceholder}
                       value={form.productType}
                       onChange={(e) => set("productType", e.target.value)}
                     />
                   </div>
                   <div>
-                    <label className={labelCls}>Tags</label>
+                    <label className={labelCls}>{pf.tagsLabel}</label>
                     <input
                       className={field}
-                      placeholder="nouveauté, promo, été"
+                      placeholder={pf.tagsPlaceholder}
                       value={form.tags}
                       onChange={(e) => set("tags", e.target.value)}
                     />
-                    <p className={hint}>Séparés par des virgules.</p>
+                    <p className={hint}>{pf.tagsHint}</p>
                   </div>
                 </div>
               </Panel>
@@ -584,14 +596,14 @@ function NouveauProduitPage() {
                     <Search className="h-4 w-4" />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <h2 className="text-base font-bold">SEO & aperçu Google</h2>
+                    <h2 className="text-base font-bold">{pf.seoTitle}</h2>
                     <div className="mt-4 grid gap-4">
                       <div>
-                        <label className={labelCls}>Titre SEO</label>
+                        <label className={labelCls}>{pf.seoTitleLabel}</label>
                         <input
                           className={field}
                           maxLength={70}
-                          placeholder="Sneakers Urban — livraison 48h"
+                          placeholder={pf.seoTitlePlaceholder}
                           value={form.seoTitle}
                           onChange={(e) => set("seoTitle", e.target.value)}
                         />
@@ -599,12 +611,12 @@ function NouveauProduitPage() {
                         {err("seoTitle")}
                       </div>
                       <div>
-                        <label className={labelCls}>Description SEO</label>
+                        <label className={labelCls}>{pf.seoDescLabel}</label>
                         <textarea
                           rows={3}
                           maxLength={160}
                           className={area}
-                          placeholder="Description courte affichée dans les résultats Google…"
+                          placeholder={pf.seoDescPlaceholder}
                           value={form.seoDescription}
                           onChange={(e) => set("seoDescription", e.target.value)}
                         />
@@ -617,12 +629,12 @@ function NouveauProduitPage() {
                           {slugify(form.name) || "nouveau-produit"}
                         </p>
                         <p className="mt-1 truncate text-base font-semibold text-primary">
-                          {form.seoTitle || form.name || "Nom du produit"}
+                          {form.seoTitle || form.name || (isEn ? "Product name" : "Nom du produit")}
                         </p>
                         <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">
                           {form.seoDescription ||
                             form.description ||
-                            "Description courte qui s'affichera dans les résultats de recherche…"}
+                            pf.seoDefaultDesc}
                         </p>
                       </div>
                     </div>
@@ -635,10 +647,10 @@ function NouveauProduitPage() {
           {step === 3 && (
             <>
               <Panel>
-                <h2 className="text-base font-bold">Prix — devise FCFA (XOF)</h2>
+                <h2 className="text-base font-bold">{pf.pricingTitle}</h2>
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className={labelCls}>Prix de vente *</label>
+                    <label className={labelCls}>{pf.priceLabel}</label>
                     <div className="relative">
                       <input
                         className={cn(field, "pr-16")}
@@ -654,7 +666,7 @@ function NouveauProduitPage() {
                     {err("price")}
                   </div>
                   <div>
-                    <label className={labelCls}>Prix barré (optionnel)</label>
+                    <label className={labelCls}>{pf.priceCompareLabel}</label>
                     <div className="relative">
                       <input
                         className={cn(field, "pr-16")}
@@ -673,12 +685,12 @@ function NouveauProduitPage() {
                       <p className={errCls}>{errors["priceCompare"]}</p>
                     ) : (
                       <p className={hint}>
-                        Doit être supérieur au prix de vente pour afficher une réduction.
+                        {pf.priceCompareHint}
                       </p>
                     )}
                   </div>
                   <div className="sm:col-span-2">
-                    <label className={labelCls}>Prix d'achat (interne, optionnel)</label>
+                    <label className={labelCls}>{pf.priceCostLabel}</label>
                     <div className="relative">
                       <input
                         className={cn(field, "pr-16")}
@@ -694,7 +706,7 @@ function NouveauProduitPage() {
                     {errors["priceCost"] && touched ? (
                       <p className={errCls}>{errors["priceCost"]}</p>
                     ) : (
-                      <p className={hint}>Sert au calcul de la marge. Jamais affiché en boutique.</p>
+                      <p className={hint}>{pf.priceCostHint}</p>
                     )}
                   </div>
                 </div>
@@ -702,12 +714,12 @@ function NouveauProduitPage() {
                   <div className="mt-4 flex flex-wrap gap-2">
                     {discount > 0 && (
                       <span className="rounded-[4px] border border-border px-2.5 py-1 text-xs font-semibold text-primary">
-                        −{discount}% affiché en boutique
+                        −{discount}% {pf.discountBadge}
                       </span>
                     )}
                     {margin > 0 && (
                       <span className="rounded-[4px] border border-border px-2.5 py-1 text-xs font-semibold text-muted-foreground">
-                        Marge : {money(margin)} FCFA
+                        {pf.marginBadge} {money(margin)} FCFA
                       </span>
                     )}
                   </div>
@@ -715,10 +727,10 @@ function NouveauProduitPage() {
               </Panel>
 
               <Panel>
-                <h2 className="text-base font-bold">Inventaire</h2>
+                <h2 className="text-base font-bold">{pf.inventoryTitle}</h2>
                 <div className="mt-4 grid gap-4 sm:grid-cols-3">
                   <div>
-                    <label className={labelCls}>Référence (SKU)</label>
+                    <label className={labelCls}>{pf.skuLabel}</label>
                     <input
                       className={field}
                       placeholder="DK-001"
@@ -727,7 +739,7 @@ function NouveauProduitPage() {
                     />
                   </div>
                   <div>
-                    <label className={labelCls}>Code-barres</label>
+                    <label className={labelCls}>{pf.barcodeLabel}</label>
                     <input
                       className={field}
                       placeholder="UPC, EAN"
@@ -736,7 +748,7 @@ function NouveauProduitPage() {
                     />
                   </div>
                   <div>
-                    <label className={labelCls}>Quantité en stock</label>
+                    <label className={labelCls}>{pf.quantityLabel}</label>
                     <input
                       className={field}
                       placeholder="0"
@@ -752,18 +764,18 @@ function NouveauProduitPage() {
                   {(
                     [
                       {
-                        t: "Suivre la quantité",
-                        h: "décochez si stock illimité",
+                        t: pf.trackQuantity,
+                        h: pf.trackQuantityHint,
                         k: "trackQuantity",
                       },
                       {
-                        t: "Continuer à vendre en rupture",
-                        h: "utile pour la précommande",
+                        t: pf.continueSelling,
+                        h: pf.continueSellingHint,
                         k: "continueSelling",
                       },
                     ] as const
                   ).map((c) => (
-                    <label key={c.t} className="flex items-start gap-3 text-sm">
+                    <label key={c.k} className="flex items-start gap-3 text-sm">
                       <input
                         type="checkbox"
                         checked={form[c.k]}
@@ -785,7 +797,7 @@ function NouveauProduitPage() {
                     <Truck className="h-4 w-4" />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <h2 className="text-base font-bold">Livraison</h2>
+                    <h2 className="text-base font-bold">{pf.shippingTitle}</h2>
                     <label className="mt-3 flex items-start gap-3 text-sm">
                       <input
                         type="checkbox"
@@ -794,14 +806,14 @@ function NouveauProduitPage() {
                         className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--primary)]"
                       />
                       <span className="min-w-0">
-                        <span className="font-medium">C'est un produit physique</span>{" "}
+                        <span className="font-medium">{pf.physicalProduct}</span>{" "}
                         <span className="text-muted-foreground">
-                          — décochez pour un service ou un fichier digital
+                          — {pf.physicalProductHint}
                         </span>
                       </span>
                     </label>
                     <div className="mt-4 max-w-xs">
-                      <label className={labelCls}>Poids (kg)</label>
+                      <label className={labelCls}>{pf.weightLabel}</label>
                       <input
                         className={field}
                         placeholder="0"
@@ -817,13 +829,13 @@ function NouveauProduitPage() {
               </Panel>
 
               <Panel>
-                <h2 className="text-base font-bold">Statut de publication</h2>
+                <h2 className="text-base font-bold">{pf.statusTitle}</h2>
                 <div className="mt-3 grid gap-2 sm:grid-cols-3">
                   {(
                     [
-                      { v: "draft", l: "Brouillon", h: "invisible en boutique" },
-                      { v: "active", l: "Actif", h: "visible et achetable" },
-                      { v: "archived", l: "Archivé", h: "retiré du catalogue" },
+                      { v: "draft", l: pf.statusDraft, h: pf.statusDraftHint },
+                      { v: "active", l: pf.statusActive, h: pf.statusActiveHint },
+                      { v: "archived", l: pf.statusArchived, h: pf.statusArchivedHint },
                     ] as const
                   ).map((o) => (
                     <button
@@ -849,7 +861,7 @@ function NouveauProduitPage() {
           {step === 4 && (
             <Panel>
               <div className="grid gap-3">
-                {CHECKS.map((c, i) => {
+                {checks.map((c, i) => {
                   const done = checking > i + 1;
                   const running = checking === i + 1;
                   return (
@@ -875,12 +887,12 @@ function NouveauProduitPage() {
                 })}
               </div>
 
-              {checking > CHECKS.length && (
+              {checking > checks.length && (
                 <div className="mt-5">
                   {Object.keys(allErrors).length > 0 ? (
                     <div className="rounded-[6px] border border-destructive/40 bg-destructive/5 p-4">
                       <p className="text-sm font-bold text-destructive">
-                        {Object.keys(allErrors).length} point(s) à corriger
+                        {Object.keys(allErrors).length} {pf.pointsToFix}
                       </p>
                       <ul className="mt-2 list-disc pl-5 text-sm text-muted-foreground">
                         {Object.values(allErrors).map((m) => (
@@ -891,15 +903,15 @@ function NouveauProduitPage() {
                   ) : (
                     <div className="rounded-[6px] border border-border bg-surface-tint p-4">
                       <p className="inline-flex items-center gap-2 text-sm font-bold">
-                        <ShieldCheck className="h-4 w-4 text-primary" /> Fiche conforme
+                        <ShieldCheck className="h-4 w-4 text-primary" /> {pf.compliant}
                       </p>
                       <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
                         <div className="flex justify-between gap-3">
-                          <dt className="text-muted-foreground">Produit</dt>
+                          <dt className="text-muted-foreground">{pf.reviewProduct}</dt>
                           <dd className="truncate font-medium">{form.name}</dd>
                         </div>
                         <div className="flex justify-between gap-3">
-                          <dt className="text-muted-foreground">Prix</dt>
+                          <dt className="text-muted-foreground">{pf.reviewPrice}</dt>
                           <dd className="font-medium">
                             {money(price)} FCFA
                             {discount > 0 && (
@@ -908,17 +920,17 @@ function NouveauProduitPage() {
                           </dd>
                         </div>
                         <div className="flex justify-between gap-3">
-                          <dt className="text-muted-foreground">Images</dt>
+                          <dt className="text-muted-foreground">{pf.reviewImages}</dt>
                           <dd className="font-medium">{form.images.length}</dd>
                         </div>
                         <div className="flex justify-between gap-3">
-                          <dt className="text-muted-foreground">Statut</dt>
+                          <dt className="text-muted-foreground">{pf.reviewStatus}</dt>
                           <dd className="font-medium">
                             {form.status === "active"
-                              ? "Actif"
+                              ? pf.statusActive
                               : form.status === "draft"
-                                ? "Brouillon"
-                                : "Archivé"}
+                                ? pf.statusDraft
+                                : pf.statusArchived}
                           </dd>
                         </div>
                       </dl>
@@ -937,7 +949,7 @@ function NouveauProduitPage() {
             disabled={step === 1}
             className="btn-3d inline-flex items-center gap-2 rounded-[6px] border border-border px-3.5 py-2.5 text-sm font-semibold disabled:opacity-50"
           >
-            <ArrowLeft className="h-4 w-4" /> Retour
+            <ArrowLeft className="h-4 w-4" /> {pf.backBtn}
           </button>
           {step < 4 ? (
             <button
@@ -945,21 +957,21 @@ function NouveauProduitPage() {
               onClick={next}
               className="btn-3d inline-flex items-center gap-2 rounded-[6px] px-4 py-2.5 text-sm font-semibold"
             >
-              Continuer <ArrowRight className="h-4 w-4" />
+              {pf.nextBtn} <ArrowRight className="h-4 w-4" />
             </button>
           ) : (
             <button
               type="button"
               onClick={handleSave}
-              disabled={save.isPending || checking <= CHECKS.length}
+              disabled={save.isPending || checking <= checks.length}
               className="btn-3d inline-flex items-center gap-2 rounded-[6px] px-4 py-2.5 text-sm font-semibold disabled:opacity-60"
             >
               <Save className="h-4 w-4" />
               {save.isPending
-                ? "Enregistrement…"
+                ? pf.savingBtn
                 : id
-                  ? "Mettre à jour le produit"
-                  : "Créer le produit"}
+                  ? pf.updateBtn
+                  : pf.createBtn}
             </button>
           )}
         </div>

@@ -10,7 +10,7 @@ export const Route = createFileRoute("/s/$handle/produit/")({
         typeof window !== "undefined" ? window.location.host : await getIncomingHost().catch(() => null);
       const handle = storeHandleFromHost(host);
       if (handle && handle.toLowerCase() === params.handle.toLowerCase()) {
-        throw redirect({ to: "/produit/", replace: true });
+        throw redirect({ to: "/produit", replace: true });
       }
     } catch (e) {
       if ((e as any)?.isRedirect) throw e;
