@@ -1444,7 +1444,7 @@ function ProduitIaPage() {
               <button
                 type="button"
                 onClick={() => void compose()}
-                className="btn-3d inline-flex items-center gap-2 rounded-[6px] px-6 py-2.5 text-sm font-semibold cursor-pointer"
+                className="btn-3d inline-flex items-center gap-2 rounded-[6px] bg-primary text-primary-foreground px-6 py-2.5 text-sm font-semibold cursor-pointer hover:bg-primary/90 transition-colors"
               >
                 {funnel ? (
                   <>
