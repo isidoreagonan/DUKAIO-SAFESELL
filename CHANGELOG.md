@@ -4,6 +4,20 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 > **Note d'environnement :** Ce projet a été initialement généré avec Lovable, mais a été entièrement migré sur Antigravity. Il n'est plus synchronisé avec Lovable Cloud et utilise désormais exclusivement la propre instance Supabase de l'utilisateur.
 
+## [25/09/2026] - Refonte Simplifiée et Centrée du Parcours Onboarding
+
+### Modifié
+- **`onboarding.tsx` (`src/routes/onboarding.tsx`) & `onboarding.ts` (`src/lib/onboarding.ts`)** : refonte complète de la mise en route de la boutique.
+  - **Design épuré et centré :** Suppression du panneau latéral orange lourd (`auth-brand`), des doubles cadres et conteneurs massifs. Le formulaire d'onboarding est désormais parfaitement centré, sobre, moderne et fluide sur mobile comme sur desktop.
+  - **Réduction à 6 étapes essentielles :**
+    1. **Nom de votre boutique** : saisie rapide du nom commercial (génération automatique du sous-domaine).
+    2. **Domaine de votre boutique** : vérification instantanée de la disponibilité de l'adresse `[nom].dukaio.com` avec suggestions automatiques.
+    3. **Chiffre d'affaires / ventes** : sélection du volume habituel en 1 clic (cartes interactives avec progression automatique).
+    4. **Pays de vente** : choix du marché principal avec barre de recherche rapide, drapeaux et devises associées (Bénin, Côte d'Ivoire, Sénégal, etc.).
+    5. **Numéro de téléphone (WhatsApp)** : saisie du numéro de contact avec indicatif du pays sélectionné pré-rempli.
+    6. **Canal d'acquisition (Où avez-vous entendu parler de nous ?)** : sélection directe avec les logos officiels (TikTok, Facebook, Instagram, YouTube, Google, Bouche à oreille / Ami, Autre) déclenchant la finalisation immédiate.
+  - **Création fluide :** Animation de configuration en 4 phases et redirection vers le tableau de bord.
+
 ## [25/09/2026] - Alignement Automatique des Couleurs du Catalogue sur la Page d'Accueil
 
 ### Corrigé

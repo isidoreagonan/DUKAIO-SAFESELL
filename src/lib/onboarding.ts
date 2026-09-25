@@ -61,13 +61,14 @@ export const COLOR_PALETTES = [
 export type OnboardingAnswers = {
   storeName: string;
   subdomain?: string;
-  experience: string;
+  experience?: string;
   revenue: string;
-  teamSize: string;
-  delivery: string;
+  teamSize?: string;
+  delivery?: string;
   country: string;
   whatsapp: string;
-  palette: string;
+  palette?: string;
+  heardFrom?: string;
 };
 
 function storeDescription(storeName: string, countryName: string) {
@@ -111,10 +112,10 @@ export function useCompleteOnboarding() {
         contact_phone: phone,
         description: storeDescription(storeName, country.name),
         theme_config: themeConfig,
-        experience_level: answers.experience,
-        monthly_revenue: answers.revenue,
-        team_size: answers.teamSize,
-        delivery_mode: answers.delivery,
+        experience_level: answers.experience || "beginner",
+        monthly_revenue: answers.revenue || "none",
+        team_size: answers.teamSize || "solo",
+        delivery_mode: answers.delivery || "agency",
         color_palette: palette.id,
       };
 
@@ -161,7 +162,13 @@ export function useCompleteOnboarding() {
         );
       if (profileError) throw profileError;
 
-      await supabase.auth.updateUser({ data: { onboarding_completed: true, store_name: storeName } });
+      await supabase.auth.updateUser({
+        data: {
+          onboarding_completed: true,
+          store_name: storeName,
+          ...(answers.heardFrom ? { referral_source: answers.heardFrom } : {}),
+        },
+      });
 
       /* Notification instantanée Telegram Super-Admin (non bloquante) */
       if (storeId) {

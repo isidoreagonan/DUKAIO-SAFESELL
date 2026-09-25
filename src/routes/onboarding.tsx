@@ -1,5 +1,5 @@
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
@@ -8,9 +8,8 @@ import {
   Check,
   Globe2,
   Loader2,
-  Palette,
+  Search,
   ShieldCheck,
-  ShoppingBag,
   Sparkles,
   X,
 } from "lucide-react";
@@ -23,12 +22,8 @@ import { RESERVED_SUBDOMAINS } from "@/lib/storefront";
 import { acceptTeamInvite, listMyInvites } from "@/lib/team.functions";
 import { ensureWelcomeEmail } from "@/lib/lifecycle.functions";
 import {
-  COLOR_PALETTES,
   COUNTRIES,
-  DELIVERY_OPTIONS,
-  EXPERIENCE_OPTIONS,
   REVENUE_OPTIONS,
-  TEAM_OPTIONS,
   useCompleteOnboarding,
   type OnboardingAnswers,
 } from "@/lib/onboarding";
@@ -54,7 +49,7 @@ export const Route = createFileRoute("/onboarding")({
       {
         name: "description",
         content:
-          "Configurez votre boutique DUKAIO en quelques étapes simples : nom, adresse, pays, devise, livraison et couleurs.",
+          "Configurez votre boutique DUKAIO en quelques étapes simples : nom, adresse web, ventes, pays et contact.",
       },
       { property: "og:title", content: "Mise en route de votre boutique | DUKAIO" },
       {
@@ -68,89 +63,120 @@ export const Route = createFileRoute("/onboarding")({
   component: OnboardingFlow,
 });
 
-const TOTAL_STEPS = 10;
+const TOTAL_STEPS = 6;
 
 const SETUP_PHASES = [
   "Enregistrement de vos informations",
   "Réservation de l'adresse de votre boutique",
-  "Configuration du thème et de la devise",
+  "Configuration du catalogue et de la devise",
   "Préparation de votre tableau de bord",
 ];
 
-function PrimaryButton({
-  onClick,
-  children,
-  disabled,
-}: {
-  onClick: () => void;
-  children: React.ReactNode;
-  disabled?: boolean;
-}) {
-  return (
-    <Button
-      type="button"
-      variant="tunnel"
-      size="lg"
-      onClick={onClick}
-      disabled={disabled}
-      className="h-11 w-full text-sm font-bold sm:h-12"
-    >
-      {children}
-    </Button>
-  );
-}
-
-function SelectionCard({
-  icon,
-  label,
-  selected,
-  onClick,
-  grid = false,
-}: {
-  icon: string;
-  label: string;
-  selected: boolean;
-  onClick: () => void;
-  grid?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`group w-full cursor-pointer rounded-lg border text-left transition-all duration-150 ${
-        grid
-          ? "flex aspect-square flex-col items-center justify-center p-4 text-center"
-          : "flex items-center gap-3.5 p-3.5 sm:p-4"
-      } ${
-        selected
-          ? "border-signal bg-signal/10 ring-2 ring-signal/30 font-bold text-foreground"
-          : "border-foreground/15 bg-muted/40 hover:border-foreground/30 hover:bg-muted/70 text-foreground"
-      }`}
-    >
-      <span className={`text-2xl transition-transform group-hover:scale-110 ${grid ? "mb-2.5" : ""}`}>
-        {icon}
-      </span>
-      <span className="text-sm font-medium leading-tight text-foreground flex-1">{label}</span>
-      {!grid && (
-        <span
-          className={`size-4 shrink-0 rounded-full border flex items-center justify-center transition-colors ${
-            selected ? "border-signal bg-signal text-signal-foreground" : "border-foreground/25"
-          }`}
-        >
-          {selected && <Check className="size-2.5 stroke-[3]" />}
-        </span>
-      )}
-    </button>
-  );
-}
+const PLATFORM_OPTIONS = [
+  {
+    id: "tiktok",
+    label: "TikTok",
+    icon: (
+      <svg className="size-6 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.298-.002.595.042.88.13V9.4a6.33 6.33 0 0 0-1-.08A6.34 6.34 0 0 0 3 15.66a6.34 6.34 0 0 0 10.82 4.47 6.27 6.27 0 0 0 1.95-4.47V8.06a8.28 8.28 0 0 0 4.82 1.56V6.69z" />
+      </svg>
+    ),
+  },
+  {
+    id: "facebook",
+    label: "Facebook",
+    icon: (
+      <svg className="size-6 shrink-0" viewBox="0 0 24 24" fill="#1877F2">
+        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+      </svg>
+    ),
+  },
+  {
+    id: "instagram",
+    label: "Instagram",
+    icon: (
+      <svg className="size-6 shrink-0" viewBox="0 0 24 24">
+        <defs>
+          <linearGradient id="ig-grad" x1="100%" y1="0%" x2="0%" y2="100%">
+            <stop stopColor="#405DE6" offset="0%" />
+            <stop stopColor="#5851DB" offset="25%" />
+            <stop stopColor="#833AB4" offset="50%" />
+            <stop stopColor="#C13584" offset="65%" />
+            <stop stopColor="#E1306C" offset="75%" />
+            <stop stopColor="#FD1D1D" offset="90%" />
+            <stop stopColor="#F56040" offset="100%" />
+          </linearGradient>
+        </defs>
+        <rect width="24" height="24" rx="6" fill="url(#ig-grad)" />
+        <path
+          d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 8.2a3.2 3.2 0 1 1 0-6.4 3.2 3.2 0 0 1 0 6.4zm5.2-8.4a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 0 1 2.4 0z"
+          fill="#fff"
+        />
+      </svg>
+    ),
+  },
+  {
+    id: "youtube",
+    label: "YouTube",
+    icon: (
+      <svg className="size-6 shrink-0" viewBox="0 0 24 24" fill="#FF0000">
+        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+      </svg>
+    ),
+  },
+  {
+    id: "google",
+    label: "Google / Recherche web",
+    icon: (
+      <svg className="size-6 shrink-0" viewBox="0 0 24 24">
+        <path
+          fill="#4285F4"
+          d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
+        />
+        <path
+          fill="#34A853"
+          d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"
+        />
+        <path
+          fill="#FBBC05"
+          d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.97 0 12s.45 3.82 1.25 5.42l4.03-3.15z"
+        />
+        <path
+          fill="#EA4335"
+          d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
+        />
+      </svg>
+    ),
+  },
+  {
+    id: "referral",
+    label: "Ami ou formateur (Bouche à oreille)",
+    icon: (
+      <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold text-sm">
+        🤝
+      </div>
+    ),
+  },
+  {
+    id: "other",
+    label: "Autre canal",
+    icon: (
+      <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground font-bold text-sm">
+        ✨
+      </div>
+    ),
+  },
+];
 
 function StepHeader({ title, subtitle }: { title: string; subtitle: string }) {
   return (
     <div className="mb-6 text-center">
-      <h2 className="text-balance font-display text-xl font-bold leading-tight sm:text-2xl text-foreground">
+      <h1 className="text-balance font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
         {title}
-      </h2>
-      <p className="mt-1.5 text-xs text-muted-foreground sm:text-sm leading-relaxed">{subtitle}</p>
+      </h1>
+      <p className="mx-auto mt-2 max-w-md text-xs text-muted-foreground sm:text-sm leading-relaxed">
+        {subtitle}
+      </p>
     </div>
   );
 }
@@ -192,7 +218,7 @@ function PendingInvites() {
   };
 
   return (
-    <div className="mb-6 rounded-xl border border-signal/30 bg-signal/5 p-4 sm:p-5">
+    <div className="mb-6 rounded-xl border border-primary/30 bg-primary/5 p-4 sm:p-5 text-left">
       <p className="text-xs font-bold text-foreground">Vous avez été invité dans une équipe</p>
       <div className="mt-3 space-y-2">
         {invites.map((invite) => (
@@ -228,16 +254,15 @@ function OnboardingFlow() {
 
   const [step, setStep] = useState(1);
   const [setupPhase, setSetupPhase] = useState(0);
+  const [countrySearch, setCountrySearch] = useState("");
   const [answers, setAnswers] = useState<OnboardingAnswers>({
     storeName: "",
     subdomain: "",
-    experience: "",
     revenue: "",
-    teamSize: "",
-    delivery: "",
-    country: "SN",
+    country: "BJ",
     whatsapp: "",
     palette: "sunset",
+    heardFrom: "",
   });
 
   const [subdomainInput, setSubdomainInput] = useState("");
@@ -300,18 +325,36 @@ function OnboardingFlow() {
   const set = (patch: Partial<OnboardingAnswers>) => setAnswers((a) => ({ ...a, ...patch }));
   const next = () => setStep((s) => Math.min(s + 1, TOTAL_STEPS + 1));
   const prev = () => setStep((s) => Math.max(s - 1, 1));
-  const pick = (patch: Partial<OnboardingAnswers>) => {
-    set(patch);
-    window.setTimeout(next, 200);
+
+  const pickRevenue = (revenueId: string) => {
+    set({ revenue: revenueId });
+    window.setTimeout(next, 180);
+  };
+
+  const pickCountry = (countryCode: string) => {
+    set({ country: countryCode });
+    window.setTimeout(next, 180);
   };
 
   const country = COUNTRIES.find((c) => c.code === answers.country) ?? COUNTRIES[0];
 
-  const handleFinish = async () => {
+  const filteredCountries = useMemo(() => {
+    const q = countrySearch.trim().toLowerCase();
+    if (!q) return COUNTRIES;
+    return COUNTRIES.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.code.toLowerCase().includes(q) ||
+        c.currency.toLowerCase().includes(q),
+    );
+  }, [countrySearch]);
+
+  const handleFinish = async (finalAnswers?: OnboardingAnswers) => {
+    const payload = finalAnswers ?? answers;
     setStep(TOTAL_STEPS + 1);
     setSetupPhase(0);
     try {
-      await complete.mutateAsync(answers);
+      await complete.mutateAsync(payload);
       for (let i = 1; i <= SETUP_PHASES.length; i += 1) {
         await new Promise((r) => window.setTimeout(r, 600));
         setSetupPhase(i);
@@ -326,546 +369,485 @@ function OnboardingFlow() {
     }
   };
 
+  const pickPlatform = (platformId: string) => {
+    const updated = { ...answers, heardFrom: platformId };
+    setAnswers(updated);
+    void handleFinish(updated);
+  };
+
   return (
-    <main className="auth-page relative flex min-h-dvh items-center justify-center bg-background sm:bg-muted/40 sm:p-6">
-      <div className="auth-shell mx-auto w-full overflow-hidden bg-card sm:max-w-[32rem] sm:rounded-[1.5rem] sm:border sm:border-foreground/10 sm:shadow-[0_30px_70px_-45px_color-mix(in_oklab,var(--foreground)_30%,transparent)] lg:grid lg:h-[46rem] lg:max-w-[74rem] lg:grid-cols-2 lg:grid-rows-[minmax(0,1fr)] lg:rounded-[1.6rem] lg:shadow-[0_40px_90px_-50px_color-mix(in_oklab,var(--foreground)_34%,transparent)]">
-        {/* Panneau de marque Desktop (identique à Inscription et Connexion) */}
-        <aside className="auth-brand relative hidden min-h-0 self-stretch overflow-hidden text-signal-foreground lg:flex lg:flex-col lg:justify-between lg:rounded-[1.15rem] lg:p-9 lg:m-3 lg:mr-0">
-          <div className="relative flex items-center justify-between gap-3">
+    <main className="relative flex min-h-dvh flex-col justify-between bg-background px-4 py-8 sm:px-6">
+      {/* En-tête centré avec logo DUKAIO + stepper */}
+      <header className="mx-auto w-full max-w-xl">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
             <a
               href="/"
               aria-label="Accueil DUKAIO"
-              className="inline-flex rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal-foreground/50"
+              className="inline-flex rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
             >
-              <BrandLogo className="h-6 brightness-0 invert sm:h-7" />
+              <BrandLogo className="h-7 w-auto" />
             </a>
-            <span className="inline-flex items-center rounded-md bg-signal-foreground/15 px-2.5 py-1 text-[0.62rem] font-extrabold uppercase tracking-[0.16em]">
-              Mise en route boutique
-            </span>
           </div>
 
-          <div className="relative mt-4 lg:mt-6">
-            <h2 className="text-balance font-display text-[1.45rem] font-bold leading-[1.08] sm:text-[1.7rem] lg:text-[2.2rem]">
-              Votre boutique prête à vendre en 2 minutes.
-            </h2>
-            <p className="mt-2 max-w-sm text-[0.72rem] leading-relaxed text-signal-foreground/80 sm:text-xs lg:text-sm">
-              DUKAIO configure votre catalogue, votre devise et votre système de commande par paiement à la livraison (COD).
-            </p>
-
-            {/* Carte de prévisualisation vivante */}
-            <div className="mt-5 rounded-xl border border-signal-foreground/20 bg-signal-foreground/10 p-4 backdrop-blur-md">
-              <div className="flex items-center justify-between text-[11px] font-bold text-signal-foreground/90 pb-2 border-b border-signal-foreground/15">
-                <span className="flex items-center gap-1.5">
-                  <Sparkles className="size-3.5 text-signal-foreground" /> Aperçu de votre vitrine
-                </span>
-                <span className="rounded bg-signal-foreground/20 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-signal-foreground">
-                  {country.name}
-                </span>
-              </div>
-              <div className="mt-3 space-y-1">
-                <p className="text-base font-extrabold text-signal-foreground truncate">
-                  {answers.storeName.trim() || "Ma Boutique"}
-                </p>
-                <p className="font-mono text-xs text-signal-foreground/85 truncate">
-                  https://{subdomainInput.trim() || "ma-boutique"}.dukaio.com
-                </p>
-              </div>
-              <div className="mt-3 pt-2.5 border-t border-signal-foreground/15 flex items-center justify-between text-[11px] text-signal-foreground/85">
-                <span>Devise : <strong>{country.currency}</strong></span>
-                <span>•</span>
-                <span>
-                  {answers.delivery
-                    ? DELIVERY_OPTIONS.find((d) => d.id === answers.delivery)?.label || "Expédition standard"
-                    : "Paiement à la livraison"}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <ol className="relative mt-4 grid grid-cols-3 gap-2 lg:mt-6 lg:gap-2.5">
-            {[
-              { stepNum: 1, title: "Identité", text: "Nom & domaine", active: step <= 3 },
-              { stepNum: 2, title: "Marché", text: "Expédition & devise", active: step >= 4 && step <= 8 },
-              { stepNum: 3, title: "Vitrine", text: "Thème & WhatsApp", active: step >= 9 },
-            ].map((s) => (
-              <li
-                key={s.title}
-                className={`rounded-xl border p-2.5 backdrop-blur-sm lg:p-3 transition-all duration-200 ${
-                  s.active
-                    ? "border-signal-foreground bg-signal-foreground/25 shadow-sm scale-[1.02]"
-                    : "border-signal-foreground/15 bg-signal-foreground/10 opacity-70"
-                }`}
+          <div className="flex items-center gap-3">
+            {step > 1 && step <= TOTAL_STEPS && (
+              <button
+                type="button"
+                onClick={prev}
+                aria-label="Étape précédente"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               >
-                <span
-                  className={`inline-flex size-5 items-center justify-center rounded-md text-[0.65rem] font-extrabold lg:size-6 lg:text-[0.7rem] ${
-                    s.active ? "bg-signal-foreground text-signal" : "bg-signal-foreground/30 text-signal-foreground"
-                  }`}
-                >
-                  {s.stepNum}
-                </span>
-                <p className="mt-1.5 text-[0.68rem] font-bold leading-snug lg:mt-2 lg:text-xs text-signal-foreground">
-                  {s.title}
-                </p>
-                <p className="mt-0.5 hidden text-[0.68rem] leading-relaxed text-signal-foreground/75 lg:block">
-                  {s.text}
-                </p>
-              </li>
-            ))}
-          </ol>
-        </aside>
-
-        {/* Panneau interactif Onboarding */}
-        <section className="relative flex w-full flex-col justify-between overflow-y-auto px-5 py-7 sm:px-8 sm:py-8 lg:px-10 lg:py-9 [scrollbar-width:thin]">
-          {/* Header Mobile / Navigation */}
-          <div>
-            <div className="mb-5 flex items-center justify-between lg:hidden">
-              <a
-                href="/"
-                aria-label="Accueil DUKAIO"
-                className="inline-flex rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal/40"
-              >
-                <BrandLogo className="h-7" />
-              </a>
-              {step <= TOTAL_STEPS && (
-                <span className="rounded-md border border-foreground/15 bg-muted/60 px-2.5 py-1 text-[0.68rem] font-extrabold uppercase tracking-wider text-muted-foreground">
-                  Étape {step} / {TOTAL_STEPS}
-                </span>
-              )}
-            </div>
-
-            {/* Stepper bar desktop & navigation */}
-            <div className="flex items-center justify-between gap-3">
-              {step > 1 && step <= TOTAL_STEPS ? (
-                <button
-                  type="button"
-                  onClick={prev}
-                  aria-label="Étape précédente"
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                >
-                  <ArrowLeft className="size-3.5" />
-                  Retour
-                </button>
-              ) : (
-                <span className="hidden lg:inline-block text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                  Configuration DUKAIO
-                </span>
-              )}
-              {step <= TOTAL_STEPS && (
-                <span className="hidden lg:inline-block rounded-md border border-foreground/15 bg-muted/50 px-2.5 py-1 text-[0.68rem] font-extrabold uppercase tracking-wider text-muted-foreground">
-                  Étape {step} sur {TOTAL_STEPS}
-                </span>
-              )}
-            </div>
-
+                <ArrowLeft className="size-3.5" />
+                Retour
+              </button>
+            )}
             {step <= TOTAL_STEPS && (
-              <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-foreground/10">
-                <div
-                  className="h-full bg-signal transition-all duration-300 ease-out"
-                  style={{ width: `${(Math.max(step - 1, 0.4) / TOTAL_STEPS) * 100}%` }}
-                />
-              </div>
+              <span className="rounded-full border border-border bg-muted/60 px-3 py-1 text-[11px] font-bold text-muted-foreground">
+                Étape {step} sur {TOTAL_STEPS}
+              </span>
             )}
           </div>
+        </div>
 
-          {/* Form Content */}
-          <div className="my-auto py-4">
-            <PendingInvites />
+        {/* Barre de progression fluide */}
+        {step <= TOTAL_STEPS && (
+          <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full bg-primary transition-all duration-300 ease-out"
+              style={{ width: `${(step / TOTAL_STEPS) * 100}%` }}
+            />
+          </div>
+        )}
+      </header>
 
-          {step === 1 && (
-            <div className="text-center">
-              <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-xl bg-signal/10 text-signal">
-                <ShoppingBag className="size-7" />
-              </div>
-              <h1 className="text-balance font-display text-2xl font-bold leading-tight sm:text-3xl text-foreground">
-                Bienvenue sur <span className="text-signal">DUKAIO</span>
-              </h1>
-              <p className="mx-auto mt-2 max-w-sm text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                Créez votre boutique en ligne clé en main avec paiement à la livraison (COD) et Mobile Money en quelques minutes.
-              </p>
-              <div className="mt-8">
-                <PrimaryButton onClick={next}>
-                  Commencer la configuration <ArrowRight className="size-4" />
-                </PrimaryButton>
-              </div>
-            </div>
-          )}
+      {/* Contenu principal centré */}
+      <div className="mx-auto my-auto w-full max-w-xl py-8">
+        <PendingInvites />
 
-          {step === 2 && (
-            <div>
-              <StepHeader
-                title="Comment s'appelle votre boutique ?"
-                subtitle="Vous pourrez modifier ce nom à tout moment dans vos paramètres."
+        {/* ================= ÉTAPE 1 : NOM DE LA BOUTIQUE ================= */}
+        {step === 1 && (
+          <div className="animate-in fade-in-50 duration-300">
+            <StepHeader
+              title="Comment s'appelle votre boutique ?"
+              subtitle="Vous pourrez modifier ce nom à tout moment dans les paramètres de votre boutique."
+            />
+            <div className="mb-6">
+              <label className="text-xs font-bold text-foreground" htmlFor="store-name">
+                Nom de votre boutique
+              </label>
+              <input
+                id="store-name"
+                autoFocus
+                value={answers.storeName}
+                onChange={(e) => set({ storeName: e.target.value })}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && answers.storeName.trim()) {
+                    handleStoreNameNext();
+                  }
+                }}
+                placeholder="Ex : TECHNOVA, LUMIA SHOP, BIO SOURCING..."
+                className="mt-2 h-13 w-full rounded-xl border border-input bg-card px-4 text-base font-semibold text-foreground outline-none transition-all placeholder:text-muted-foreground/60 focus:border-primary focus:ring-2 focus:ring-primary/20 shadow-xs"
               />
-              <div className="auth-field-wrap mb-5">
-                <label className="text-xs font-bold" htmlFor="store-name">
-                  Nom de la boutique
-                </label>
+            </div>
+            <Button
+              type="button"
+              variant="tunnel"
+              size="lg"
+              onClick={handleStoreNameNext}
+              disabled={!answers.storeName.trim()}
+              className="h-12 w-full text-sm font-bold shadow-sm"
+            >
+              Continuer <ArrowRight className="size-4" />
+            </Button>
+          </div>
+        )}
+
+        {/* ================= ÉTAPE 2 : DOMAINE DE LA BOUTIQUE ================= */}
+        {step === 2 && (
+          <div className="animate-in fade-in-50 duration-300">
+            <StepHeader
+              title="Quelle sera l'adresse web de votre boutique ?"
+              subtitle="Vos clients l'utiliseront pour visiter votre catalogue et passer commande en ligne."
+            />
+            <div className="mb-4">
+              <div className="flex items-center overflow-hidden rounded-xl border border-input bg-card shadow-xs transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+                <span className="bg-muted/70 px-3.5 py-3 text-xs font-semibold text-muted-foreground border-r border-border select-none shrink-0">
+                  https://
+                </span>
                 <input
-                  id="store-name"
                   autoFocus
-                  value={answers.storeName}
-                  onChange={(e) => set({ storeName: e.target.value })}
-                  placeholder="Ex : TECHNOVA, LUMIA SHOP, BIO SOURCING..."
-                  className="auth-field mt-1.5 h-12 w-full rounded-lg border border-foreground/15 bg-muted/40 px-4 text-base font-semibold outline-none transition-[background-color,border-color,box-shadow] focus-visible:border-signal focus-visible:bg-card focus-visible:ring-2 focus-visible:ring-signal/20"
+                  value={subdomainInput}
+                  onChange={(e) => {
+                    const val = slugify(e.target.value);
+                    setSubdomainInput(val);
+                    setAnswers((a) => ({ ...a, subdomain: val }));
+                    void verifySubdomain(val);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && subdomainStatus === "free") {
+                      next();
+                    }
+                  }}
+                  placeholder="technova"
+                  className="w-full bg-transparent px-3.5 py-3 text-sm font-bold text-foreground outline-none lowercase min-w-0"
                 />
+                <span className="bg-muted/70 px-3.5 py-3 text-xs font-extrabold text-primary border-l border-border select-none whitespace-nowrap shrink-0">
+                  .dukaio.com
+                </span>
               </div>
-              <PrimaryButton onClick={handleStoreNameNext} disabled={!answers.storeName.trim()}>
-                Continuer <ArrowRight className="size-4" />
-              </PrimaryButton>
-            </div>
-          )}
 
-          {step === 3 && (
-            <div>
-              <StepHeader
-                title="Quelle sera l'adresse web de votre boutique ?"
-                subtitle="Vos clients l'utiliseront pour visiter votre catalogue et commander."
-              />
-              <div className="mb-4">
-                <div className="flex items-center rounded-lg border border-foreground/15 bg-muted/40 overflow-hidden focus-within:border-signal focus-within:ring-2 focus-within:ring-signal/20 transition-all">
-                  <span className="bg-muted/70 px-3 py-3 text-xs font-semibold text-muted-foreground border-r border-foreground/10 select-none shrink-0">
-                    https://
+              {subdomainStatus === "checking" && (
+                <p className="mt-2.5 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                  <Loader2 className="size-3.5 animate-spin text-primary" /> Vérification de la disponibilité…
+                </p>
+              )}
+              {subdomainStatus === "free" && (
+                <p className="mt-2.5 flex items-center gap-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                  <Check className="size-4 shrink-0 stroke-[3]" />
+                  <span>
+                    <strong>{subdomainInput}.dukaio.com</strong> est disponible !
                   </span>
-                  <input
-                    autoFocus
-                    value={subdomainInput}
-                    onChange={(e) => {
-                      const val = slugify(e.target.value);
-                      setSubdomainInput(val);
-                      setAnswers((a) => ({ ...a, subdomain: val }));
-                      void verifySubdomain(val);
-                    }}
-                    placeholder="technova"
-                    className="w-full bg-transparent px-3 py-3 text-sm font-bold text-foreground outline-none lowercase min-w-0"
-                  />
-                  <span className="bg-muted/70 px-3 py-3 text-xs font-extrabold text-signal border-l border-foreground/10 select-none whitespace-nowrap shrink-0">
-                    .dukaio.com
-                  </span>
-                </div>
-
-                {subdomainStatus === "checking" && (
-                  <p className="mt-2.5 flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                    <Loader2 className="size-3.5 animate-spin text-signal" /> Vérification de la disponibilité…
+                </p>
+              )}
+              {subdomainStatus === "taken" && (
+                <div className="mt-2.5 space-y-2">
+                  <p className="flex items-center gap-2 text-xs font-semibold text-destructive">
+                    <X className="size-4 shrink-0 stroke-[3]" />{" "}
+                    {subdomainError || `${subdomainInput}.dukaio.com est déjà pris`}
                   </p>
-                )}
-                {subdomainStatus === "free" && (
-                  <p className="mt-2.5 flex items-center gap-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                    <Check className="size-4 shrink-0" />
-                    <span><strong>{subdomainInput}.dukaio.com</strong> est disponible !</span>
-                  </p>
-                )}
-                {subdomainStatus === "taken" && (
-                  <div className="mt-2.5 space-y-2">
-                    <p className="flex items-center gap-2 text-xs font-semibold text-destructive">
-                      <X className="size-4 shrink-0" /> {subdomainError || `${subdomainInput}.dukaio.com est déjà pris`}
-                    </p>
-                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                      <span className="text-[11px] text-muted-foreground">Suggestions disponibles :</span>
-                      {[
-                        `${subdomainInput}-boutique`,
-                        `${subdomainInput}-shop`,
-                        `${subdomainInput}-store`,
-                      ].map((sug) => (
-                        <button
-                          key={sug}
-                          type="button"
-                          onClick={() => {
-                            setSubdomainInput(sug);
-                            setAnswers((a) => ({ ...a, subdomain: sug }));
-                            void verifySubdomain(sug);
-                          }}
-                          className="rounded-md border border-foreground/15 bg-muted/60 px-2 py-0.5 text-[11px] font-bold text-foreground hover:border-signal hover:text-signal transition-colors cursor-pointer"
-                        >
-                          {sug}
-                        </button>
-                      ))}
-                    </div>
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                    <span className="text-[11px] text-muted-foreground">Suggestions disponibles :</span>
+                    {[
+                      `${subdomainInput}-boutique`,
+                      `${subdomainInput}-shop`,
+                      `${subdomainInput}-store`,
+                    ].map((sug) => (
+                      <button
+                        key={sug}
+                        type="button"
+                        onClick={() => {
+                          setSubdomainInput(sug);
+                          setAnswers((a) => ({ ...a, subdomain: sug }));
+                          void verifySubdomain(sug);
+                        }}
+                        className="rounded-md border border-border bg-muted/60 px-2 py-0.5 text-[11px] font-bold text-foreground hover:border-primary hover:text-primary transition-colors cursor-pointer"
+                      >
+                        {sug}
+                      </button>
+                    ))}
                   </div>
-                )}
-                {subdomainStatus === "invalid" && (
-                  <p className="mt-2.5 flex items-center gap-2 text-xs font-medium text-amber-600 dark:text-amber-400">
-                    <span>{subdomainError}</span>
-                  </p>
-                )}
-              </div>
-
-              <p className="mb-6 text-[11px] text-muted-foreground leading-relaxed">
-                Vous pourrez également connecter votre propre nom de domaine personnalisé (ex: <strong>votreboutique.com</strong>) plus tard.
-              </p>
-
-              <PrimaryButton onClick={next} disabled={subdomainStatus !== "free"}>
-                Continuer <ArrowRight className="size-4" />
-              </PrimaryButton>
+                </div>
+              )}
+              {subdomainStatus === "invalid" && (
+                <p className="mt-2.5 flex items-center gap-2 text-xs font-medium text-amber-600 dark:text-amber-400">
+                  <span>{subdomainError}</span>
+                </p>
+              )}
             </div>
-          )}
 
-          {step === 4 && (
-            <div>
-              <StepHeader
-                title="Quelle est votre expérience en e-commerce ?"
-                subtitle="Nous adaptons nos conseils et outils à votre profil."
-              />
-              <div className="space-y-2.5">
-                {EXPERIENCE_OPTIONS.map((opt) => (
-                  <SelectionCard
+            <p className="mb-6 text-[11px] text-muted-foreground leading-relaxed">
+              💡 Vous pourrez également connecter votre propre nom de domaine personnalisé (ex :{" "}
+              <strong>{answers.storeName ? `${slugify(answers.storeName)}.com` : "votreboutique.com"}</strong>) à tout moment.
+            </p>
+
+            <Button
+              type="button"
+              variant="tunnel"
+              size="lg"
+              onClick={next}
+              disabled={subdomainStatus !== "free"}
+              className="h-12 w-full text-sm font-bold shadow-sm"
+            >
+              Continuer <ArrowRight className="size-4" />
+            </Button>
+          </div>
+        )}
+
+        {/* ================= ÉTAPE 3 : CHIFFRE D'AFFAIRES / VENTES ================= */}
+        {step === 3 && (
+          <div className="animate-in fade-in-50 duration-300">
+            <StepHeader
+              title="Combien de chiffre d'affaires avez-vous déjà réalisé ?"
+              subtitle="Quel est votre volume de ventes habituel en e-commerce ?"
+            />
+            <div className="space-y-2.5">
+              {REVENUE_OPTIONS.map((opt) => {
+                const selected = answers.revenue === opt.id;
+                return (
+                  <button
                     key={opt.id}
-                    icon={opt.icon}
-                    label={opt.label}
-                    selected={answers.experience === opt.id}
-                    onClick={() => pick({ experience: opt.id })}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {step === 5 && (
-            <div>
-              <StepHeader
-                title="Quel est votre volume de ventes mensuel ?"
-                subtitle="Pour dimensionner les relances et le serveur de votre boutique."
-              />
-              <div className="space-y-2.5">
-                {REVENUE_OPTIONS.map((opt) => (
-                  <SelectionCard
-                    key={opt.id}
-                    icon={opt.icon}
-                    label={opt.label}
-                    selected={answers.revenue === opt.id}
-                    onClick={() => pick({ revenue: opt.id })}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {step === 6 && (
-            <div>
-              <StepHeader
-                title="Combien êtes-vous dans votre équipe ?"
-                subtitle="Closers, livreurs, gestionnaires de stock ou solo."
-              />
-              <div className="grid grid-cols-2 gap-2.5">
-                {TEAM_OPTIONS.map((opt) => (
-                  <SelectionCard
-                    key={opt.id}
-                    icon={opt.icon}
-                    label={opt.label}
-                    grid
-                    selected={answers.teamSize === opt.id}
-                    onClick={() => pick({ teamSize: opt.id })}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {step === 7 && (
-            <div>
-              <StepHeader
-                title="Comment gérez-vous la livraison ?"
-                subtitle="DUKAIO s'adapte à votre méthode d'expédition habituelle."
-              />
-              <div className="space-y-2.5">
-                {DELIVERY_OPTIONS.map((opt) => (
-                  <SelectionCard
-                    key={opt.id}
-                    icon={opt.icon}
-                    label={opt.label}
-                    selected={answers.delivery === opt.id}
-                    onClick={() => pick({ delivery: opt.id })}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {step === 8 && (
-            <div>
-              <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-xl bg-signal/10 text-signal">
-                <Globe2 className="size-6" />
-              </div>
-              <StepHeader
-                title="Où est basée votre activité principale ?"
-                subtitle="Pour adapter la devise (FCFA, etc.) et l'indicatif téléphonique."
-              />
-              <div className="relative">
-                <div className="max-h-[300px] space-y-2 overflow-y-auto pb-4 pr-1 [scrollbar-width:thin]">
-                  {COUNTRIES.map((c) => (
-                    <button
-                      key={c.code}
-                      type="button"
-                      onClick={() => pick({ country: c.code })}
-                      className={`flex w-full cursor-pointer items-center gap-3.5 rounded-lg border p-3 text-left transition-all ${
-                        answers.country === c.code
-                          ? "border-signal bg-signal/10 ring-2 ring-signal/30 font-bold"
-                          : "border-foreground/15 bg-muted/40 hover:border-foreground/30 hover:bg-muted/70"
+                    type="button"
+                    onClick={() => pickRevenue(opt.id)}
+                    className={`group flex w-full cursor-pointer items-center justify-between rounded-xl border p-4 text-left transition-all duration-150 shadow-xs ${
+                      selected
+                        ? "border-primary bg-primary/10 ring-2 ring-primary/30 font-bold text-foreground"
+                        : "border-border bg-card hover:border-foreground/30 hover:bg-muted/40 text-foreground"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3.5">
+                      <span className="text-2xl transition-transform group-hover:scale-110">
+                        {opt.icon}
+                      </span>
+                      <span className="text-sm font-semibold text-foreground">{opt.label}</span>
+                    </div>
+                    <span
+                      className={`flex size-5 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                        selected
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-muted-foreground/30"
                       }`}
                     >
+                      {selected && <Check className="size-3 stroke-[3]" />}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ================= ÉTAPE 4 : PAYS DE VENTE ================= */}
+        {step === 4 && (
+          <div className="animate-in fade-in-50 duration-300">
+            <StepHeader
+              title="Dans quel pays voulez-vous vendre ?"
+              subtitle="Sélectionnez votre marché principal pour configurer la devise et le système de commande."
+            />
+
+            {/* Barre de recherche pays */}
+            <div className="relative mb-3">
+              <Search className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                value={countrySearch}
+                onChange={(e) => setCountrySearch(e.target.value)}
+                placeholder="Rechercher un pays (ex : Bénin, Côte d'Ivoire...)"
+                className="h-11 w-full rounded-xl border border-input bg-card pl-10 pr-4 text-sm font-medium text-foreground outline-none transition-all placeholder:text-muted-foreground/60 focus:border-primary focus:ring-2 focus:ring-primary/20 shadow-xs"
+              />
+            </div>
+
+            <div className="max-h-[340px] space-y-2 overflow-y-auto pr-1 pb-2 [scrollbar-width:thin]">
+              {filteredCountries.map((c) => {
+                const selected = answers.country === c.code;
+                return (
+                  <button
+                    key={c.code}
+                    type="button"
+                    onClick={() => pickCountry(c.code)}
+                    className={`group flex w-full cursor-pointer items-center justify-between rounded-xl border p-3.5 text-left transition-all duration-150 shadow-xs ${
+                      selected
+                        ? "border-primary bg-primary/10 ring-2 ring-primary/30 font-bold text-foreground"
+                        : "border-border bg-card hover:border-foreground/30 hover:bg-muted/40 text-foreground"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3.5">
                       <img
                         src={`https://flagcdn.com/w40/${c.code.toLowerCase()}.png`}
                         alt={`Drapeau ${c.name}`}
                         loading="lazy"
-                        className="h-auto w-5 rounded-[2px] border border-border shrink-0"
+                        className="h-auto w-5 rounded-[2px] border border-border shrink-0 shadow-2xs"
                       />
-                      <span className="text-xs sm:text-sm font-semibold text-foreground flex-1">
-                        {c.name}
-                      </span>
-                      <span className="text-xs font-bold text-muted-foreground">
+                      <span className="text-sm font-semibold text-foreground">{c.name}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="rounded-md bg-muted px-2 py-0.5 text-xs font-bold text-muted-foreground">
                         {c.currency}
                       </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {step === 9 && (
-            <div>
-              <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-xl bg-signal/10 text-signal">
-                <Palette className="size-6" />
-              </div>
-              <StepHeader
-                title="Couleur d'accentuation de votre vitrine"
-                subtitle="Personnalisable à l'infini dans l'éditeur de thème."
-              />
-              <div className="grid grid-cols-2 gap-2.5">
-                {COLOR_PALETTES.map((palette) => (
-                  <button
-                    key={palette.id}
-                    type="button"
-                    onClick={() => pick({ palette: palette.id })}
-                    className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-all ${
-                      answers.palette === palette.id
-                        ? "border-signal bg-signal/10 ring-2 ring-signal/30 font-bold"
-                        : "border-foreground/15 bg-muted/40 hover:border-foreground/30 hover:bg-muted/70"
-                    }`}
-                  >
-                    <span
-                      className="size-6 shrink-0 rounded-full border border-border shadow-xs"
-                      style={{ backgroundColor: palette.primaryColor }}
-                    />
-                    <span className="text-xs sm:text-sm font-semibold text-foreground">
-                      {palette.name}
-                    </span>
+                      <span
+                        className={`flex size-5 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                          selected
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-muted-foreground/30"
+                        }`}
+                      >
+                        {selected && <Check className="size-3 stroke-[3]" />}
+                      </span>
+                    </div>
                   </button>
-                ))}
-              </div>
+                );
+              })}
             </div>
-          )}
+          </div>
+        )}
 
-          {step === 10 && (
-            <div>
-              <StepHeader
-                title="Votre numéro WhatsApp de contact"
-                subtitle="Il permettra à vos clients de vous contacter directement en 1 clic."
-              />
-              <div className="mb-6 flex overflow-hidden rounded-lg border border-foreground/15 bg-muted/40 focus-within:border-signal focus-within:ring-2 focus-within:ring-signal/20 transition-all">
-                <span className="flex items-center justify-center border-r border-foreground/10 bg-muted/70 px-4 py-3 text-xs font-bold text-foreground shrink-0">
+        {/* ================= ÉTAPE 5 : NUMÉRO DE TÉLÉPHONE (WHATSAPP) ================= */}
+        {step === 5 && (
+          <div className="animate-in fade-in-50 duration-300">
+            <StepHeader
+              title="Votre numéro de téléphone (WhatsApp)"
+              subtitle="Il permettra à vos clients de vous contacter directement et de recevoir vos alertes de commande."
+            />
+            <div className="mb-6">
+              <label className="text-xs font-bold text-foreground" htmlFor="whatsapp-number">
+                Numéro WhatsApp
+              </label>
+              <div className="mt-2 flex overflow-hidden rounded-xl border border-input bg-card shadow-xs transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+                <span className="flex items-center justify-center border-r border-border bg-muted/70 px-4 py-3.5 text-sm font-bold text-foreground select-none shrink-0">
                   {country.prefix}
                 </span>
                 <input
+                  id="whatsapp-number"
                   autoFocus
                   type="tel"
                   value={answers.whatsapp}
                   onChange={(e) => set({ whatsapp: e.target.value })}
-                  placeholder="Numéro sans l'indicatif"
-                  className="w-full bg-transparent px-4 py-3 text-sm font-semibold text-foreground outline-none"
+                  onKeyDown={(e) => {
+                    if (
+                      e.key === "Enter" &&
+                      answers.whatsapp.replace(/\D/g, "").length >= 6
+                    ) {
+                      next();
+                    }
+                  }}
+                  placeholder="Ex : 97 00 00 00"
+                  className="w-full bg-transparent px-4 py-3.5 text-base font-semibold text-foreground outline-none placeholder:text-muted-foreground/50"
                 />
               </div>
-              <PrimaryButton
-                onClick={() => void handleFinish()}
-                disabled={answers.whatsapp.replace(/\D/g, "").length < 6 || complete.isPending}
-              >
-                Créer ma boutique maintenant <ArrowRight className="size-4" />
-              </PrimaryButton>
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                📱 Format : saisissez votre numéro sans l'indicatif international ({country.prefix}).
+              </p>
             </div>
-          )}
+            <Button
+              type="button"
+              variant="tunnel"
+              size="lg"
+              onClick={next}
+              disabled={answers.whatsapp.replace(/\D/g, "").length < 6}
+              className="h-12 w-full text-sm font-bold shadow-sm"
+            >
+              Continuer <ArrowRight className="size-4" />
+            </Button>
+          </div>
+        )}
 
-          {step === TOTAL_STEPS + 1 && (
-            <div className="mx-auto max-w-sm text-center py-2">
-              <div className="mb-6">
-                <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-xl bg-signal/10 text-signal">
-                  <Sparkles className="size-6" />
-                </div>
-                <h2 className="font-display text-2xl font-bold text-foreground">
-                  Création de votre boutique…
-                </h2>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Nous configurons votre catalogue et vos accès.
-                </p>
-              </div>
-
-              <div className="space-y-2.5 text-left">
-                {SETUP_PHASES.map((text, idx) => {
-                  const isActive = setupPhase === idx;
-                  const isDone = setupPhase > idx;
-                  return (
-                    <div
-                      key={text}
-                      className={`flex items-center gap-3 rounded-lg border p-3 text-xs transition-all ${
-                        isActive
-                          ? "border-signal bg-signal/10 text-foreground font-bold"
-                          : "border-foreground/10 bg-muted/30"
-                      } ${!isActive && !isDone ? "opacity-40" : ""}`}
-                    >
-                      <span
-                        className={`flex size-5 shrink-0 items-center justify-center ${
-                          isDone
-                            ? "text-emerald-600 dark:text-emerald-400"
-                            : isActive
-                              ? "text-signal"
-                              : "text-muted-foreground"
-                        }`}
-                      >
-                        {isDone ? (
-                          <Check className="size-4 stroke-[3]" />
-                        ) : isActive ? (
-                          <Loader2 className="size-4 animate-spin" />
-                        ) : (
-                          <span className="size-3 rounded-full border-2 border-current" />
-                        )}
-                      </span>
-                      <span
-                        className={`font-semibold ${
-                          isDone
-                            ? "text-foreground"
-                            : isActive
-                              ? "text-signal"
-                              : "text-muted-foreground"
-                        }`}
-                      >
-                        {text}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {setupPhase >= SETUP_PHASES.length && (
-                <div className="mt-6 text-center animate-in fade-in">
-                  <PrimaryButton
-                    onClick={() => {
-                      window.location.href = "/dashboard";
-                    }}
+        {/* ================= ÉTAPE 6 : OÙ AVEZ-VOUS ENTENDU PARLER DE NOUS ================= */}
+        {step === 6 && (
+          <div className="animate-in fade-in-50 duration-300">
+            <StepHeader
+              title="Où avez-vous entendu parler de DUKAIO ?"
+              subtitle="Sélectionnez la plateforme pour finaliser la création de votre boutique."
+            />
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+              {PLATFORM_OPTIONS.map((item) => {
+                const selected = answers.heardFrom === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => pickPlatform(item.id)}
+                    className={`group flex w-full cursor-pointer items-center justify-between rounded-xl border p-4 text-left transition-all duration-150 shadow-xs ${
+                      selected
+                        ? "border-primary bg-primary/10 ring-2 ring-primary/30 font-bold text-foreground"
+                        : "border-border bg-card hover:border-foreground/30 hover:bg-muted/40 text-foreground"
+                    }`}
                   >
-                    Accéder à mon tableau de bord <ArrowRight className="size-4" />
-                  </PrimaryButton>
-                </div>
-              )}
+                    <div className="flex items-center gap-3.5">
+                      {item.icon}
+                      <span className="text-sm font-semibold text-foreground">{item.label}</span>
+                    </div>
+                    <span
+                      className={`flex size-5 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                        selected
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-muted-foreground/30"
+                      }`}
+                    >
+                      {selected && <Check className="size-3 stroke-[3]" />}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
-          )}
           </div>
+        )}
 
-          {/* Pied de page confidentiel */}
-          <div className="pt-4 text-center">
-            <p className="flex items-center justify-center gap-2 text-[0.7rem] text-muted-foreground">
-              <ShieldCheck className="size-3.5" /> Données protégées & configuration sécurisée.
-            </p>
+        {/* ================= ÉTAPE 7 : CRÉATION DE LA BOUTIQUE (ANIMATION) ================= */}
+        {step === TOTAL_STEPS + 1 && (
+          <div className="mx-auto max-w-md text-center py-4 animate-in fade-in-50 duration-300">
+            <div className="mb-6">
+              <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-xs">
+                <Sparkles className="size-7" />
+              </div>
+              <h2 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                Création de votre boutique…
+              </h2>
+              <p className="mt-1.5 text-xs sm:text-sm text-muted-foreground">
+                Nous configurons votre catalogue, votre devise et vos accès.
+              </p>
+            </div>
+
+            <div className="space-y-2.5 text-left">
+              {SETUP_PHASES.map((text, idx) => {
+                const isActive = setupPhase === idx;
+                const isDone = setupPhase > idx;
+                return (
+                  <div
+                    key={text}
+                    className={`flex items-center gap-3.5 rounded-xl border p-3.5 text-xs transition-all shadow-xs ${
+                      isActive
+                        ? "border-primary bg-primary/10 text-foreground font-bold"
+                        : "border-border bg-card"
+                    } ${!isActive && !isDone ? "opacity-40" : ""}`}
+                  >
+                    <span
+                      className={`flex size-5 shrink-0 items-center justify-center ${
+                        isDone
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : isActive
+                            ? "text-primary"
+                            : "text-muted-foreground"
+                      }`}
+                    >
+                      {isDone ? (
+                        <Check className="size-4 stroke-[3]" />
+                      ) : isActive ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <span className="size-2.5 rounded-full border-2 border-current" />
+                      )}
+                    </span>
+                    <span
+                      className={`font-semibold text-sm ${
+                        isDone
+                          ? "text-foreground"
+                          : isActive
+                            ? "text-primary"
+                            : "text-muted-foreground"
+                      }`}
+                    >
+                      {text}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {setupPhase >= SETUP_PHASES.length && (
+              <div className="mt-8 text-center animate-in fade-in">
+                <Button
+                  type="button"
+                  variant="tunnel"
+                  size="lg"
+                  onClick={() => {
+                    window.location.href = "/dashboard";
+                  }}
+                  className="h-12 w-full text-sm font-bold shadow-sm"
+                >
+                  Accéder à mon tableau de bord <ArrowRight className="size-4" />
+                </Button>
+              </div>
+            )}
           </div>
-        </section>
+        )}
       </div>
+
+      {/* Pied de page confidentiel */}
+      <footer className="mx-auto w-full max-w-xl pt-4 text-center">
+        <p className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+          <ShieldCheck className="size-3.5 text-emerald-500" /> Données protégées & configuration sécurisée.
+        </p>
+      </footer>
     </main>
   );
 }
