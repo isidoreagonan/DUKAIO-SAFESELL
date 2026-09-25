@@ -4,7 +4,19 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 > **Note d'environnement :** Ce projet a été initialement généré avec Lovable, mais a été entièrement migré sur Antigravity. Il n'est plus synchronisé avec Lovable Cloud et utilise désormais exclusivement la propre instance Supabase de l'utilisateur.
 
+## [25/09/2026] - Correction du Crash « Cannot read properties of undefined (reading 'some') » sur l'Analyse Découverte
+
+### Corrigé
+- **Résolution de l'erreur sur la modale d'analyse (`src/components/discovery/charts.tsx`, `src/components/discovery/analysis-dialog.tsx`, `src/components/discovery/store-card.tsx`)** :
+  - **Problème résolu :** Lorsqu'un utilisateur cliquait sur le bouton « Analyser » d'un produit gagnant ou d'une publicité sur `/dashboard/decouverte/produits`, l'application plantait avec l'écran blanc « This page didn't load: Cannot read properties of undefined (reading 'some') ».
+  - **Cause identifiée :** Dans le composant `StoreAnalyticsCard`, la propriété `timeline` était interrogée avec `timeline.some(...)` avant de vérifier si `timeline` était défini. Par ailleurs, dans `analysis-dialog.tsx`, l'appel au composant passait d'anciennes props sans lui fournir la timeline calculée `timeline={analyticsTimeline}`.
+  - **Correction apportée :**
+    - `StoreAnalyticsCard` sécurise désormais la prop `timeline` avec un tableau de repli (`Array.isArray(timeline) ? timeline : []`) et une vérification stricte avant tout appel `.some()`.
+    - Transmission correcte de `timeline={analyticsTimeline}` dans `analysis-dialog.tsx`.
+    - Sécurisation de `store.bestAds` dans `store-card.tsx` pour parer à tout tableau absent.
+
 ## [25/09/2026] - Refonte Finition Modale d'Analyse Découverte : Suppression Totale des Scrollbars et Identité de Marque / Shopify HD
+
 
 ### Modifié & Optimisé
 - **Suppression intégrale des traits de défilement / barres disgracieuses (`src/styles.css` & `src/components/discovery/analysis-dialog.tsx`)** :

@@ -370,16 +370,17 @@ export function StoreAnalyticsCard({
   title = "Évolution des performances estimées",
   defaultMetric,
 }: {
-  timeline: AnalyticsPoint[];
+  timeline?: AnalyticsPoint[] | null;
   height?: number;
   title?: string;
   defaultMetric?: "revenue" | "traffic" | "orders" | "ads";
 }) {
-  const hasRevenue = timeline.some((p) => p.revenueFcfa > 0);
+  const safeTimeline = Array.isArray(timeline) ? timeline : [];
+  const hasRevenue = safeTimeline.some((p) => (p?.revenueFcfa ?? 0) > 0);
   const initialMetric = defaultMetric ?? (hasRevenue ? "revenue" : "ads");
   const [metric, setMetric] = useState<"revenue" | "traffic" | "orders" | "ads">(initialMetric);
 
-  if (!timeline || timeline.length === 0) {
+  if (safeTimeline.length === 0) {
     return (
       <div className="grid place-items-center rounded-[8px] border border-border bg-background p-6 text-center text-xs text-muted-foreground">
         Données d'analyse insuffisantes
@@ -387,8 +388,8 @@ export function StoreAnalyticsCard({
     );
   }
 
-  const latest = timeline[timeline.length - 1];
-  const previous = timeline[timeline.length - 2] ?? latest;
+  const latest = safeTimeline[safeTimeline.length - 1];
+  const previous = safeTimeline[safeTimeline.length - 2] ?? latest;
 
   const metricConfig = {
     revenue: {
@@ -545,7 +546,7 @@ export function StoreAnalyticsCard({
       {/* Graphique de courbe fine ondulée */}
       <div className="mt-4 text-muted-foreground" style={{ height }}>
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={timeline} margin={{ top: 12, right: 8, bottom: 0, left: -12 }}>
+          <AreaChart data={safeTimeline} margin={{ top: 12, right: 8, bottom: 0, left: -12 }}>
             <defs>
               <linearGradient id={metricConfig.gradientId} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={metricConfig.stroke} stopOpacity={0.28} />

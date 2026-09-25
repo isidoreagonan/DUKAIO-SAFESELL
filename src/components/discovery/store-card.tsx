@@ -103,7 +103,7 @@ export function StoreCard({ store, onAnalyse }: { store: DiscoveryStore; onAnaly
         <Sparkline data={store.timeline} className="w-full" height={28} unit="pubs / mois" />
       </div>
 
-      {store.bestAds.some((item) => item.thumb) ? (
+      {(store.bestAds || []).some((item) => item.thumb) ? (
         <div className="mt-1.5 hidden sm:block">
           <p className="mb-0.5 text-[9px] font-bold uppercase tracking-wide text-muted-foreground">Meilleures pubs</p>
           <div className="grid grid-cols-4 gap-1">

@@ -994,19 +994,8 @@ export function AdAnalysisDialog({
                     {/* SUPER-POUVOIR DUKAIO : CARTE ESTIMATIONS & TRAJECTOIRE */}
                     {store && (
                       <StoreAnalyticsCard
-                        adId={ad.id}
-                        domain={ad.landing_domain}
-                        pageName={ad.page_name}
-                        avgPrice={store.avg_price}
-                        currency={store.currency}
-                        productsCount={store.products_count}
-                        activeAds={stats.activeAds}
-                        totalAds={stats.totalAds}
-                        activeDays={ad.active_days}
-                        followers={stats.followers}
-                        tractionScore={ad.traction_score}
-                        monthlyVisits={traffic.data?.monthlyVisits ?? null}
-                        trancoRank={traffic.data?.trancoRank ?? null}
+                        timeline={analyticsTimeline}
+                        title="Évolution des performances estimées de la boutique"
                       />
                     )}
 
