@@ -160,7 +160,7 @@ export function moneyRange(range: { low: number; high: number } | null, currency
 }
 
 export function adMedia(ad: DiscoveryAd) {
-  return ad.media_signed_url ?? ad.thumbnail_url ?? ad.image_url ?? null;
+  return ad.media_signed_url ?? ad.media_path ?? ad.thumbnail_url ?? ad.image_url ?? null;
 }
 
 export function useDiscoveryAds(filters: AdFilters) {

@@ -229,7 +229,7 @@ export const listDiscoveryAds = createServerFn({ method: "POST" })
     let query = ctx.supabase
       .from("discovery_ads")
       .select("*")
-      .or("media_path.not.is.null,thumbnail_url.not.is.null,image_url.not.is.null");
+      .not("media_path", "is", null);
 
     if (!rules.filters) {
       const domains = await freeSampleDomains(ctx, rules);
@@ -876,7 +876,7 @@ export const listDiscoveryProducts = createServerFn({ method: "POST" })
         id: head.id,
         title: head.headline || head.page_name,
         body: head.body,
-        image: head.media_signed_url ?? head.thumbnail_url ?? head.image_url,
+        image: head.media_signed_url ?? head.media_path ?? head.thumbnail_url ?? head.image_url,
         video: head.video_url,
         category: head.category,
         pageName: head.page_name,
