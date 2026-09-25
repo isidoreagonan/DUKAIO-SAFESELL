@@ -64,6 +64,8 @@ export type ShopValue = {
   goCheckout: () => void;
   /** Ouvre la liste des produits de la boutique. */
   navigateToCatalog: () => void;
+  /** Lien canonique vers une page de la boutique. */
+  href: (to?: string) => string;
   /** Achat direct : remplit le panier avec ce seul produit puis ouvre la commande. */
   buyNow: (product: Tables<"products">, qty: number) => void;
   submit: (
@@ -151,6 +153,12 @@ export function ShopProvider({
     setCartOpen(false);
     void navigate({ to: storePath(handle, products.length > 1 ? "/produits" : "/produit") });
   }, [handle, navigate, products.length]);
+
+  /* Lien canonique vers une page de la boutique. */
+  const href = useCallback(
+    (to = "/") => storePath(handle, to),
+    [handle],
+  );
 
   const totals = useMemo(() => cartTotals(lines, offers, coupon), [lines, offers, coupon]);
 
@@ -320,6 +328,7 @@ export function ShopProvider({
       setSelectedQty,
       goCheckout,
       navigateToCatalog,
+      href,
       buyNow,
       submit,
     }),
@@ -346,6 +355,7 @@ export function ShopProvider({
       setSelectedQty,
       goCheckout,
       navigateToCatalog,
+      href,
       buyNow,
       submit,
     ],

@@ -18,7 +18,7 @@ export const Route = createFileRoute("/produits")({
   },
   loader: ({ context }) =>
     context.queryClient.ensureQueryData(storefrontQuery(context.handle)),
-  head: (ctx) => {
+  head: (ctx: any) => {
     const context = ctx?.context;
     const loaderData = ctx?.loaderData as any;
     const name = loaderData?.store?.store_name ?? context?.handle ?? "Boutique";

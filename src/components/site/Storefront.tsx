@@ -100,34 +100,41 @@ export function Storefront({ handle, page, productId }: StorefrontProps) {
   useEffect(() => {
     if (!faviconUrl || typeof document === "undefined") return;
 
-    // Retirer temporairement tous les liens de favicons existants (y compris PNG et apple-touch-icon)
     const existingIcons = Array.from(
       document.querySelectorAll<HTMLLinkElement>("link[rel*='icon'], link[rel='apple-touch-icon']"),
     );
-    const backups = existingIcons.map((el) => ({
-      el,
-      parent: el.parentNode,
-      next: el.nextSibling,
-    }));
 
-    existingIcons.forEach((el) => el.remove());
+    if (existingIcons.length > 0) {
+      const originalHrefs = existingIcons.map((el) => el.getAttribute("href"));
+      existingIcons.forEach((el) => el.setAttribute("href", faviconUrl));
+
+      return () => {
+        existingIcons.forEach((el, index) => {
+          const orig = originalHrefs[index];
+          if (orig) {
+            el.setAttribute("href", orig);
+          } else {
+            el.removeAttribute("href");
+          }
+        });
+      };
+    }
 
     const newFavicon = document.createElement("link");
     newFavicon.rel = "icon";
     newFavicon.href = faviconUrl;
+    newFavicon.dataset["storefront"] = "true";
     document.head.appendChild(newFavicon);
 
     const newApple = document.createElement("link");
     newApple.rel = "apple-touch-icon";
     newApple.href = faviconUrl;
+    newApple.dataset["storefront"] = "true";
     document.head.appendChild(newApple);
 
     return () => {
       newFavicon.remove();
       newApple.remove();
-      backups.forEach(({ el, parent, next }) => {
-        if (parent) parent.insertBefore(el, next);
-      });
     };
   }, [faviconUrl]);
 

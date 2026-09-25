@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, CheckCircle2, Loader2, ShieldCheck, Ticket, Truck, Search, MapPin, PencilLine } from "lucide-react";
 import { z } from "zod";
 import { useShop } from "@/lib/shop";
+import { storePath } from "@/lib/storefront";
 import { money } from "@/lib/pricing";
 import { visitorSession } from "@/lib/abandoned";
 import { trackAbandonedCart } from "@/lib/abandoned.functions";
@@ -24,8 +25,8 @@ function AddressAutocomplete({
   value: string;
   onChange: (v: string) => void;
   onBlur?: () => void;
-  country?: string | null;
-  error?: string;
+  country?: string | null | undefined;
+  error?: string | undefined;
 }) {
   const [query, setQuery] = useState(value);
   const [results, setResults] = useState<NominatimResult[]>([]);
@@ -308,7 +309,7 @@ export function CheckoutPage() {
           confirmer la livraison.
         </p>
         <a
-          href={shop?.href("/") ?? "/"}
+          href={shop?.href ? shop.href("/") : (shop?.handle ? storePath(shop.handle, "/") : "/")}
           className="mt-6 inline-flex items-center justify-center gap-2 rounded-[var(--radius)] bg-[var(--rose)] px-6 py-3 text-sm font-bold tracking-wide text-white uppercase"
         >
           Continuer mes achats
@@ -325,7 +326,7 @@ export function CheckoutPage() {
           Ajoutez un produit à votre panier pour passer commande.
         </p>
         <a
-          href={shop?.href("/") ?? "/"}
+          href={shop?.href ? shop.href("/") : (shop?.handle ? storePath(shop.handle, "/") : "/")}
           className="mt-6 inline-flex items-center gap-2 rounded-[var(--radius)] border border-border px-5 py-3 text-sm font-bold uppercase transition hover:bg-muted"
         >
           <ArrowLeft size={15} /> Retour à la boutique
@@ -541,7 +542,7 @@ export function CheckoutPage() {
         </div>
 
         <a
-          href={shop?.href("/") ?? "/"}
+          href={shop?.href ? shop.href("/") : (shop?.handle ? storePath(shop.handle, "/") : "/")}
           className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground transition hover:text-foreground"
         >
           <ArrowLeft size={13} /> Continuer mes achats
