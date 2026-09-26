@@ -4,7 +4,45 @@ Ce fichier garde la trace de toutes les modifications et corrections apportées 
 
 > **Note d'environnement :** Ce projet a été initialement généré avec Lovable, mais a été entièrement migré sur Antigravity. Il n'est plus synchronisé avec Lovable Cloud et utilise désormais exclusivement la propre instance Supabase de l'utilisateur.
 
-## [25/09/2026] - Correction du Crash « Cannot read properties of undefined (reading 'some') » sur l'Analyse Découverte
+## [26/09/2026] - Refonte Mobile Responsive de la Page Clients & En-tête Global
+
+### Corrigé & Optimisé
+- **Correction globale de l'en-tête de module (`src/components/dashboard/empty-state.tsx`)** :
+  - **Problème résolu :** Sur smartphone, le titre principal de la page Clients s'affichait tronqué en `Cu...` et la description était écrasée dans une colonne de ~100px à cause d'une disposition rigide `grid grid-cols-[minmax(0,1fr)_auto]` qui laissait tout l'espace aux boutons d'action.
+  - **Correction apportée :** Remplacement par un layout adaptatif `flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between`. Le titre (« Customers » / « Clients ») et la description disposent de toute la largeur de l'écran sans troncature. Les boutons d'action s'alignent proprement en dessous sur mobile et côte-à-côte sur desktop. Cette correction bénéficie à toutes les pages utilisant `ModuleHeader`.
+
+- **Refonte responsive moderne de la page Clients (`src/routes/_authenticated/dashboard/clients.index.tsx`)** :
+  - **Vue Mobile en Cartes Dédiées (`md:hidden`) :** Élimination totale du tableau desktop horizontal (`overflow-x-auto`) qui forçait l'utilisateur à faire défiler l'écran vers la droite. Remplacement par de superbes cartes tactiles affichant :
+    - Avatar initiales et nom complet du client.
+    - Badge de commandes (`1 commande` / `X commandes`) et date de création.
+    - Chiffre d'affaires dépensé mis en valeur en orange vif.
+    - Bouton WhatsApp en un clic avec badge vert et redirection automatique.
+    - Coordonnées directes (téléphone, e-mail, adresse/quartier).
+    - Ouverture immédiate de la fiche détaillée au toucher de la carte.
+  - **Tableau Desktop préservé (`hidden md:block`) :** Affichage tabulaire complet conservé pour les écrans larges ($\ge$ 768px).
+  - **Cartes métriques / KPI compactes :** Alignement horizontal propre des 3 indicateurs (`Total clients`, `Acheteurs`, `C.A. total`) au lieu de 3 énormes blocs verticaux occupant 300px d'écran.
+  - **Boutons d'action optimisés :** `Export CSV` et `Add customer` répartis à 50/50 sur mobile pour un confort tactile optimal.
+  - **Modales adaptatives :** `CreateCustomerDialog` et `CustomerDetailDialog` sécurisées avec un scroll interne sans barre disgracieuse (`max-h-[90dvh] overflow-y-auto no-scrollbar`) pour s'adapter à toutes les hauteurs d'écran mobile.
+
+
+
+### Corrigé & Optimisé
+- **Affichage et accès direct aux analyses sur mobile (`src/components/discovery/analysis-dialog.tsx`)** :
+  - **Problème résolu :** Sur smartphone, le clic sur « Analyser » bloquait l'utilisateur dans la colonne latérale gauche (`<aside>`). Le panneau principal (`<main>`) contenant toutes les analyses (courbe de performance, chiffre d'affaires estimé, commandes, trafic web et pression publicitaire) était repoussé hors écran, indéfilable et invisible. De plus, le bouton de fermeture `X` et les onglets étaient inaccessibles.
+  - **Correction apportée :**
+    - **Header mobile dédié et compact :** Identité complète de la marque (Avatar HD, nom, badge officiel `Vérifié`, plateforme `Shopify`/`WooCommerce`), raccourcis d'action (Favori, Meta Ad Library) et **bouton de fermeture `X` permanent** en haut à droite.
+    - **Barre d'onglets mobile tactile :** Navigation intuitive par onglets (`Analyses`, `Créative`, `Produits`, `Déclinaisons`, `Annonceur`).
+    - **Ouverture directe sur les analyses :** Le marchand accède immédiatement aux données analytiques pour lesquelles il a cliqué sur « Analyser » :
+      - Mini-vignette récapitulative de la pub avec statut actif, durée, score de traction et bouton raccourci *« Voir pub »*.
+      - Détails complets de l'annonce et de la boutique.
+      - Graphique interactif de trajectoire `StoreAnalyticsCard` (C.A., trafic, commandes, pubs).
+      - Indicateurs de trafic mondial Tranco & volume publicitaire.
+    - **Onglet dédié « Créative » :** Affiche le lecteur média (vidéo/image HD Bunny CDN), le texte de l'annonce avec bouton « Voir plus », le bouton CTA, les liens directs (« Page de vente », « Meta Ads ») et les pixels actifs.
+    - **Pied de page épuré :** Le footer est masqué sur mobile pour préserver un espace de lecture vertical maximal.
+- **Suppression intégrale des traits de défilement & fluidité tactile (`src/styles.css` & `src/components/discovery/analysis-dialog.tsx`)** :
+  - Intégration de `-webkit-overflow-scrolling: touch` et préservation stricte de `no-scrollbar` sur tous les conteneurs défilables.
+  - Défilement au doigt ultra-fluide sans aucune barre grise disgracieuse.
+
 
 ### Corrigé
 - **Résolution de l'erreur sur la modale d'analyse (`src/components/discovery/charts.tsx`, `src/components/discovery/analysis-dialog.tsx`, `src/components/discovery/store-card.tsx`)** :

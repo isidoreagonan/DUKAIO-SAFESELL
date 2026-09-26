@@ -129,19 +129,21 @@ export function ModuleHeader({
   actions?: ReactNode;
 }) {
   return (
-    <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 sm:flex sm:justify-between">
-      <div className="min-w-0">
-        <h1 className="truncate text-2xl font-extrabold tracking-tight sm:text-3xl font-display">
+    <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0 flex-1">
+        <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl font-display text-foreground">
           {title}
           {count ? (
             <span className="font-display not-italic text-muted-foreground"> · {count}</span>
           ) : null}
         </h1>
         {description ? (
-          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+          <p className="mt-1 text-sm text-muted-foreground leading-relaxed">{description}</p>
         ) : null}
       </div>
-      {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
+      {actions ? (
+        <div className="flex shrink-0 items-center gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto">{actions}</div>
+      ) : null}
     </header>
   );
 }
