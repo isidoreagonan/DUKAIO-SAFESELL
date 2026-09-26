@@ -59,12 +59,20 @@ import { SafeImage } from "@/components/discovery/safe-image";
 import { FavoriteButton } from "@/components/discovery/favorite-button";
 import { cn } from "@/lib/utils";
 
-type Tab = "apercu" | "produits" | "creatives" | "annonceur";
+type Tab = "apercu" | "creative" | "produits" | "creatives" | "annonceur";
 
-const TABS: { key: Tab; label: string; icon: typeof Gauge }[] = [
+const DESKTOP_TABS: { key: Tab; label: string; icon: typeof Gauge }[] = [
   { key: "apercu", label: "Vue d'ensemble", icon: Gauge },
   { key: "produits", label: "Produits", icon: Package },
   { key: "creatives", label: "Créatives", icon: Film },
+  { key: "annonceur", label: "Annonceur", icon: Store },
+];
+
+const MOBILE_TABS: { key: Tab; label: string; icon: typeof Gauge }[] = [
+  { key: "apercu", label: "Analyses", icon: BarChart3 },
+  { key: "creative", label: "Créative", icon: Film },
+  { key: "produits", label: "Produits", icon: Package },
+  { key: "creatives", label: "Déclinaisons", icon: Layers },
   { key: "annonceur", label: "Annonceur", icon: Store },
 ];
 
@@ -374,6 +382,168 @@ function SidebarAdMedia({ ad }: { ad: DiscoveryAd }) {
   );
 }
 
+/**
+ * Panneau complet de la Créative :
+ * Métriques rapides, texte avec voir plus, lecteur vidéo/visuel,
+ * boutons d'accès direct (Page de vente, Meta Ads), plateforme et pixels de tracking.
+ */
+function AdCreativePanel({
+  ad,
+  stats,
+  store,
+  detectedPlatform,
+  websiteUrl,
+  metaAdUrl,
+  isTextExpanded,
+  setIsTextExpanded,
+  isMobile = false,
+}: {
+  ad: DiscoveryAd;
+  stats: { followers: number; activeAds: number; firstSeen: string };
+  store: { pixels?: string[] } | null;
+  detectedPlatform: string;
+  websiteUrl: string | null;
+  metaAdUrl: string | null;
+  isTextExpanded: boolean;
+  setIsTextExpanded: (v: boolean) => void;
+  isMobile?: boolean;
+}) {
+  return (
+    <div className={cn("space-y-3.5", isMobile ? "p-0" : "p-3.5 sm:p-4")}>
+      {/* Sur mobile, afficher les 3 métriques clés en haut du panneau créative */}
+      {isMobile && (
+        <div className="grid grid-cols-3 gap-1.5 text-center">
+          <div className="rounded-xl border border-border/80 bg-card p-2 shadow-xs">
+            <span className="text-[10px] font-medium text-muted-foreground block">Abonnés</span>
+            <span className="text-xs font-black text-foreground">{compact(stats.followers)}</span>
+          </div>
+          <div className="rounded-xl border border-border/80 bg-card p-2 shadow-xs">
+            <span className="text-[10px] font-medium text-muted-foreground block">Pubs actives</span>
+            <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">
+              {stats.activeAds}
+            </span>
+          </div>
+          <div className="rounded-xl border border-border/80 bg-card p-2 shadow-xs">
+            <span className="text-[10px] font-medium text-muted-foreground block">Actif depuis</span>
+            <span className="text-xs font-black text-foreground">{formatDate(stats.firstSeen)}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Texte de l'annonce */}
+      <div className="rounded-xl border border-border/70 bg-card p-3 shadow-xs">
+        {ad.headline && (
+          <p className="text-xs font-bold text-foreground mb-1 leading-snug">
+            {ad.headline}
+          </p>
+        )}
+        <p
+          className={cn(
+            "text-xs leading-relaxed text-muted-foreground whitespace-pre-line",
+            !isTextExpanded && "line-clamp-3"
+          )}
+        >
+          {ad.body || "Sans texte descriptif"}
+        </p>
+        {ad.body && ad.body.length > 120 && (
+          <button
+            type="button"
+            onClick={() => setIsTextExpanded(!isTextExpanded)}
+            className="mt-1.5 text-[11px] font-bold text-orange-600 hover:text-orange-700 hover:underline flex items-center gap-0.5 cursor-pointer"
+          >
+            {isTextExpanded ? "Voir moins" : "Voir plus"}
+            {isTextExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+          </button>
+        )}
+        {ad.cta_text && (
+          <div className="mt-2.5 pt-2 border-t border-border/50 flex items-center justify-between text-[11px]">
+            <span className="text-muted-foreground">Bouton CTA :</span>
+            <span className="font-bold text-foreground bg-muted px-2 py-0.5 rounded-md">
+              {ad.cta_text}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Lecteur Vidéo / Visuel */}
+      <div className="space-y-2">
+        <SidebarAdMedia ad={ad} />
+
+        {/* Boutons d'accès directs sous le média */}
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          {ad.link_url ? (
+            <a
+              href={ad.link_url}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-2 text-xs font-bold text-foreground hover:bg-muted transition-colors shadow-xs"
+            >
+              <ExternalLink className="h-3.5 w-3.5 text-orange-500" />
+              <span className="truncate">Page de vente</span>
+            </a>
+          ) : (
+            <span className="flex items-center justify-center gap-1 rounded-lg border border-dashed border-border px-2.5 py-2 text-xs text-muted-foreground">
+              Sans lien direct
+            </span>
+          )}
+
+          {metaAdUrl ? (
+            <a
+              href={metaAdUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-2 text-xs font-bold text-foreground hover:bg-muted transition-colors shadow-xs"
+            >
+              <SourceHeaderBadge platform={ad.platform} />
+            </a>
+          ) : null}
+        </div>
+      </div>
+
+      {/* Infos boutique & Pixels en bas de la créative */}
+      <div className="rounded-xl border border-border/70 bg-card p-3 space-y-2.5 shadow-xs text-xs">
+        <div className="flex items-center justify-between text-muted-foreground">
+          <span>Plateforme e-commerce :</span>
+          <PlatformBadge platform={detectedPlatform} domain={ad.landing_domain} size="sm" />
+        </div>
+        <div className="flex items-center justify-between text-muted-foreground">
+          <span>Domaine officiel :</span>
+          {ad.landing_domain ? (
+            <a
+              href={websiteUrl || `https://${ad.landing_domain}`}
+              target="_blank"
+              rel="noreferrer"
+              className="font-semibold text-foreground hover:text-orange-600 transition-colors truncate max-w-[170px] inline-flex items-center gap-1"
+            >
+              <span>{ad.landing_domain}</span>
+              <ExternalLink className="h-2.5 w-2.5" />
+            </a>
+          ) : (
+            <span className="font-semibold text-foreground">Non renseigné</span>
+          )}
+        </div>
+        {store?.pixels && store.pixels.length > 0 && (
+          <div className="pt-2 border-t border-border/50">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
+              Pixels actifs ({store.pixels.length})
+            </p>
+            <div className="flex flex-wrap gap-1">
+              {store.pixels.map((pix) => (
+                <span
+                  key={pix}
+                  className="rounded-md bg-orange-500/10 px-1.5 py-0.5 text-[10px] font-bold text-orange-600 dark:text-orange-400 border border-orange-500/20"
+                >
+                  {pixelLabel(pix)}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function AdAnalysisDialog({
   adId,
   onClose,
@@ -509,7 +679,7 @@ export function AdAnalysisDialog({
     >
       <div
         onClick={(event) => event.stopPropagation()}
-        className="relative flex flex-col md:flex-row w-full max-w-6xl h-[94vh] max-h-[920px] rounded-2xl border border-border/80 bg-background shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="relative flex flex-col md:flex-row w-full max-w-6xl h-[94dvh] sm:h-[94vh] max-h-[920px] rounded-2xl border border-border/80 bg-background shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {isLoading || !ad || !stats ? (
           <div className="grid flex-1 place-items-center bg-background">
@@ -521,9 +691,9 @@ export function AdAnalysisDialog({
         ) : (
           <>
             {/* ============================================================== */}
-            {/* COLONNE GAUCHE (SIDEBAR CRÉATIVE & MARQUE - STYLE PREMIUM)     */}
+            {/* COLONNE GAUCHE (SIDEBAR CRÉATIVE DESKTOP - FIXE & PRO)         */}
             {/* ============================================================== */}
-            <aside className="w-full md:w-[350px] lg:w-[370px] shrink-0 border-b md:border-b-0 md:border-r border-border bg-muted/20 dark:bg-zinc-950/40 flex flex-col overflow-y-auto no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <aside className="hidden md:flex md:w-[350px] lg:w-[370px] shrink-0 border-r border-border bg-muted/20 dark:bg-zinc-950/40 flex-col overflow-y-auto no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {/* Header de la sidebar : Identité complète de la Marque & Boutique */}
               <div className="border-b border-border/70 p-3.5 sm:p-4 bg-background/90 backdrop-blur-xs space-y-3">
                 <div className="flex items-start justify-between gap-2.5">
@@ -604,144 +774,146 @@ export function AdAnalysisDialog({
                 </div>
               </div>
 
-              {/* Contenu de la sidebar : Texte de l'annonce + Vidéo/Visuel */}
-              <div className="p-3.5 sm:p-4 space-y-3.5 flex-1 overflow-y-auto no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                {/* Texte de l'annonce */}
-                <div className="rounded-xl border border-border/70 bg-card p-3 shadow-xs">
-                  {ad.headline && (
-                    <p className="text-xs font-bold text-foreground mb-1 leading-snug">
-                      {ad.headline}
-                    </p>
-                  )}
-                  <p
-                    className={cn(
-                      "text-xs leading-relaxed text-muted-foreground whitespace-pre-line",
-                      !isTextExpanded && "line-clamp-3"
-                    )}
-                  >
-                    {ad.body || "Sans texte descriptif"}
-                  </p>
-                  {ad.body && ad.body.length > 120 && (
-                    <button
-                      type="button"
-                      onClick={() => setIsTextExpanded(!isTextExpanded)}
-                      className="mt-1.5 text-[11px] font-bold text-orange-600 hover:text-orange-700 hover:underline flex items-center gap-0.5 cursor-pointer"
-                    >
-                      {isTextExpanded ? "Voir moins" : "Voir plus"}
-                      {isTextExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                    </button>
-                  )}
-                  {ad.cta_text && (
-                    <div className="mt-2.5 pt-2 border-t border-border/50 flex items-center justify-between text-[11px]">
-                      <span className="text-muted-foreground">Bouton CTA :</span>
-                      <span className="font-bold text-foreground bg-muted px-2 py-0.5 rounded-md">
-                        {ad.cta_text}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Lecteur Vidéo / Visuel */}
-                <div className="space-y-2">
-                  <SidebarAdMedia ad={ad} />
-
-                  {/* Boutons d'accès directs sous le média */}
-                  <div className="grid grid-cols-2 gap-2 pt-1">
-                    {ad.link_url ? (
-                      <a
-                        href={ad.link_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-2 text-xs font-bold text-foreground hover:bg-muted transition-colors shadow-xs"
-                      >
-                        <ExternalLink className="h-3.5 w-3.5 text-orange-500" />
-                        <span className="truncate">Page de vente</span>
-                      </a>
-                    ) : (
-                      <span className="flex items-center justify-center gap-1 rounded-lg border border-dashed border-border px-2.5 py-2 text-xs text-muted-foreground">
-                        Sans lien direct
-                      </span>
-                    )}
-
-                    {metaAdUrl ? (
-                      <a
-                        href={metaAdUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-2 text-xs font-bold text-foreground hover:bg-muted transition-colors shadow-xs"
-                      >
-                        <SourceHeaderBadge platform={ad.platform} />
-                      </a>
-                    ) : null}
-                  </div>
-                </div>
-
-                {/* Infos boutique & Pixels en bas de la sidebar */}
-                <div className="rounded-xl border border-border/70 bg-card p-3 space-y-2.5 shadow-xs text-xs">
-                  <div className="flex items-center justify-between text-muted-foreground">
-                    <span>Plateforme e-commerce :</span>
-                    <PlatformBadge platform={detectedPlatform} domain={ad.landing_domain} size="sm" />
-                  </div>
-                  <div className="flex items-center justify-between text-muted-foreground">
-                    <span>Domaine officiel :</span>
-                    {ad.landing_domain ? (
-                      <a
-                        href={websiteUrl || `https://${ad.landing_domain}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="font-semibold text-foreground hover:text-orange-600 transition-colors truncate max-w-[170px] inline-flex items-center gap-1"
-                      >
-                        <span>{ad.landing_domain}</span>
-                        <ExternalLink className="h-2.5 w-2.5" />
-                      </a>
-                    ) : (
-                      <span className="font-semibold text-foreground">Non renseigné</span>
-                    )}
-                  </div>
-                  {store?.pixels && store.pixels.length > 0 && (
-                    <div className="pt-2 border-t border-border/50">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
-                        Pixels actifs ({store.pixels.length})
-                      </p>
-                      <div className="flex flex-wrap gap-1">
-                        {store.pixels.map((pix) => (
-                          <span
-                            key={pix}
-                            className="rounded-md bg-orange-500/10 px-1.5 py-0.5 text-[10px] font-bold text-orange-600 dark:text-orange-400 border border-orange-500/20"
-                          >
-                            {pixelLabel(pix)}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
+              {/* Contenu défilable de la sidebar desktop */}
+              <div className="flex-1 overflow-y-auto no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <AdCreativePanel
+                  ad={ad}
+                  stats={stats}
+                  store={store}
+                  detectedPlatform={detectedPlatform}
+                  websiteUrl={websiteUrl}
+                  metaAdUrl={metaAdUrl}
+                  isTextExpanded={isTextExpanded}
+                  setIsTextExpanded={setIsTextExpanded}
+                  isMobile={false}
+                />
               </div>
             </aside>
 
             {/* ============================================================== */}
-            {/* PANNEAU PRINCIPAL DROIT                                         */}
+            {/* PANNEAU PRINCIPAL (MOBILE & DESKTOP)                           */}
             {/* ============================================================== */}
-            <main className="flex-1 flex flex-col min-w-0 bg-background overflow-hidden no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {/* Barre supérieure : Onglets de navigation + Actions de droite */}
-              <header className="flex shrink-0 items-center justify-between border-b border-border bg-card/60 px-3 py-2 sm:px-6 sm:py-3 gap-2 sm:gap-3">
-                {/* Onglets de navigation (AUCUN trait de défilement) */}
-                <nav className="flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  {TABS.map((item) => {
+            <main className="flex-1 flex flex-col min-w-0 h-full bg-background overflow-hidden no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {/* HEADER MOBILE : Identité, badges, favori & bouton fermer X */}
+              <div className="flex md:hidden shrink-0 items-center justify-between border-b border-border bg-card/90 backdrop-blur-xs px-3.5 py-2.5 gap-2">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <BrandAvatar
+                    name={ad.page_name}
+                    avatarUrl={ad.page_avatar_url}
+                    domain={ad.landing_domain}
+                    size="sm"
+                  />
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <h3 className="truncate text-xs font-extrabold text-foreground leading-tight">
+                        {ad.page_name}
+                      </h3>
+                      <span className="inline-flex items-center text-[9px] text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1 py-0.2 rounded-full font-bold">
+                        <ShieldCheck className="h-2.5 w-2.5 mr-0.5" />
+                        Vérifié
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <PlatformBadge platform={detectedPlatform} domain={ad.landing_domain} size="xs" />
+                      {ad.landing_domain && (
+                        <span className="text-[10px] text-muted-foreground truncate max-w-[120px]">
+                          · {ad.landing_domain}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1 shrink-0">
+                  {metaAdUrl && (
+                    <a
+                      href={metaAdUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      title="Voir sur Meta Ad Library"
+                      className="grid h-8 w-8 place-items-center rounded-xl border border-border bg-background text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shadow-xs"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                    </a>
+                  )}
+
+                  <FavoriteButton
+                    kind="ad"
+                    refId={ad.id}
+                    payload={{
+                      page_name: ad.page_name,
+                      headline: ad.headline,
+                      image_url: ad.image_url,
+                      video_url: ad.video_url,
+                      landing_domain: ad.landing_domain,
+                    }}
+                    size="sm"
+                    className="rounded-xl"
+                  />
+
+                  <button
+                    onClick={onClose}
+                    aria-label="Fermer la vue d'analyse"
+                    className="grid h-8 w-8 cursor-pointer place-items-center rounded-xl border border-border bg-muted/60 text-foreground hover:bg-muted transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* ONGLETS MOBILE (Zéro trait d'ascenseur) */}
+              <nav className="flex md:hidden shrink-0 items-center gap-1 overflow-x-auto border-b border-border bg-card/60 px-3 py-2 no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {MOBILE_TABS.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = tab === item.key;
+                  return (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={() => setTab(item.key)}
+                      className={cn(
+                        "flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer whitespace-nowrap shrink-0",
+                        isActive
+                          ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 shadow-xs border border-orange-500/20"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                      )}
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                      <span>{item.label}</span>
+                      {item.key === "produits" && products.length > 0 && (
+                        <span className="rounded-full bg-muted px-1.5 py-0.2 text-[10px] font-black">
+                          {products.length}
+                        </span>
+                      )}
+                      {item.key === "creatives" && creatives.length > 0 && (
+                        <span className="rounded-full bg-muted px-1.5 py-0.2 text-[10px] font-black">
+                          {creatives.length}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </nav>
+
+              {/* HEADER DESKTOP : Onglets + Actions */}
+              <header className="hidden md:flex shrink-0 items-center justify-between border-b border-border bg-card/60 px-6 py-3 gap-3">
+                <nav className="flex items-center gap-2 overflow-x-auto no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {DESKTOP_TABS.map((item) => {
                     const Icon = item.icon;
-                    const isActive = tab === item.key;
+                    const isActive = (tab === "creative" ? "apercu" : tab) === item.key;
                     return (
                       <button
                         key={item.key}
+                        type="button"
                         onClick={() => setTab(item.key)}
                         className={cn(
-                          "flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-sm font-bold rounded-xl transition-all cursor-pointer whitespace-nowrap",
+                          "flex items-center gap-2 px-3.5 py-2 text-sm font-bold rounded-xl transition-all cursor-pointer whitespace-nowrap",
                           isActive
                             ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 shadow-xs border border-orange-500/20"
                             : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
                         )}
                       >
-                        <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                        <Icon className="h-4 w-4" />
                         <span>{item.label}</span>
                         {item.key === "produits" && products.length > 0 && (
                           <span className="rounded-full bg-muted px-1.5 py-0.2 text-[10px] font-black">
@@ -758,14 +930,13 @@ export function AdAnalysisDialog({
                   })}
                 </nav>
 
-                {/* Actions en haut à droite : Site web, Favori, Fermer */}
-                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                <div className="flex items-center gap-2 shrink-0">
                   {websiteUrl && (
                     <a
                       href={websiteUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="hidden sm:inline-flex items-center gap-1.5 rounded-xl border border-border bg-background px-3 py-2 text-xs font-bold text-foreground hover:bg-muted transition-colors shadow-xs"
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-background px-3 py-2 text-xs font-bold text-foreground hover:bg-muted transition-colors shadow-xs"
                     >
                       <ExternalLink className="h-3.5 w-3.5 text-orange-500" />
                       <span>Site web</span>
@@ -789,7 +960,7 @@ export function AdAnalysisDialog({
                   <button
                     onClick={onClose}
                     aria-label="Fermer la vue d'analyse"
-                    className="grid h-8 w-8 sm:h-9 sm:w-9 cursor-pointer place-items-center rounded-xl border border-border bg-background text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                    className="grid h-9 w-9 cursor-pointer place-items-center rounded-xl border border-border bg-background text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -797,12 +968,65 @@ export function AdAnalysisDialog({
               </header>
 
               {/* Corps défilable : TOUTES LES BARRES DE DÉFILEMENT SONT MASQUÉES */}
-              <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-5 bg-muted/15 no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div className="flex-1 overflow-y-auto overscroll-contain p-3.5 sm:p-5 md:p-6 space-y-4 sm:space-y-5 bg-muted/15 no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {/* ONGLET MOBILE : CRÉATIVE & PUB */}
+                {tab === "creative" && (
+                  <div className="md:hidden">
+                    <AdCreativePanel
+                      ad={ad}
+                      stats={stats}
+                      store={store}
+                      detectedPlatform={detectedPlatform}
+                      websiteUrl={websiteUrl}
+                      metaAdUrl={metaAdUrl}
+                      isTextExpanded={isTextExpanded}
+                      setIsTextExpanded={setIsTextExpanded}
+                      isMobile={true}
+                    />
+                  </div>
+                )}
+
                 {/* -------------------------------------------------------- */}
-                {/* ONGLET 1 : VUE D'ENSEMBLE                                */}
+                {/* ONGLET 1 : VUE D'ENSEMBLE (ANALYSES)                     */}
                 {/* -------------------------------------------------------- */}
-                {tab === "apercu" && (
-                  <div className="space-y-5">
+                {(tab === "apercu" || (tab === "creative" && false)) && (
+                  <div className="space-y-4 sm:space-y-5">
+                    {/* Mini-Bandeau de prévisualisation de l'annonce sur mobile avec raccourci vers la créative */}
+                    <div className="md:hidden flex items-center gap-3 p-3 rounded-2xl border border-border/80 bg-card shadow-xs">
+                      <div className="relative h-14 w-14 shrink-0 rounded-xl overflow-hidden bg-muted flex items-center justify-center">
+                        {adMedia(ad) ? (
+                          <img src={adMedia(ad)!} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          <Film className="h-6 w-6 text-muted-foreground/50" />
+                        )}
+                        {ad.media_type === "video" && (
+                          <div className="absolute inset-0 grid place-items-center bg-black/25">
+                            <Play className="h-4 w-4 text-white fill-white" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-bold text-foreground line-clamp-1 leading-snug">
+                          {ad.headline || ad.body || ad.page_name}
+                        </p>
+                        <div className="flex items-center gap-1.5 mt-1 text-[11px] text-muted-foreground flex-wrap">
+                          <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                            ● {ad.active_days} j actifs
+                          </span>
+                          <span>·</span>
+                          <span className={cn("font-bold", tractionLabel(ad.traction_score).tone)}>
+                            Traction {ad.traction_score}/100
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setTab("creative")}
+                        className="shrink-0 text-xs font-bold text-orange-600 hover:text-orange-700 bg-orange-500/10 hover:bg-orange-500/20 px-2.5 py-1.5 rounded-xl border border-orange-500/20 transition-colors cursor-pointer"
+                      >
+                        Voir pub
+                      </button>
+                    </div>
                     {/* Deux cartes côte à côte (Style Concurrent parfait) */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* CARTE 1 : DÉTAILS DE L'ANNONCE */}
@@ -1316,8 +1540,8 @@ export function AdAnalysisDialog({
                 )}
               </div>
 
-              {/* Pied de page du modal (Style Concurrent avec boutons d'action) */}
-              <footer className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-border bg-card/60 px-4 py-3 sm:px-6">
+              {/* Pied de page du modal (Style Concurrent avec boutons d'action - Desktop) */}
+              <footer className="hidden md:flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-border bg-card/60 px-4 py-3 sm:px-6">
                 <p className="text-[11px] text-muted-foreground hidden sm:block">
                   Données certifiées issues des bibliothèques publicitaires officielles et de la boutique.
                 </p>
